@@ -1,4 +1,4 @@
-# Pseudocode: News-Digest-Algorithmus
+#  Pseudocode: News-Digest-Algorithmus
 
 ## Eingaben und Parameter
 
