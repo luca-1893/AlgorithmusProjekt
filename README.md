@@ -1,74 +1,64 @@
-# AlgorithmusProjekt – News-Digest-Algorithmus
+# AlgorithmusProjekt – RAG-Pipeline für die Recherche
 
-Ein Studienprojekt, das einen Algorithmus zur automatisierten Erstellung eines Nachrichten-Digests entwirft und dokumentiert. Der Algorithmus sammelt Artikel aus verschiedenen Quellen, dedupliziert sie thematisch, bewertet sie anhand gewichteter Kriterien, fasst sie per LLM zusammen und versendet den Digest per E-Mail.
+Hackathon-Projekt von Gruppe 2 im FOM-Modul „Algorithmen & Datenstrukturen“.
 
-Die algorithmische Spezifikation ist als Pseudocode formuliert und in [`Phase2/pseudocode.md`](Phase2/pseudocode.md) zu finden.
+## Problem
 
----
+Bei der Recherche mit KI kommt es häufig zu Halluzinationen, und jede Recherche kostet Tokens und Zeit, weil das Sprachmodell selbst sucht und liest.
 
-## Funktionsweise
+## Idee
 
-Der Algorithmus durchläuft fünf Phasen:
+Ein regelbasierter Auswahl-Algorithmus übernimmt die Recherche: Er durchsucht eine Wissensbasis, sortiert die Treffer vor und gibt nur die relevantesten Textabschnitte an das Sprachmodell zurück (Retrieval Augmented Generation). Bereitgestellt wird das als MCP-Tool, aufrufbar über einen MCP-Client wie Claude Desktop oder Claude Code.
 
-1. **Sammeln** – Artikel werden von konfigurierten Quellen (RSS-/API-Endpunkte) abgerufen. Bei Fehlern kommt ein exponentielles Backoff mit bis zu `maxRetries` Versuchen zum Einsatz.
-2. **Deduplizierung / Clustering** – Ähnliche Artikel werden anhand der Jaccard-Ähnlichkeit der Titel zu Themen-Clustern zusammengefasst (Schwelle `tau`).
-3. **Ranking** – Jeder Cluster bekommt einen Score aus Aktualität, Keyword-Treffern und Quellenanzahl. Ein Min-Heap der Größe `N` hält die Top-Artikel.
-4. **Zusammenfassung (LLM)** – Die Top-Artikel werden per LLM zu einem Digest zusammengefasst, mit Retry und Fallback (nur Titel + Link).
-5. **Versand** – Der fertige Digest wird per SMTP versendet, mit Retry und Backoff bei Fehlern.
+Ziele:
 
----
+- weniger Halluzinationen, weil das Modell auf belegten Quellen antwortet
+- weniger Tokens und kürzere Laufzeit, weil die Vorauswahl algorithmisch passiert
+
+## Geplante Bausteine
+
+| # | Baustein | Verfahren |
+|---|---|---|
+| 1 | Chunking | Text in überlappende Abschnitte zerlegen |
+| 2 | Vektorsuche | Cosine Similarity, Top-k mit Heap |
+| 3 | Keyword-Suche | BM25 über einen invertierten Index |
+| 4 | Hybrid-Ranking | Reciprocal Rank Fusion |
+| 5 | Duplikat-Filter | Maximal Marginal Relevance, wählt die endgültigen k Abschnitte |
+| 6 | MCP-Tool | Wrapper mit FastMCP |
+| 7 | Evaluation | Testfragen mit bekannter Quelle, Vergleich der Varianten und des Tokenverbrauchs mit und ohne Tool |
+
+Die Bausteine entstehen zuerst als eigenständige Übungen ohne Bibliotheken und werden danach zur Pipeline zusammengesteckt.
+
+Die Pipeline arbeitet ohne Token-Budget: Die Größe der Antwort ist durch `k` und die Chunk-Größe begrenzt.
+
+## Stand
+
+Das Projekt ist in der Konzeptphase, es gibt noch keinen Code. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
+
+## Hackathon-Phasen
+
+| Phase | Inhalt | Termin |
+|---|---|---|
+| 1 | Problemdefinition & Use Case | 21.09.2026 |
+| 2 | Algorithmischer Entwurf | 05.10.2026 |
+| 3 | Erste Implementierung | 19.10.2026 |
+| 4 | Test & Validierung | 09.11.2026 |
+| 5 | Optimierung & Reflexion | 16.11.2026 |
+| 6 | Pitch | 30.11.2026 |
 
 ## Projektstruktur
 
 ```
 AlgorithmusProjekt/
 ├── Phase2/
-│   └── pseudocode.md   # Algorithmus-Spezifikation (Pseudocode)
-├── Diagram.md         # (Platzhalter für Diagramme)
-├── README.md          # Diese Datei
-└── LICENSE            # MIT-Lizenz
+│   ├── Flowchart_RAG-Pipeline.drawio   # Flowchart der Pipeline (Anfrage, Indexaufbau)
+│   └── Pseudocode.drawio               # früher Entwurf: Keyword-Satzfilter
+├── docs/
+│   ├── journal.md          # Arbeitsjournal
+│   └── uml/                # UML-Diagramme (PlantUML)
+├── README.md
+└── LICENSE
 ```
-
----
-
-## Eingaben und Parameter
-
-| Parameter | Bedeutung | Beispiel |
-|---|---|---|
-| `S` | Liste der Quellen (RSS-/API-Endpunkte) | – |
-| `K` | Interessen des Nutzers (Keywords) | – |
-| `N` | Anzahl Artikel im Digest | 5 |
-| `T` | Zeitfenster | 24 h |
-| `tau` | Ähnlichkeitsschwelle für Clustering | 0.5 |
-| `maxRetries` | Maximale Versuche pro Quelle | 3 |
-| `w1, w2, w3` | Gewichte (Aktualität / Keyword / Quellen) | 0.4 / 0.4 / 0.2 |
-
----
-
-## Entscheidungsregeln
-
-| Regel | Bedingung | Folge |
-|---|---|---|
-| R1 | HTTP 200 und parsebar | Artikel übernehmen |
-| R2 | Fetch fehlgeschlagen und `r < maxRetries` | Backoff, erneut versuchen |
-| R3 | Fetch endgültig fehlgeschlagen | Quelle loggen, weiter mit nächster |
-| R4 | `A` leer | Alarm, Abbruch |
-| R5 | Jaccard `>= tau` | in bestehenden Cluster |
-| R6 | Jaccard `< tau` | neuer Cluster |
-| R7 | Heap-Größe `> N` | kleinsten Score entfernen |
-| R8 | LLM-Antwort ungültig und `q < 2` | Retry |
-| R9 | LLM endgültig ungültig | Fallback ohne Zusammenfassung |
-| R10 | SMTP fehlgeschlagen und `k < 3` | Backoff, erneut senden |
-
----
-
-## Komplexität
-
-- **Fetch:** `O(|S|)`
-- **Clustering:** `O(|A| · |Cluster|)`, im Worst Case `O(|A|²)`
-- **Ranking mit Heap:** `O(|Cluster| · log N)`
-
----
 
 ## Lizenz
 
