@@ -1,7 +1,8 @@
 def tokenizer(chunk: str) -> list[str]:
-    """Normalizes the chunk into a list of lower words, stripped of punctuation."""
-    lower = chunk.lower()
-    separated = lower.replace("-"," ")
-    cleaned = "".join(char for char in separated if char.isalnum() or char.isspace())
+    """Normalizes the chunk into a list of lowercase words, stripped of punctuation."""
+    lower = chunk.casefold()
+    cleaned = "".join(char if char.isalnum() or char == "-" else " " for char in lower)
     words = cleaned.split()
-    return words
+    dehyphenated = [word.strip("-").replace("-", "") for word in words]
+    tokens = [word for word in dehyphenated if word]
+    return tokens
