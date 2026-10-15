@@ -1,4 +1,6 @@
 import unittest
+from unittest import mock
+from urllib.error import HTTPError, URLError
 
 import vector_search
 
@@ -107,14 +109,19 @@ class FakeEmbedder(vector_search.Embedder):
 
 
 class TestEmbedder(unittest.TestCase):
-    def test_embed_empty_vector(self):
-        with self.assertRaises(vector_search.EmbeddingError):
-            FakeEmbedder([[]]).embed(["a"])
-
     def test_embed_default_input_type_is_document(self):
         embedder = FakeEmbedder([[1.0]])
         embedder.embed(["a"])
         self.assertEqual(embedder.calls, [(["a"], "document")])
+
+    def test_embed_empty_vector(self):
+        with self.assertRaises(vector_search.EmbeddingError):
+            FakeEmbedder([[]]).embed(["a"])
+
+    def test_embed_empty_without_request(self):
+        embedder = FakeEmbedder([])
+        self.assertEqual(embedder.embed([]), [])
+        self.assertEqual(embedder.calls, [])
 
     def test_embed_invalid_input_type(self):
         with self.assertRaises(ValueError):
@@ -124,11 +131,6 @@ class TestEmbedder(unittest.TestCase):
         embedder = FakeEmbedder([[1.0]])
         embedder.embed(["a"], "query")
         self.assertEqual(embedder.calls, [(["a"], "query")])
-
-    def test_embed_empty_without_request(self):
-        embedder = FakeEmbedder([])
-        self.assertEqual(embedder.embed([]), [])
-        self.assertEqual(embedder.calls, [])
 
     def test_embed_returns_vectors(self):
         embedder = FakeEmbedder([[1.0, 0.0], [0.0, 1.0]])
@@ -190,3 +192,69 @@ class TestMmrSelect(unittest.TestCase):
 
     def test_mmr_ties_keep_lower_position(self):
         self.assertEqual(vector_search.mmr_select([0.5, 0.5], [[1.0, 0.0], [0.0, 1.0]], 1), [0])
+
+
+class FakePost:
+    def __init__(self, response=None, error=None):
+        self.response = response
+        self.error = error
+        self.calls = []
+
+    def __call__(self, url, body, headers):
+        self.calls.append((url, body, headers))
+        if self.error:
+            raise self.error
+        return self.response
+
+
+def voyage_response(*vectors):
+    return {"data": [{"object": "embedding", "embedding": vector, "index": index}
+                     for index, vector in enumerate(vectors)]}
+
+
+class TestVoyageEmbedder(unittest.TestCase):
+    def test_voyage_bad_response_format(self):
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost({"detail": "oops"}))
+        with self.assertRaises(vector_search.EmbeddingError):
+            embedder.embed(["a"])
+
+    def test_voyage_http_error(self):
+        error = HTTPError(vector_search.VOYAGE_API_URL, 401, "Unauthorized", {}, None)
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost(error=error))
+        with self.assertRaisesRegex(vector_search.EmbeddingError, "401"):
+            embedder.embed(["a"])
+
+    def test_voyage_key_from_environment(self):
+        with mock.patch.dict("os.environ", {"VOYAGE_API_KEY": "env-key"}):
+            self.assertEqual(vector_search.VoyageEmbedder().api_key, "env-key")
+
+    def test_voyage_missing_key(self):
+        with mock.patch.dict("os.environ", {}, clear=True):
+            with self.assertRaises(vector_search.EmbeddingError):
+                vector_search.VoyageEmbedder()
+
+    def test_voyage_network_error(self):
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost(error=URLError("no route")))
+        with self.assertRaises(vector_search.EmbeddingError):
+            embedder.embed(["a"])
+
+    def test_voyage_orders_by_index(self):
+        response = {"data": [{"embedding": [0.0, 1.0], "index": 1}, {"embedding": [1.0, 0.0], "index": 0}]}
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost(response))
+        self.assertEqual(embedder.embed(["a", "b"]), [[1.0, 0.0], [0.0, 1.0]])
+
+    def test_voyage_request(self):
+        post = FakePost(voyage_response([1.0, 0.0]))
+        vector_search.VoyageEmbedder("secret", model="voyage-4-lite", post=post).embed(["frage"], "query")
+        self.assertEqual(post.calls, [(vector_search.VOYAGE_API_URL,
+                                       {"input": ["frage"], "model": "voyage-4-lite", "input_type": "query"},
+                                       {"Authorization": "Bearer secret"})])
+
+    def test_voyage_returns_vectors(self):
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost(voyage_response([1.0, 0.0], [0.0, 1.0])))
+        self.assertEqual(embedder.embed(["a", "b"]), [[1.0, 0.0], [0.0, 1.0]])
+
+    def test_voyage_timeout(self):
+        embedder = vector_search.VoyageEmbedder("key", post=FakePost(error=TimeoutError()))
+        with self.assertRaises(vector_search.EmbeddingError):
+            embedder.embed(["a"])

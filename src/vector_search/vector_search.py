@@ -1,6 +1,14 @@
 import heapq
+import json
 import math
+import os
+import urllib.request
 from abc import ABC, abstractmethod
+from typing import Callable
+from urllib.error import HTTPError
+
+VOYAGE_API_URL = "https://api.voyageai.com/v1/embeddings"
+VOYAGE_DEFAULT_MODEL = "voyage-4"
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -64,6 +72,43 @@ class Embedder(ABC):
     @abstractmethod
     def _request(self, texts: list[str], input_type: str) -> list[list[float]]:
         """Sends the texts to the provider and returns the raw vectors."""
+
+
+def http_post_json(url: str, body: dict, headers: dict, timeout: float = 30.0) -> dict:
+    """Posts body as JSON and returns the decoded JSON response."""
+    request = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
+                                     headers={"Content-Type": "application/json", **headers}, method="POST")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+class VoyageEmbedder(Embedder):
+    """Embeddings from Voyage AI; the API key comes from VOYAGE_API_KEY unless given."""
+
+    def __init__(self, api_key: str = "", model: str = VOYAGE_DEFAULT_MODEL,
+                 post: Callable[[str, dict, dict], dict] = http_post_json):
+        self.api_key = api_key or os.environ.get("VOYAGE_API_KEY", "")
+        if not self.api_key:
+            raise EmbeddingError("VOYAGE_API_KEY is not set")
+        self.model = model
+        self.post = post
+
+    def _request(self, texts: list[str], input_type: str) -> list[list[float]]:
+        """Sends one request for all texts and returns the vectors in input order."""
+        body = {"input": texts, "model": self.model, "input_type": input_type}
+        headers = {"Authorization": f"Bearer {self.api_key}"}
+        try:
+            response = self.post(VOYAGE_API_URL, body, headers)
+        except HTTPError as error:
+            raise EmbeddingError(f"Voyage answered with HTTP {error.code}") from error
+        except (OSError, ValueError) as error:
+            raise EmbeddingError(f"Voyage is not reachable: {error}") from error
+
+        try:
+            items = sorted(response["data"], key=lambda item: item["index"])
+            return [item["embedding"] for item in items]
+        except (KeyError, TypeError) as error:
+            raise EmbeddingError("Voyage response has an unexpected format") from error
 
 
 def mmr_select(relevance: list[float], vectors: list[list[float]], k: int, lambda_: float = 0.7) -> list[int]:

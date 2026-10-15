@@ -79,6 +79,29 @@ ENDE
 // Bekannte Grenzen: Anbieter noch offen (ADR 0001); kein Wiederholen bei Netzwerkfehlern
 
 
+FUNKTION VoyageEinbetter.anbieter_anfrage(texte, art)
+    EINGABE:  texte, art – wie bei einbetten
+    AUSGABE:  Liste von Vektoren in Reihenfolge der texte
+    VORAUSSETZUNG: API-Schlüssel aus der Umgebungsvariable VOYAGE_API_KEY,
+                   sonst FEHLER schon beim Anlegen des Einbetters
+
+    VERSUCHE:
+        antwort ← HTTP-POST an https://api.voyageai.com/v1/embeddings
+                  mit {input: texte, model: modell, input_type: art}
+                  und Kopfzeile Authorization: Bearer schlüssel
+    BEI HTTP-Fehler (z. B. 401 Schlüssel ungültig, 429 Limit erreicht):
+        FEHLER "Voyage antwortet mit HTTP " + Code
+    BEI Netzwerkfehler oder Zeitüberschreitung:
+        FEHLER "Voyage nicht erreichbar"
+
+    einträge ← antwort.data nach index sortiert   // Reihenfolge nicht garantiert
+    WENN data oder index oder embedding fehlen: FEHLER "Unerwartetes Antwortformat"
+    GIB Vektor jedes eintrags ZURÜCK
+ENDE
+// Laufzeit: ein HTTP-Aufruf für alle Texte; bis zu 1.000 Texte pro Aufruf erlaubt
+// Bekannte Grenzen: kein automatisches Wiederholen bei 429; Modell voyage-4, 1024 Dimensionen
+
+
 FUNKTION mmr_auswahl(relevanz, vektoren, k, lambda)
     EINGABE:  relevanz – Liste von Zahlen zwischen 0 und 1, eine pro Kandidat
               vektoren – Liste von Vektoren, einer pro Kandidat
