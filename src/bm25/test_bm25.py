@@ -1,6 +1,6 @@
 import unittest
+import math
 import bm25
-
 
 class TestTokenize(unittest.TestCase):
     def test_tokenize_apostrophe(self):
@@ -129,3 +129,28 @@ class TestBuildIndex(unittest.TestCase):
         self.assertEqual(index["dog"], {0: 3})
         self.assertEqual(index["cat"], {0: 1})
         self.assertEqual(doc_lengths[0], 4)
+
+class TestIDF(unittest.TestCase):
+
+    def test_compute_idf_known_values(self):
+        cases = [
+            (0, 3, math.log(8)),      # unknown term
+            (1, 3, math.log(8 / 3)),
+            (3, 3, math.log(8 / 7)),  # term in every doc
+            (0, 0, math.log(2)),      # empty index
+        ]
+        for df, n_docs, expected in cases:
+            with self.subTest(df=df, n_docs=n_docs):
+                self.assertAlmostEqual(bm25.compute_idf(df, n_docs), expected)
+
+    def test_compute_idf_always_positive(self):
+        for n_docs in range(0, 20):
+            for df in range(0, n_docs + 1):
+                with self.subTest(df=df, n_docs=n_docs):
+                    self.assertGreater(bm25.compute_idf(df, n_docs), 0)
+
+    def test_compute_idf_decreases_with_df(self):
+        n_docs = 10
+        idfs = [bm25.compute_idf(df, n_docs) for df in range(n_docs + 1)]
+        for rarer, more_common in zip(idfs, idfs[1:]):
+            self.assertGreater(rarer, more_common)

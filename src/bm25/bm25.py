@@ -1,3 +1,5 @@
+import math
+
 JOINERS = "-'’"
 
 def tokenize(chunk: str) -> list[str]:
@@ -33,3 +35,6 @@ def build_index(corpus: list[str]) -> tuple[dict[str, dict[int, int]], dict[int,
 
     return index, doc_lengths, n_docs, avgdl
 
+def compute_idf(df: int, n_docs: int) -> float:
+    """BM25 IDF (Lucene variant, +1 inside ln). Requires 0 <= df <= n_docs; result is always > 0."""
+    return math.log((n_docs - df + 0.5) / (df + 0.5) + 1)
