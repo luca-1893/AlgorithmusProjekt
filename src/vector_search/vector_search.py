@@ -60,3 +60,25 @@ class Embedder(ABC):
     @abstractmethod
     def _request(self, texts: list[str]) -> list[list[float]]:
         """Sends the texts to the provider and returns the raw vectors."""
+
+
+def mmr_select(relevance: list[float], vectors: list[list[float]], k: int, lambda_: float = 0.7) -> list[int]:
+    """Selects up to k positions that are relevant and dissimilar to the ones already selected."""
+    if len(relevance) != len(vectors):
+        raise ValueError("relevance and vectors must have the same length")
+    if k <= 0 or not 0 <= lambda_ <= 1:
+        raise ValueError("k must be > 0 and lambda_ between 0 and 1")
+
+    selected = []
+    remaining = list(range(len(relevance)))
+    max_similarity = [0.0] * len(relevance)
+
+    while remaining and len(selected) < k:
+        best = max(remaining, key=lambda p: (lambda_ * relevance[p] - (1 - lambda_) * max_similarity[p], -p))
+        selected.append(best)
+        remaining.remove(best)
+        for position in remaining:
+            similarity = cosine_similarity(vectors[position], vectors[best])
+            max_similarity[position] = max(max_similarity[position], similarity)
+
+    return selected

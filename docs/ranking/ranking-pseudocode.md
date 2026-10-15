@@ -18,3 +18,14 @@ FUNKTION reziproke_rang_fusion(ranglisten, k_rrf)
 ENDE                                      // Nur Ränge zählen, nicht die Rohwerte:
                                           // BM25-Scores und Cosinus-Werte haben
                                           // verschiedene Skalen und sind so vergleichbar
+
+FUNKTION normalisiere_scores(scores)
+    EINGABE:  scores – Liste von Zahlen
+    AUSGABE:  Liste gleicher Länge mit Werten zwischen 0 und 1 (Min-Max)
+
+    WENN scores leer:
+        GIB leere Liste ZURÜCK
+    WENN alle Werte gleich:
+        GIB Liste mit lauter 1 ZURÜCK     // kein Kandidat ist schlechter
+    GIB für jeden wert: (wert − minimum) / (maximum − minimum) ZURÜCK
+ENDE

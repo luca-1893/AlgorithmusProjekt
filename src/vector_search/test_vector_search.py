@@ -114,3 +114,38 @@ class TestEmbedder(unittest.TestCase):
     def test_embedder_is_abstract(self):
         with self.assertRaises(TypeError):
             vector_search.Embedder()
+
+
+DUPLICATE_VECTORS = [[1.0, 0.0], [1.0, 0.01], [0.0, 1.0]]
+
+
+class TestMmrSelect(unittest.TestCase):
+    def test_mmr_skips_near_duplicate(self):
+        self.assertEqual(vector_search.mmr_select([1.0, 0.95, 0.6], DUPLICATE_VECTORS, 2, 0.5), [0, 2])
+
+    def test_mmr_lambda_one_is_pure_relevance(self):
+        self.assertEqual(vector_search.mmr_select([1.0, 0.95, 0.6], DUPLICATE_VECTORS, 2, 1.0), [0, 1])
+
+    def test_mmr_first_pick_is_most_relevant(self):
+        self.assertEqual(vector_search.mmr_select([0.2, 0.9, 0.5], DUPLICATE_VECTORS, 1, 0.5), [1])
+
+    def test_mmr_k_larger_than_candidates(self):
+        self.assertEqual(sorted(vector_search.mmr_select([1.0, 0.5, 0.2], DUPLICATE_VECTORS, 10)), [0, 1, 2])
+
+    def test_mmr_ties_keep_lower_position(self):
+        self.assertEqual(vector_search.mmr_select([0.5, 0.5], [[1.0, 0.0], [0.0, 1.0]], 1), [0])
+
+    def test_mmr_no_candidates(self):
+        self.assertEqual(vector_search.mmr_select([], [], 3), [])
+
+    def test_mmr_length_mismatch(self):
+        with self.assertRaises(ValueError):
+            vector_search.mmr_select([1.0], DUPLICATE_VECTORS, 1)
+
+    def test_mmr_k_zero(self):
+        with self.assertRaises(ValueError):
+            vector_search.mmr_select([1.0], [[1.0]], 0)
+
+    def test_mmr_lambda_out_of_range(self):
+        with self.assertRaises(ValueError):
+            vector_search.mmr_select([1.0], [[1.0]], 1, 1.5)

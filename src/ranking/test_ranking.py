@@ -35,3 +35,14 @@ class TestReciprocalRankFusion(unittest.TestCase):
     def test_rrf_negative_constant(self):
         with self.assertRaises(ValueError):
             ranking.reciprocal_rank_fusion([[1]], k_rrf=-1)
+
+
+class TestNormalizeScores(unittest.TestCase):
+    def test_normalize_example(self):
+        self.assertEqual(ranking.normalize_scores([2.0, 4.0, 3.0]), [0.0, 1.0, 0.5])
+
+    def test_normalize_all_equal(self):
+        self.assertEqual(ranking.normalize_scores([0.3, 0.3]), [1.0, 1.0])
+
+    def test_normalize_empty(self):
+        self.assertEqual(ranking.normalize_scores([]), [])

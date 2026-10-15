@@ -66,3 +66,32 @@ FUNKTION Einbetter.einbetten(texte)
         FEHLER "Anbieter lieferte ungültige Vektoren"
     GIB vektoren ZURÜCK
 ENDE
+
+FUNKTION mmr_auswahl(relevanz, vektoren, k, lambda)
+    EINGABE:  relevanz – Liste von Zahlen zwischen 0 und 1, eine pro Kandidat
+              vektoren – Liste von Vektoren, einer pro Kandidat
+              k        – Anzahl auszuwählender Kandidaten, > 0
+              lambda   – Gewicht zwischen 0 und 1; 1 heißt nur Relevanz,
+                         0 heißt nur Vielfalt
+    AUSGABE:  Liste der ausgewählten Positionen, in Auswahlreihenfolge
+
+    WENN Anzahl(relevanz) ≠ Anzahl(vektoren): FEHLER "Längen passen nicht"
+    WENN k ≤ 0 ODER lambda außerhalb [0, 1]:  FEHLER "Ungültige Parameter"
+
+    ausgewählt ← leere Liste
+    übrig      ← alle Positionen
+    SOLANGE übrig nicht leer UND Anzahl(ausgewählt) < k:
+        bester ← die Position p aus übrig mit dem höchsten Wert
+                 lambda · relevanz[p] − (1 − lambda) · ähnlichkeit_zur_auswahl(p)
+                 wobei ähnlichkeit_zur_auswahl(p) = höchste Cosinus-Ähnlichkeit
+                 von vektoren[p] zu einem bereits ausgewählten Vektor, 0 wenn
+                 noch nichts ausgewählt ist
+                 (bei Gleichstand die kleinere Position)
+        ausgewählt.anhängen(bester)
+        übrig.entfernen(bester)
+    GIB ausgewählt ZURÜCK
+ENDE                                      // Laufzeit O(k · n · d) mit
+                                          // n Kandidaten und Vektorlänge d,
+                                          // weil die höchste Ähnlichkeit pro
+                                          // Kandidat nach jeder Wahl nur um den
+                                          // neuen Vektor aktualisiert wird
