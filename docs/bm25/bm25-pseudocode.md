@@ -66,3 +66,55 @@ ENDE
 // Variante mit +1 (Lucene): Argument von ln ist immer > 1, daher nie negativ.
 // Klassische Variante ohne +1 wird negativ, sobald df > N/2.
 // Laufzeit: O(1)
+
+
+FUNKTION berechne_beitrag(f, dl, avgdl, idf, k1, b)
+    EINGABE:  f     – Häufigkeit des Worts im Dokument
+              dl    – Länge des Dokuments (Anzahl Tokens)
+              avgdl – durchschnittliche Dokumentlänge (> 0)
+              idf   – Gewicht des Worts
+              k1    – Sättigung der Termfrequenz (z. B. 1.5)
+              b     – Stärke der Längennormalisierung (z. B. 0.75)
+    AUSGABE:  beitrag – Anteil dieses Worts am Score (≥ 0, 0 bei f = 0)
+
+    L       ← dl / avgdl
+    K       ← k1 · (1 − b + b · L)
+    TF      ← f · (k1 + 1) / (f + K)
+    beitrag ← idf · TF
+
+    RÜCKGABE beitrag
+ENDE
+// Laufzeit: O(1)
+
+
+FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
+    EINGABE:  query  – Menge von Query-Wörtern; der Aufrufer tokenisiert die Anfrage
+                       und entfernt Duplikate (doppelte Schlagwörter sind eher Zufall
+                       oder Halluzination, die Formel braucht keine Anfrage-Häufigkeit)
+              doc_id – Dokument, das bewertet wird
+              index  – Zuordnung Wort → (Dok-ID → Anzahl)
+              laenge – Zuordnung Dok-ID → Anzahl Tokens
+              N      – Anzahl nicht-leerer Dokumente
+              avgdl  – durchschnittliche Dokumentlänge
+              k1, b  – BM25-Parameter
+    AUSGABE:  score  – Relevanz des Dokuments für die Anfrage (≥ 0)
+
+    WENN N = 0:                                   // leerer Index: avgdl = 0,
+        RÜCKGABE 0                                // Division durch null vermeiden
+
+    WENN doc_id NICHT IN laenge:                  // leeres (übersprungenes) oder
+        RÜCKGABE 0                                // unbekanntes Dokument
+
+    dl    ← laenge[doc_id]
+    score ← 0
+
+    FÜR JEDES wort IN query:
+        posting ← index.get(wort, {})
+        f       ← posting.get(doc_id, 0)          // Wort nicht im Dokument → f = 0
+        idf     ← berechne_idf(len(posting), N)
+        score   ← score + berechne_beitrag(f, dl, avgdl, idf, k1, b)
+
+    RÜCKGABE score
+ENDE
+// Laufzeit: O(|query|) pro Dokument, jeder Schritt ist ein Dict-Zugriff
+// Offen für Schritt 7: IDF hängt nur am Wort und wird hier pro Dokument neu berechnet
