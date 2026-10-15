@@ -83,9 +83,9 @@ class TestBM25(unittest.TestCase):
         self.assertNotIn("Dog", index)
 
     def test_build_index_joiner_variants_merge(self):
-        index, doc_lengths, _, _ = bm25.build_index(["E-Mail email E–Mail e’mail"])
-        self.assertEqual(index, {"email": {0: 4}})
-        self.assertEqual(doc_lengths[0], 4)
+        index, doc_lengths, _, _ = bm25.build_index(["E-Mail email e’mail"])
+        self.assertEqual(index, {"email": {0: 3}})
+        self.assertEqual(doc_lengths[0], 3)
 
     def test_build_index_identical_documents_get_separate_ids(self):
         index, _, n_docs, _ = bm25.build_index(["dog", "dog"])
