@@ -170,7 +170,7 @@ class TestScore(unittest.TestCase):
 
     def _score(self, doc_id, query=None):
         query = self.query if query is None else query
-        return bm25.compute_score(query, doc_id, self.index, self.doc_lengths, self._idfs(query), self.avgdl)
+        return bm25.compute_score(doc_id, self.index, self.doc_lengths, self._idfs(query), self.avgdl)
 
     def test_score_reference_values(self):
         for doc_id, expected in [(0, 0.694), (1, 0.573), (2, 0.0), (3, 0.767)]:
@@ -188,7 +188,7 @@ class TestScore(unittest.TestCase):
 
     def test_score_empty_index(self):
         # N = 0 is guarded in top_m; compute_score still returns 0 because no doc_id is known
-        self.assertEqual(bm25.compute_score({"apfel"}, 0, {}, {}, {}, 0.0), 0.0)
+        self.assertEqual(bm25.compute_score(0, {}, {}, {"apfel": 1.0}, 0.0), 0.0)
 
     def test_score_unknown_doc_id(self):
         self.assertEqual(self._score(99), 0.0)
