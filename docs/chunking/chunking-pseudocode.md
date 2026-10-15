@@ -24,12 +24,20 @@ FUNKTION zerlege_in_chunks(text, chunk_größe, überlappung)
 
     GIB chunks ZURÜCK                     // leerer Text ergibt []
 ENDE
+// Laufzeit: O(n), n = Anzahl Wörter; jedes Wort landet in höchstens
+// ⌈chunk_größe / schritt⌉ Chunks, bei überlappung < chunk_größe / 2 also in höchstens zwei
+// Bekannte Grenzen: Einheit sind Wörter, nicht LLM-Tokens; Absätze und Zeilenumbrüche
+// gehen verloren; Chunks können mitten im Satz beginnen und enden
+
 
 STRUKTUR Chunk
     dokument_id – Kennung des Quelldokuments, z. B. arXiv-ID
     position    – laufende Nummer des Chunks im Dokument, beginnt bei 0
     text        – Inhalt des Chunks
 ENDE
+// Unveränderlich nach dem Erzeugen; Titel, Autoren, Datum stehen nicht im Chunk,
+// sondern am Dokument (normalisiert wie im geplanten Datenbankschema)
+
 
 FUNKTION erzeuge_chunks(dokument_id, text, chunk_größe, überlappung)
     EINGABE:  dokument_id   – nicht leerer String
@@ -47,3 +55,4 @@ FUNKTION erzeuge_chunks(dokument_id, text, chunk_größe, überlappung)
     GIB chunks ZURÜCK                     // die übrigen Metadaten bleiben am
                                           // Dokument, verknüpft über dokument_id
 ENDE
+// Laufzeit: O(n) wie zerlege_in_chunks
