@@ -67,7 +67,7 @@ Alle Module auf einmal, aus dem Projektordner:
 python3 -m unittest discover -s src -t src
 ```
 
-Einzelnes Modul, aus seinem Ordner, z. B. `src/bm25`:
+Einzelnes Modul ohne Abhängigkeit zu anderen Modulen, aus seinem Ordner, z. B. `src/bm25`. Die Pipeline importiert alle anderen Module und läuft deshalb nur über den Befehl oben:
 
 ```
 python3 -m unittest

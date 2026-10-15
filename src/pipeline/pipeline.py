@@ -1,0 +1,84 @@
+from dataclasses import dataclass
+from typing import Optional
+
+from bm25 import build_index, top_m
+from chunking import Chunk, create_chunks
+from sources import Document, Source, normalize_keywords
+from vector_search import Embedder
+
+
+@dataclass(frozen=True)
+class PipelineConfig:
+    """Tuning parameters of the research pipeline."""
+    max_documents: int = 20
+    chunk_size: int = 200
+    overlap: int = 40
+    candidates_m: int = 50
+    k_rrf: int = 60
+    mmr_lambda: float = 0.7
+
+
+@dataclass(frozen=True)
+class Hit:
+    """One selected chunk together with its document and score."""
+    document: Document
+    chunk: Chunk
+    score: float
+
+    def to_dict(self) -> dict:
+        """JSON-ready representation for the MCP tool."""
+        return {
+            "document_id": self.document.id,
+            "title": self.document.title,
+            "authors": list(self.document.authors),
+            "published": self.document.published.isoformat(),
+            "url": self.document.url,
+            "source": self.document.source,
+            "chunk_position": self.chunk.position,
+            "text": self.chunk.text,
+            "score": self.score,
+        }
+
+
+@dataclass(frozen=True)
+class ResearchResult:
+    """Selected hits, best first, and notes about empty results or fallbacks."""
+    hits: tuple[Hit, ...]
+    warnings: tuple[str, ...] = ()
+
+    def to_dict(self) -> dict:
+        """JSON-ready representation for the MCP tool."""
+        return {"hits": [hit.to_dict() for hit in self.hits], "warnings": list(self.warnings)}
+
+
+def research(keywords: list[str], k: int, source: Source, embedder: Optional[Embedder] = None,
+             question: str = "", config: PipelineConfig = PipelineConfig()) -> ResearchResult:
+    """Finds documents for the keywords and returns the k best chunks."""
+    if k <= 0:
+        raise ValueError("k must be > 0")
+    keywords = normalize_keywords(keywords)
+    if not keywords:
+        raise ValueError("keywords must not be empty")
+
+    documents = source.search(keywords, config.max_documents)
+    if not documents:
+        return ResearchResult((), ("Keine Treffer",))
+
+    chunks = [(chunk, document)
+              for document in documents
+              for chunk in create_chunks(document.id, document.text, config.chunk_size, config.overlap)]
+    if not chunks:
+        return ResearchResult((), ("Keine verwertbaren Quellen",))
+
+    index, doc_lengths, n_docs, avgdl = build_index([chunk.text for chunk, _ in chunks])
+    bm25_hits = top_m(" ".join(keywords), index, doc_lengths, n_docs, avgdl, config.candidates_m)
+
+    return _bm25_only(bm25_hits, chunks, k)
+
+
+def _bm25_only(bm25_hits: list[tuple[int, float]], chunks: list[tuple[Chunk, Document]], k: int) -> ResearchResult:
+    """Takes the k best BM25 hits as the result."""
+    if not bm25_hits:
+        return ResearchResult((), ("Kein Chunk enthält ein Schlagwort",))
+    return ResearchResult(tuple(Hit(chunks[position][1], chunks[position][0], score)
+                                for position, score in bm25_hits[:k]))
