@@ -47,8 +47,9 @@ class TestBM25(unittest.TestCase):
     def test_tokenize_single_quotes(self):
         self.assertEqual(bm25.tokenize("'Apfel'"), ["apfel"])
 
-    def test_tokenize_em_dash_range(self):
+    def test_tokenize_em_dash(self):
         self.assertEqual(bm25.tokenize("kam—und"), ["kam", "und"])
+
     def test_tokenize_en_dash_range(self):
         self.assertEqual(bm25.tokenize("Seiten 10–20"), ["seiten", "10", "20"])
 
@@ -115,3 +116,13 @@ class TestBM25(unittest.TestCase):
         original = list(corpus)
         bm25.build_index(corpus)
         self.assertEqual(corpus, original)
+
+    def test_build_index_example(self):
+        corpus = ["Apfel apfel Banane.", "Banane, Milch!", ".!?", "Apfel Brot Milch Käse Butter"]
+        index, doc_lengths, n_docs, avgdl = bm25.build_index(corpus)
+
+        self.assertEqual(index["apfel"], {0: 2, 3: 1})
+        self.assertEqual(index["milch"], {1: 1, 3: 1})
+        self.assertEqual(doc_lengths, {0: 3, 1: 2, 3: 5})
+        self.assertEqual(n_docs, 3)
+        self.assertAlmostEqual(avgdl, 10 / 3)
