@@ -24,3 +24,26 @@ FUNKTION zerlege_in_chunks(text, chunk_größe, überlappung)
 
     GIB chunks ZURÜCK                     // leerer Text ergibt []
 ENDE
+
+STRUKTUR Chunk
+    dokument_id – Kennung des Quelldokuments, z. B. arXiv-ID
+    position    – laufende Nummer des Chunks im Dokument, beginnt bei 0
+    text        – Inhalt des Chunks
+ENDE
+
+FUNKTION erzeuge_chunks(dokument_id, text, chunk_größe, überlappung)
+    EINGABE:  dokument_id   – nicht leerer String
+              text, chunk_größe, überlappung – wie bei zerlege_in_chunks
+    AUSGABE:  Liste von Chunk, in der Reihenfolge des Textes
+
+    WENN dokument_id leer:
+        FEHLER "Dokument-ID fehlt"
+
+    texte  ← zerlege_in_chunks(text, chunk_größe, überlappung)
+    chunks ← leere Liste
+    FÜR JEDES (position, chunk_text) IN texte, nummeriert ab 0:
+        chunks.anhängen(Chunk(dokument_id, position, chunk_text))
+
+    GIB chunks ZURÜCK                     // die übrigen Metadaten bleiben am
+                                          // Dokument, verknüpft über dokument_id
+ENDE
