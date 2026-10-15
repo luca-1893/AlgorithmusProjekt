@@ -40,3 +40,33 @@ def build_index(corpus: list[str]) -> tuple[dict[str, dict[int, int]], dict[int,
 def compute_idf(df: int, n_docs: int) -> float:
     """BM25 IDF (Lucene variant, +1 inside ln). Requires 0 <= df <= n_docs; result is always > 0."""
     return math.log((n_docs - df + 0.5) / (df + 0.5) + 1)
+
+
+def compute_term_score(f: int, dl: int, avgdl: float, idf: float, k1: float, b: float) -> float:
+    """BM25 contribution of one term to one document. Requires avgdl > 0; returns 0 for f = 0."""
+    length_ratio = dl / avgdl
+    k = k1 * (1 - b + b * length_ratio)
+    tf = f * (k1 + 1) / (f + k)
+    return idf * tf
+
+
+def compute_score(query: set[str], doc_id: int, index: dict[str, dict[int, int]],
+                  doc_lengths: dict[int, int], n_docs: int, avgdl: float,
+                  k1: float = 1.5, b: float = 0.75) -> float:
+    """BM25 score of one document for a deduplicated, tokenized query."""
+    if n_docs == 0:                     # empty index: avgdl = 0, avoid division by zero
+        return 0.0
+
+    if doc_id not in doc_lengths:       # skipped (empty) or unknown document
+        return 0.0
+
+    dl = doc_lengths[doc_id]
+    score = 0.0
+
+    for term in query:
+        posting = index.get(term, {})
+        f = posting.get(doc_id, 0)      # term not in document → f = 0
+        idf = compute_idf(len(posting), n_docs)
+        score += compute_term_score(f, dl, avgdl, idf, k1, b)
+
+    return score

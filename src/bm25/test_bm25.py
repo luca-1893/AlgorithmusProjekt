@@ -1,6 +1,8 @@
-import unittest
 import math
+import unittest
+
 import bm25
+
 
 class TestTokenize(unittest.TestCase):
     def test_tokenize_apostrophe(self):
@@ -138,7 +140,6 @@ class TestIDF(unittest.TestCase):
             (1, 3, math.log(8 / 3)),
             (2, 3, math.log(8 / 5)),  # "apfel", "milch" in example corpus → ≈ 0.470
             (3, 3, math.log(8 / 7)),  # term in every doc
-            (0, 0, math.log(2)),  # empty index
         ]
         for df, n_docs, expected in cases:
             with self.subTest(df=df, n_docs=n_docs):
@@ -155,3 +156,33 @@ class TestIDF(unittest.TestCase):
         idfs = [bm25.compute_idf(df, n_docs) for df in range(n_docs + 1)]
         for rarer, more_common in zip(idfs, idfs[1:]):
             self.assertGreater(rarer, more_common)
+
+class TestScore(unittest.TestCase):
+
+    def setUp(self):
+        corpus = ["Apfel apfel Banane.", "Banane, Milch!", ".!?", "Apfel Brot Milch Käse Butter"]
+        self.index, self.doc_lengths, self.n_docs, self.avgdl = bm25.build_index(corpus)
+        self.query = {"apfel", "milch"}
+
+    def _score(self, doc_id):
+        return bm25.compute_score(self.query, doc_id, self.index, self.doc_lengths, self.n_docs, self.avgdl)
+
+    def test_score_reference_values(self):
+        for doc_id, expected in [(0, 0.694), (1, 0.573), (2, 0.0), (3, 0.767)]:
+            with self.subTest(doc_id=doc_id):
+                self.assertAlmostEqual(self._score(doc_id), expected, places=3)
+
+    def test_term_score_zero_frequency(self):
+        self.assertEqual(bm25.compute_term_score(0, 3, 10 / 3, 0.47, 1.5, 0.75), 0.0)
+
+    def test_score_unknown_terms(self):
+        self.assertEqual(bm25.compute_score({"xyz"}, 0, self.index, self.doc_lengths, self.n_docs, self.avgdl), 0.0)
+
+    def test_score_empty_index(self):
+        self.assertEqual(bm25.compute_score({"apfel"}, 0, {}, {}, 0, 0.0), 0.0)
+
+    def test_compute_score_unknown_doc_id(self):
+        self.assertEqual(
+            bm25.compute_score(self.query, 99, self.index, self.doc_lengths, self.n_docs, self.avgdl),
+            0.0,
+        )
