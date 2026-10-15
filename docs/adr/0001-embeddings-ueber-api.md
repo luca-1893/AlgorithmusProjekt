@@ -37,7 +37,7 @@ Entschieden von Luca. Umgesetzt als `VoyageEmbedder` in `src/vector_search/`, Mo
 | OpenAI (`text-embedding-3-small`) | – | 0,02 $ pro Mio. | verbreitet |
 | Cohere (`embed-v4`) | Test-Schlüssel | 0,10 $ pro Mio. | über 100 Sprachen |
 
-Ausschlaggebend war das große Freikontingent. Pro Anfrage werden die Anfrage und bis zu m = 50 Abstracts eingebettet, grob 10.000 Tokens; 200 Mio. Tokens reichen damit für etwa 20.000 Anfragen.
+Ausschlaggebend war das große Freikontingent. Die Dokumentation nennt die 200 Mio. Tokens ausdrücklich für die Modellreihe 3; ob `voyage-4` dasselbe Kontingent hat, ist im Voyage-Dashboard zu prüfen, sonst `voyage-3.5` als Modell setzen. Pro Anfrage werden die Anfrage und bis zu m = 50 Abstracts eingebettet, grob 10.000 Tokens; 200 Mio. Tokens reichen damit für etwa 20.000 Anfragen.
 
 Konsequenzen:
 
