@@ -36,8 +36,8 @@ class TopicEmbedder(Embedder):
         self.error = error
         self.calls = []
 
-    def _request(self, texts):
-        self.calls.append(texts)
+    def _request(self, texts, input_type):
+        self.calls.append((texts, input_type))
         if self.error:
             raise self.error
         return [self._vector(text) for text in texts]
@@ -124,9 +124,9 @@ class TestResearchHybrid(unittest.TestCase):
     def test_hybrid_embeds_query_and_bm25_candidates(self):
         embedder = TopicEmbedder()
         pipeline.research(["uml"], 2, FakeSource([UML, NETS, SEQUENCE]), embedder)
-        texts = embedder.calls[0]
-        self.assertEqual(texts[0], "uml")
-        self.assertEqual(len(texts), 3)
+        (query_texts, query_type), (candidate_texts, candidate_type) = embedder.calls
+        self.assertEqual((query_texts, query_type), (["uml"], "query"))
+        self.assertEqual((len(candidate_texts), candidate_type), (2, "document"))
 
     def test_hybrid_embedding_error_falls_back_to_bm25(self):
         result = pipeline.research(["uml"], 2, FakeSource([UML, SEQUENCE]), TopicEmbedder(EmbeddingError("down")))
@@ -140,13 +140,13 @@ class TestResearchHybrid(unittest.TestCase):
     def test_hybrid_no_keyword_hit_uses_all_chunks(self):
         embedder = TopicEmbedder()
         result = pipeline.research(["pictures"], 1, FakeSource([UML, NETS]), embedder, question="image network")
-        self.assertEqual(len(embedder.calls[0]), 3)
+        self.assertEqual(len(embedder.calls[1][0]), 2)
         self.assertEqual(result.hits[0].document.id, "2")
 
     def test_hybrid_question_is_embedded_instead_of_keywords(self):
         embedder = TopicEmbedder()
         pipeline.research(["uml"], 1, FakeSource([UML]), embedder, question="  How do class diagrams work?  ")
-        self.assertEqual(embedder.calls[0][0], "How do class diagrams work?")
+        self.assertEqual(embedder.calls[0][0], ["How do class diagrams work?"])
 
     def test_hybrid_respects_k(self):
         result = pipeline.research(["uml", "diagrams"], 1, FakeSource([UML, SEQUENCE]), TopicEmbedder())

@@ -101,8 +101,8 @@ class FakeEmbedder(vector_search.Embedder):
         self.vectors = vectors
         self.calls = []
 
-    def _request(self, texts):
-        self.calls.append(texts)
+    def _request(self, texts, input_type):
+        self.calls.append((texts, input_type))
         return self.vectors
 
 
@@ -110,6 +110,20 @@ class TestEmbedder(unittest.TestCase):
     def test_embed_empty_vector(self):
         with self.assertRaises(vector_search.EmbeddingError):
             FakeEmbedder([[]]).embed(["a"])
+
+    def test_embed_default_input_type_is_document(self):
+        embedder = FakeEmbedder([[1.0]])
+        embedder.embed(["a"])
+        self.assertEqual(embedder.calls, [(["a"], "document")])
+
+    def test_embed_invalid_input_type(self):
+        with self.assertRaises(ValueError):
+            FakeEmbedder([[1.0]]).embed(["a"], "passage")
+
+    def test_embed_passes_query_input_type(self):
+        embedder = FakeEmbedder([[1.0]])
+        embedder.embed(["a"], "query")
+        self.assertEqual(embedder.calls, [(["a"], "query")])
 
     def test_embed_empty_without_request(self):
         embedder = FakeEmbedder([])

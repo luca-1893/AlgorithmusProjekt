@@ -47,12 +47,14 @@ class EmbeddingError(Exception):
 class Embedder(ABC):
     """Turns texts into vectors; subclasses implement the provider request."""
 
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        """Returns one vector per text in the same order; checks the provider's answer."""
+    def embed(self, texts: list[str], input_type: str = "document") -> list[list[float]]:
+        """Returns one vector per text in the same order; input_type is "query" or "document"."""
+        if input_type not in ("query", "document"):
+            raise ValueError('input_type must be "query" or "document"')
         if not texts:
             return []
 
-        vectors = self._request(texts)
+        vectors = self._request(texts, input_type)
         if len(vectors) != len(texts):
             raise EmbeddingError(f"expected {len(texts)} vectors, got {len(vectors)}")
         if not vectors[0] or any(len(vector) != len(vectors[0]) for vector in vectors):
@@ -60,7 +62,7 @@ class Embedder(ABC):
         return vectors
 
     @abstractmethod
-    def _request(self, texts: list[str]) -> list[list[float]]:
+    def _request(self, texts: list[str], input_type: str) -> list[list[float]]:
         """Sends the texts to the provider and returns the raw vectors."""
 
 

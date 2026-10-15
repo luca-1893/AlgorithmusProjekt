@@ -99,12 +99,12 @@ def _hybrid(bm25_hits: list[tuple[int, float]], chunks: list[tuple[Chunk, Docume
         bm25_ranking = []
 
     try:
-        vectors = embedder.embed([query] + [chunks[position][0].text for position in candidates])
+        query_vector = embedder.embed([query], "query")[0]
+        candidate_vectors = embedder.embed([chunks[position][0].text for position in candidates], "document")
     except EmbeddingError:
         fallback = _bm25_only(bm25_hits, chunks, k)
         return ResearchResult(fallback.hits, fallback.warnings + ("Vektorsuche nicht verfügbar, nur BM25",))
 
-    query_vector, candidate_vectors = vectors[0], vectors[1:]
     vector_ranking = [local for local, _ in most_similar(query_vector, candidate_vectors, len(candidates))]
 
     fused = reciprocal_rank_fusion([bm25_ranking, vector_ranking], config.k_rrf)

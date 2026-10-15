@@ -72,13 +72,12 @@ FUNKTION hybrid(bm25, chunks, k, einbetter, frage, schlagwörter, konfiguration)
 
     anfrage ← frage, falls nicht leer, sonst schlagwörter mit Leerzeichen verbunden
     VERSUCHE:
-        vektoren ← einbetter.einbetten([anfrage] + Texte der kandidaten)
+        anfrage_vektor      ← einbetter.einbetten([anfrage], "query")[0]
+        kandidaten_vektoren ← einbetter.einbetten(Texte der kandidaten, "document")
     BEI Einbettungsfehler:
         ergebnis ← nur_bm25(bm25, chunks, k)
         RÜCKGABE ergebnis mit zusätzlichem Hinweis "Vektorsuche nicht verfügbar, nur BM25"
 
-    anfrage_vektor ← vektoren[0]
-    kandidaten_vektoren ← vektoren[1 ..]
     vektor_rangliste ← Positionen aus ähnlichste(anfrage_vektor, kandidaten_vektoren, Anzahl(kandidaten))
 
     fusion ← reziproke_rang_fusion([bm25_rangliste, vektor_rangliste], k_rrf)
@@ -87,7 +86,7 @@ FUNKTION hybrid(bm25, chunks, k, einbetter, frage, schlagwörter, konfiguration)
 
     RÜCKGABE Ergebnis(für jede gewählte Stelle: Treffer mit RRF-Score, [])
 ENDE
-// Laufzeit: ein Einbettungsaufruf für m + 1 Texte; lokal O(m · d) für die Ähnlichkeiten,
+// Laufzeit: zwei Einbettungsaufrufe (Anfrage, m Kandidaten); lokal O(m · d) für die Ähnlichkeiten,
 // O(m · log m) für die Fusion und O(k · m · d) für MMR
 // Bekannte Grenzen: Fällt der Einbetter aus, sinkt die Qualität still auf BM25; der Hinweis
 // im Ergebnis ist das einzige Signal dafür

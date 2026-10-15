@@ -53,18 +53,22 @@ ENDE
 
 
 SCHNITTSTELLE Einbetter
-    anbieter_anfrage(texte) → Liste von Vektoren   // je Anbieter umzusetzen, siehe ADR 0001
+    anbieter_anfrage(texte, art) → Liste von Vektoren   // je Anbieter umzusetzen, siehe ADR 0001
 ENDE
 
 
-FUNKTION Einbetter.einbetten(texte)
+FUNKTION Einbetter.einbetten(texte, art)
     EINGABE:  texte – Liste von Strings
+              art   – "query" für die Anfrage, "document" für Chunks (Standard);
+                      Anbieter wie Voyage betten beides unterschiedlich ein
     AUSGABE:  Liste von Vektoren, einer pro Text, gleiche Reihenfolge
+
+    WENN art weder "query" noch "document": FEHLER "Ungültige Art"
 
     WENN texte leer:
         GIB leere Liste ZURÜCK            // kein API-Aufruf ohne Inhalt
 
-    vektoren ← anbieter_anfrage(texte)
+    vektoren ← anbieter_anfrage(texte, art)
     WENN Anzahl(vektoren) ≠ Anzahl(texte):
         FEHLER "Anbieter lieferte falsche Anzahl Vektoren"
     WENN ein Vektor leer ist ODER die Vektoren unterschiedlich lang sind:
