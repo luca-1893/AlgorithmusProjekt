@@ -52,3 +52,17 @@ FUNKTION baue_index(korpus)
 ENDE
 // Laufzeit: O(T), T = Anzahl aller Tokens im Korpus (streng: O(C), C = Zeichen)
 // k1, b und K gehören nicht in den Index, sondern zur Suche
+
+
+FUNKTION berechne_idf(df, N)
+    EINGABE:  df – Dokumenthäufigkeit n(q): in wie vielen Dokumenten das Wort vorkommt
+                   (Aufrufer: df ← len(index.get(wort, {})), unbekanntes Wort ergibt 0)
+              N  – Anzahl nicht-leerer Dokumente (N = 0 fängt der Aufrufer vorher ab)
+    AUSGABE:  idf – Gewicht des Worts (immer > 0)
+
+    idf ← ln( (N - df + 0.5) / (df + 0.5) + 1 )
+    RÜCKGABE idf
+ENDE
+// Variante mit +1 (Lucene): Argument von ln ist immer > 1, daher nie negativ.
+// Klassische Variante ohne +1 wird negativ, sobald df > N/2.
+// Laufzeit: O(1)
