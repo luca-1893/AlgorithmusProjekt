@@ -90,20 +90,17 @@ ENDE
 // Laufzeit: O(1)
 
 
-FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
-    EINGABE:  query  – Menge von Query-Wörtern; der Aufrufer tokenisiert die Anfrage
-                       und entfernt Duplikate (doppelte Schlagwörter sind eher Zufall
-                       oder Halluzination, die Formel braucht keine Anfrage-Häufigkeit)
-              doc_id – Dokument, das bewertet wird
+FUNKTION berechne_score(doc_id, index, laenge, idfs, avgdl, k1, b)
+    EINGABE:  doc_id – Dokument, das bewertet wird
               index  – Zuordnung Wort → (Dok-ID → Anzahl)
               laenge – Zuordnung Dok-ID → Anzahl Tokens
-              N      – Anzahl nicht-leerer Dokumente
-              avgdl  – durchschnittliche Dokumentlänge
+              idfs   – Zuordnung Query-Wort → IDF; die Schlüssel sind die
+                       deduplizierten Query-Wörter (doppelte Schlagwörter sind eher
+                       Zufall oder Halluzination, die Formel braucht keine
+                       Anfrage-Häufigkeit)
+              avgdl  – durchschnittliche Dokumentlänge, > 0 (garantiert top_m)
               k1, b  – BM25-Parameter
     AUSGABE:  score  – Relevanz des Dokuments für die Anfrage (≥ 0)
-
-    WENN N = 0:                                   // leerer Index: avgdl = 0,
-        RÜCKGABE 0                                // Division durch null vermeiden
 
     WENN doc_id NICHT IN laenge:                  // leeres (übersprungenes) oder
         RÜCKGABE 0                                // unbekanntes Dokument
@@ -111,16 +108,14 @@ FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
     dl    ← laenge[doc_id]
     score ← 0
 
-    FÜR JEDES wort IN query:
-        posting ← index.get(wort, {})
-        f       ← posting.get(doc_id, 0)          // Wort nicht im Dokument → f = 0
-        idf     ← berechne_idf(len(posting), N)
-        score   ← score + berechne_beitrag(f, dl, avgdl, idf, k1, b)
+    FÜR JEDES (wort, idf) IN idfs:
+        f     ← index.get(wort, {}).get(doc_id, 0) // Wort nicht im Dokument → f = 0
+        score ← score + berechne_beitrag(f, dl, avgdl, idf, k1, b)
 
     RÜCKGABE score
 ENDE
 // Laufzeit: O(|query|) pro Dokument, jeder Schritt ist ein Dict-Zugriff
-// Offen für Schritt 7: IDF hängt nur am Wort und wird hier pro Dokument neu berechnet
+// Die IDF wird einmal pro Wort in top_m berechnet, nicht pro Dokument
 
 
 FUNKTION top_m(anfrage, index, laenge, N, avgdl, m, k1, b)
@@ -147,7 +142,7 @@ FUNKTION top_m(anfrage, index, laenge, N, avgdl, m, k1, b)
 
     bewertet ← leere Liste
     FÜR JEDE doc_id IN kandidaten:
-        score ← berechne_score(query, doc_id, index, laenge, idfs, avgdl, k1, b)
+        score ← berechne_score(doc_id, index, laenge, idfs, avgdl, k1, b)
         FÜGE (−score, doc_id) ZU bewertet HINZU   // −score: höchster Score wird "kleinster"
 
     beste ← die m kleinsten Einträge aus bewertet (Heap, nsmallest)
