@@ -13,3 +13,26 @@ FUNKTION cosinus_ähnlichkeit(a, b)
                                           // also keine Ähnlichkeit
     GIB skalarprodukt / (länge_a · länge_b) ZURÜCK
 ENDE
+
+FUNKTION top_k(scores, k)
+    EINGABE:  scores – Liste von Zahlen, Position i gehört zu Kandidat i
+              k      – Anzahl gewünschter Kandidaten, > 0
+    AUSGABE:  Liste von (position, score), höchster Score zuerst,
+              bei Gleichstand kleinere Position zuerst
+
+    WENN k ≤ 0:
+        FEHLER "k muss größer als 0 sein"
+
+    heap ← leerer Min-Heap                // enthält höchstens k Einträge,
+                                          // oben liegt der schwächste davon
+    FÜR JEDES (position, score) IN scores:
+        eintrag ← (score, −position)      // bei Gleichstand ist die größere
+                                          // Position der schwächere Eintrag
+        WENN Größe(heap) < k:
+            heap.einfügen(eintrag)
+        SONST WENN eintrag > heap.oberstes:
+            heap.oberstes ersetzen durch eintrag
+
+    GIB heap absteigend sortiert, als (position, score) ZURÜCK
+ENDE                                      // Laufzeit O(n · log k) statt
+                                          // O(n · log n) für vollständiges Sortieren

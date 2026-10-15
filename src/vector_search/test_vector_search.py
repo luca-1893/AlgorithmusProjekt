@@ -29,3 +29,33 @@ class TestCosineSimilarity(unittest.TestCase):
     def test_cosine_empty_vectors(self):
         with self.assertRaises(ValueError):
             vector_search.cosine_similarity([], [])
+
+
+class TestTopK(unittest.TestCase):
+    def test_top_k_example(self):
+        self.assertEqual(vector_search.top_k([0.2, 0.9, 0.5, 0.7], 2), [(1, 0.9), (3, 0.7)])
+
+    def test_top_k_sorted_descending(self):
+        scores = [score for _, score in vector_search.top_k([0.1, 0.4, 0.3, 0.8, 0.6], 5)]
+        self.assertEqual(scores, [0.8, 0.6, 0.4, 0.3, 0.1])
+
+    def test_top_k_larger_than_list(self):
+        self.assertEqual(vector_search.top_k([0.3, 0.6], 5), [(1, 0.6), (0, 0.3)])
+
+    def test_top_k_ties_keep_lower_position(self):
+        self.assertEqual(vector_search.top_k([0.5, 0.5, 0.5], 2), [(0, 0.5), (1, 0.5)])
+
+    def test_top_k_negative_scores(self):
+        self.assertEqual(vector_search.top_k([-0.5, -0.1, -0.9], 1), [(1, -0.1)])
+
+    def test_top_k_empty_scores(self):
+        self.assertEqual(vector_search.top_k([], 3), [])
+
+    def test_top_k_does_not_change_input(self):
+        scores = [0.2, 0.9, 0.5]
+        vector_search.top_k(scores, 2)
+        self.assertEqual(scores, [0.2, 0.9, 0.5])
+
+    def test_top_k_zero(self):
+        with self.assertRaises(ValueError):
+            vector_search.top_k([0.1], 0)
