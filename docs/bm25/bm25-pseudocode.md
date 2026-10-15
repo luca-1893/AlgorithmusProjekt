@@ -87,20 +87,17 @@ ENDE
 // Laufzeit: O(1)
 
 
-FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
-    EINGABE:  query  – Menge von Query-Wörtern; der Aufrufer tokenisiert die Anfrage
-                       und entfernt Duplikate (doppelte Schlagwörter sind eher Zufall
-                       oder Halluzination, die Formel braucht keine Anfrage-Häufigkeit)
-              doc_id – Dokument, das bewertet wird
+FUNKTION berechne_score(doc_id, index, laenge, idfs, avgdl, k1, b)
+    EINGABE:  doc_id – Dokument, das bewertet wird
               index  – Zuordnung Wort → (Dok-ID → Anzahl)
               laenge – Zuordnung Dok-ID → Anzahl Tokens
-              N      – Anzahl nicht-leerer Dokumente
-              avgdl  – durchschnittliche Dokumentlänge
+              idfs   – Zuordnung Query-Wort → IDF; die Schlüssel sind die
+                       deduplizierten Query-Wörter (doppelte Schlagwörter sind eher
+                       Zufall oder Halluzination, die Formel braucht keine
+                       Anfrage-Häufigkeit)
+              avgdl  – durchschnittliche Dokumentlänge, > 0 (garantiert top_m)
               k1, b  – BM25-Parameter
     AUSGABE:  score  – Relevanz des Dokuments für die Anfrage (≥ 0)
-
-    WENN N = 0:                                   // leerer Index: avgdl = 0,
-        RÜCKGABE 0                                // Division durch null vermeiden
 
     WENN doc_id NICHT IN laenge:                  // leeres (übersprungenes) oder
         RÜCKGABE 0                                // unbekanntes Dokument
@@ -108,13 +105,49 @@ FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
     dl    ← laenge[doc_id]
     score ← 0
 
-    FÜR JEDES wort IN query:
-        posting ← index.get(wort, {})
-        f       ← posting.get(doc_id, 0)          // Wort nicht im Dokument → f = 0
-        idf     ← berechne_idf(len(posting), N)
-        score   ← score + berechne_beitrag(f, dl, avgdl, idf, k1, b)
+    FÜR JEDES (wort, idf) IN idfs:
+        f     ← index.get(wort, {}).get(doc_id, 0) // Wort nicht im Dokument → f = 0
+        score ← score + berechne_beitrag(f, dl, avgdl, idf, k1, b)
 
     RÜCKGABE score
 ENDE
 // Laufzeit: O(|query|) pro Dokument, jeder Schritt ist ein Dict-Zugriff
-// Offen für Schritt 7: IDF hängt nur am Wort und wird hier pro Dokument neu berechnet
+// Die IDF wird einmal pro Wort in top_m berechnet, nicht pro Dokument
+
+
+FUNKTION top_m(anfrage, index, laenge, N, avgdl, m, k1, b)
+    EINGABE:  anfrage – roher Anfrage-String (Schlagwörter)
+              index, laenge, N, avgdl – Ergebnis von baue_index
+              m       – Anzahl gewünschter Treffer
+              k1, b   – BM25-Parameter
+    AUSGABE:  Liste von (doc_id, score), höchster Score zuerst,
+              bei Gleichstand kleinere doc_id zuerst; höchstens m Einträge,
+              nur Dokumente mit score > 0
+
+    WENN N = 0 ODER m ≤ 0:                        // leerer Index / nichts verlangt
+        RÜCKGABE leere Liste
+
+    query ← Menge(tokenisiere(anfrage))           // nach dem Tokenisieren deduplizieren
+
+    idfs ← leeres Dict                            // IDF einmal pro Wort, nicht pro Dokument
+    FÜR JEDES wort IN query:
+        idfs[wort] ← berechne_idf(len(index.get(wort, {})), N)
+
+    kandidaten ← leere Menge                      // nur Dokumente mit mindestens einem
+    FÜR JEDES wort IN query:                      // Anfragewort → score > 0 automatisch
+        kandidaten ← kandidaten ∪ Dok-IDs in index.get(wort, {})
+
+    bewertet ← leere Liste
+    FÜR JEDE doc_id IN kandidaten:
+        score ← berechne_score(doc_id, index, laenge, idfs, avgdl, k1, b)
+        FÜGE (−score, doc_id) ZU bewertet HINZU   // −score: höchster Score wird "kleinster"
+
+    beste ← die m kleinsten Einträge aus bewertet (Heap, nsmallest)
+                                                  // Gleichstand: kleinere doc_id zuerst
+    RÜCKGABE [(doc_id, −neg_score) FÜR JEDES (neg_score, doc_id) IN beste]
+ENDE
+// Laufzeit (C = Anzahl Kandidaten, |q| = Anfragewörter, P = Summe der Posting-Längen):
+//   IDFs:               O(|q|)
+//   Kandidaten sammeln: O(P)
+//   bewerten:           O(C · |q|)
+//   Top-m per Heap:     O(C · log m)   statt O(C · log C) beim kompletten Sortieren
