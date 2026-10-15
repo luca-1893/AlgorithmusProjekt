@@ -157,8 +157,8 @@ class TestIDF(unittest.TestCase):
         for rarer, more_common in zip(idfs, idfs[1:]):
             self.assertGreater(rarer, more_common)
 
-class TestScore(unittest.TestCase):
 
+class TestScore(unittest.TestCase):
     def setUp(self):
         corpus = ["Apfel apfel Banane.", "Banane, Milch!", ".!?", "Apfel Brot Milch Käse Butter"]
         self.index, self.doc_lengths, self.n_docs, self.avgdl = bm25.build_index(corpus)
@@ -178,10 +178,15 @@ class TestScore(unittest.TestCase):
     def test_score_unknown_terms(self):
         self.assertEqual(bm25.compute_score({"xyz"}, 0, self.index, self.doc_lengths, self.n_docs, self.avgdl), 0.0)
 
+    def test_score_unknown_term_does_not_change_score(self):
+        with_unknown = bm25.compute_score(self.query | {"pizza"}, 3, self.index, self.doc_lengths,
+                                          self.n_docs, self.avgdl)
+        self.assertAlmostEqual(with_unknown, self._score(3))
+
     def test_score_empty_index(self):
         self.assertEqual(bm25.compute_score({"apfel"}, 0, {}, {}, 0, 0.0), 0.0)
 
-    def test_compute_score_unknown_doc_id(self):
+    def test_score_unknown_doc_id(self):
         self.assertEqual(
             bm25.compute_score(self.query, 99, self.index, self.doc_lengths, self.n_docs, self.avgdl),
             0.0,
