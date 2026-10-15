@@ -40,3 +40,9 @@
 - Vektorsuche (`src/vector_search/`): Cosinus-Ähnlichkeit, Top-k mit begrenztem Min-Heap, Einbetter-Schnittstelle ohne konkreten Anbieter, MMR-Auswahl.
 - Ranking (`src/ranking/`): Reciprocal Rank Fusion und Min-Max-Normalisierung. Gewichtung nach Metadaten fehlt noch, die Kriterien legt Luca fest.
 - Code ohne Kommentare, nur kurze Docstrings (Lucas Vorgabe); Ausnahme ist mathematischer Code wie BM25, `top_k`, MMR und RRF, dort erklären kurze Kommentare die Formeln.
+
+## 2026-10-16
+
+- BM25 per PR #23 nach `master` gemergt. Die Regel auf `master` sperrte jede Änderung, auch über Pull Requests („Restrict updates“); Luca hat sie entfernt, Löschschutz, Force-Push-Sperre und PR-Pflicht bleiben.
+- Übrige Module auf das Niveau des BM25-Moduls gebracht: eine Testklasse pro Funktion, zusätzliche Invarianten- und Randfall-Tests (z. B. Eingabe wird nicht verändert, Top-k stimmt mit vollständiger Sortierung überein), Laufzeit und bekannte Grenzen im Pseudocode, Formelsammlungen mit Handrechnung für Vektorsuche, MMR und RRF.
+- Fehler gefunden: Ein Anführungszeichen im Schlagwort hätte die arXiv-Phrase beendet; es wird jetzt entfernt.
