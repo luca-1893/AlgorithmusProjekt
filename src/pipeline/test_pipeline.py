@@ -3,6 +3,7 @@ from datetime import date
 
 import pipeline
 from sources import Document, Source, SourceError
+from vector_search import Embedder, EmbeddingError
 
 UML = Document("1", "UML class diagrams", "Class diagrams describe classes and associations in UML.",
                ("Ada",), date(2020, 1, 1), "https://arxiv.org/abs/1", "arxiv")
@@ -25,6 +26,28 @@ class FakeSource(Source):
         if self.error:
             raise self.error
         return self.documents[:max_results]
+
+
+class TopicEmbedder(Embedder):
+    TOPICS = {"uml": [1.0, 0.0, 0.0], "class": [1.0, 0.1, 0.0], "sequence": [0.9, 0.0, 0.4],
+              "network": [0.0, 1.0, 0.0], "image": [0.0, 0.9, 0.1]}
+
+    def __init__(self, error=None):
+        self.error = error
+        self.calls = []
+
+    def _request(self, texts):
+        self.calls.append(texts)
+        if self.error:
+            raise self.error
+        return [self._vector(text) for text in texts]
+
+    def _vector(self, text):
+        vector = [0.0, 0.0, 0.01]
+        for word, topic in self.TOPICS.items():
+            if word in text.lower():
+                vector = [a + b for a, b in zip(vector, topic)]
+        return vector
 
 
 class TestResearchBm25Only(unittest.TestCase):
@@ -95,3 +118,41 @@ class TestResultToDict(unittest.TestCase):
     def test_result_to_dict_empty(self):
         self.assertEqual(pipeline.research(["uml"], 3, FakeSource([])).to_dict(),
                          {"hits": [], "warnings": ["Keine Treffer"]})
+
+
+class TestResearchHybrid(unittest.TestCase):
+    def test_hybrid_embeds_query_and_bm25_candidates(self):
+        embedder = TopicEmbedder()
+        pipeline.research(["uml"], 2, FakeSource([UML, NETS, SEQUENCE]), embedder)
+        texts = embedder.calls[0]
+        self.assertEqual(texts[0], "uml")
+        self.assertEqual(len(texts), 3)
+
+    def test_hybrid_embedding_error_falls_back_to_bm25(self):
+        result = pipeline.research(["uml"], 2, FakeSource([UML, SEQUENCE]), TopicEmbedder(EmbeddingError("down")))
+        self.assertEqual(sorted(hit.document.id for hit in result.hits), ["1", "3"])
+        self.assertEqual(result.warnings, ("Vektorsuche nicht verfügbar, nur BM25",))
+
+    def test_hybrid_matching_document_first(self):
+        result = pipeline.research(["class", "diagrams"], 2, FakeSource([NETS, SEQUENCE, UML]), TopicEmbedder())
+        self.assertEqual(result.hits[0].document.id, "1")
+
+    def test_hybrid_no_keyword_hit_uses_all_chunks(self):
+        embedder = TopicEmbedder()
+        result = pipeline.research(["pictures"], 1, FakeSource([UML, NETS]), embedder, question="image network")
+        self.assertEqual(len(embedder.calls[0]), 3)
+        self.assertEqual(result.hits[0].document.id, "2")
+
+    def test_hybrid_question_is_embedded_instead_of_keywords(self):
+        embedder = TopicEmbedder()
+        pipeline.research(["uml"], 1, FakeSource([UML]), embedder, question="  How do class diagrams work?  ")
+        self.assertEqual(embedder.calls[0][0], "How do class diagrams work?")
+
+    def test_hybrid_respects_k(self):
+        result = pipeline.research(["uml", "diagrams"], 1, FakeSource([UML, SEQUENCE]), TopicEmbedder())
+        self.assertEqual(len(result.hits), 1)
+
+    def test_hybrid_selects_distinct_chunks(self):
+        result = pipeline.research(["uml", "diagrams"], 5, FakeSource([UML, SEQUENCE]), TopicEmbedder())
+        keys = [(hit.document.id, hit.chunk.position) for hit in result.hits]
+        self.assertEqual(len(keys), len(set(keys)))
