@@ -33,7 +33,7 @@ class TestBM25(unittest.TestCase):
         self.assertEqual(bm25.tokenize("- -- ---"), [])
 
     def test_tokenize_inner_dash(self):
-        self.assertEqual(bm25.tokenize("Apfel–Baum"), ["apfelbaum"])
+        self.assertEqual(bm25.tokenize("Apfel–Baum"), ["apfel", "baum"])
 
     def test_tokenize_standalone_dash(self):
         self.assertEqual(bm25.tokenize("Apfel – Baum"), ["apfel", "baum"])
@@ -46,6 +46,11 @@ class TestBM25(unittest.TestCase):
 
     def test_tokenize_single_quotes(self):
         self.assertEqual(bm25.tokenize("'Apfel'"), ["apfel"])
+
+    def test_tokenize_em_dash_range(self):
+        self.assertEqual(bm25.tokenize("kam—und"), ["kam", "und"])
+    def test_tokenize_en_dash_range(self):
+        self.assertEqual(bm25.tokenize("Seiten 10–20"), ["seiten", "10", "20"])
 
     def test_build_index_empty_corpus(self):
         self.assertEqual(bm25.build_index([]), ({}, {}, 0, 0.0))
