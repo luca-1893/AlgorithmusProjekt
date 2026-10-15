@@ -13,6 +13,8 @@ FUNKTION cosinus_ähnlichkeit(a, b)
                                           // also keine Ähnlichkeit
     GIB skalarprodukt / (länge_a · länge_b) ZURÜCK
 ENDE
+// Laufzeit: O(d), d = Vektorlänge; Formeln und Rechenbeispiel in der Formelsammlung
+
 
 FUNKTION top_k(scores, k)
     EINGABE:  scores – Liste von Zahlen, Position i gehört zu Kandidat i
@@ -34,8 +36,9 @@ FUNKTION top_k(scores, k)
             heap.oberstes ersetzen durch eintrag
 
     GIB heap absteigend sortiert, als (position, score) ZURÜCK
-ENDE                                      // Laufzeit O(n · log k) statt
-                                          // O(n · log n) für vollständiges Sortieren
+ENDE
+// Laufzeit O(n · log k) statt O(n · log n) für vollständiges Sortieren
+
 
 FUNKTION ähnlichste(anfrage_vektor, kandidaten_vektoren, k)
     EINGABE:  anfrage_vektor      – Vektor der Anfrage
@@ -45,12 +48,14 @@ FUNKTION ähnlichste(anfrage_vektor, kandidaten_vektoren, k)
 
     ähnlichkeiten ← für jeden kandidat: cosinus_ähnlichkeit(anfrage_vektor, kandidat)
     GIB top_k(ähnlichkeiten, k) ZURÜCK
-ENDE                                      // Laufzeit O(n · d + n · log k),
-                                          // d = Vektorlänge
+ENDE
+// Laufzeit O(n · d + n · log k), d = Vektorlänge
+
 
 SCHNITTSTELLE Einbetter
     anbieter_anfrage(texte) → Liste von Vektoren   // je Anbieter umzusetzen, siehe ADR 0001
 ENDE
+
 
 FUNKTION Einbetter.einbetten(texte)
     EINGABE:  texte – Liste von Strings
@@ -66,6 +71,9 @@ FUNKTION Einbetter.einbetten(texte)
         FEHLER "Anbieter lieferte ungültige Vektoren"
     GIB vektoren ZURÜCK
 ENDE
+// Laufzeit: ein API-Aufruf für alle Texte zusammen, nicht einer pro Text
+// Bekannte Grenzen: Anbieter noch offen (ADR 0001); kein Wiederholen bei Netzwerkfehlern
+
 
 FUNKTION mmr_auswahl(relevanz, vektoren, k, lambda)
     EINGABE:  relevanz – Liste von Zahlen zwischen 0 und 1, eine pro Kandidat
@@ -90,8 +98,5 @@ FUNKTION mmr_auswahl(relevanz, vektoren, k, lambda)
         ausgewählt.anhängen(bester)
         übrig.entfernen(bester)
     GIB ausgewählt ZURÜCK
-ENDE                                      // Laufzeit O(k · n · d) mit
-                                          // n Kandidaten und Vektorlänge d,
-                                          // weil die höchste Ähnlichkeit pro
-                                          // Kandidat nach jeder Wahl nur um den
-                                          // neuen Vektor aktualisiert wird
+ENDE
+// Laufzeit O(k · n · d) mit n Kandidaten und Vektorlänge d, weil die höchste Ähnlichkeit pro Kandidat nach jeder Wahl nur um den neuen Vektor aktualisiert wird

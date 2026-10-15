@@ -15,9 +15,11 @@ FUNKTION reziproke_rang_fusion(ranglisten, k_rrf)
                                           // ein Kandidat, der nur in einer
                                           // Liste vorkommt, bekommt nur dort Punkte
     GIB score absteigend nach Wert sortiert ZURÜCK
-ENDE                                      // Nur Ränge zählen, nicht die Rohwerte:
-                                          // BM25-Scores und Cosinus-Werte haben
-                                          // verschiedene Skalen und sind so vergleichbar
+ENDE
+// Laufzeit: O(S + U · log U), S = Summe der Listenlängen, U = Anzahl verschiedener Kandidaten
+// Nur Ränge zählen, nicht die Rohwerte: BM25-Scores und Cosinus-Werte haben verschiedene
+// Skalen und werden so vergleichbar; Rechenbeispiel in der Formelsammlung
+
 
 FUNKTION normalisiere_scores(scores)
     EINGABE:  scores – Liste von Zahlen
@@ -29,3 +31,4 @@ FUNKTION normalisiere_scores(scores)
         GIB Liste mit lauter 1 ZURÜCK     // kein Kandidat ist schlechter
     GIB für jeden wert: (wert − minimum) / (maximum − minimum) ZURÜCK
 ENDE
+// Laufzeit: O(n)
