@@ -10,6 +10,7 @@ def tokenize(chunk: str) -> list[str]:
     tokens = cleaned.split()
     return tokens
 
+
 def build_index(corpus: list[str]) -> tuple[dict[str, dict[int, int]], dict[int, int], int, float]:
     """Builds an inverted index: term -> {doc_id: term frequency}."""
     index: dict[str, dict[int, int]] = {}
@@ -34,6 +35,7 @@ def build_index(corpus: list[str]) -> tuple[dict[str, dict[int, int]], dict[int,
     avgdl = sum(doc_lengths.values()) / n_docs if n_docs else 0.0
 
     return index, doc_lengths, n_docs, avgdl
+
 
 def compute_idf(df: int, n_docs: int) -> float:
     """BM25 IDF (Lucene variant, +1 inside ln). Requires 0 <= df <= n_docs; result is always > 0."""
