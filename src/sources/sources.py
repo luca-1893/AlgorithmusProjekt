@@ -54,7 +54,8 @@ def build_arxiv_url(keywords: list[str], max_results: int, categories: tuple[str
     if max_results <= 0:
         raise ValueError("max_results must be > 0")
 
-    query = " OR ".join(f'all:"{keyword}"' for keyword in keywords)
+    unquoted = [keyword.replace('"', "") for keyword in keywords]
+    query = " OR ".join(f'all:"{keyword}"' for keyword in unquoted)
     if categories:
         category_filter = " OR ".join(f"cat:{category}" for category in categories)
         query = f"({query}) AND ({category_filter})"

@@ -14,6 +14,8 @@ FUNKTION normalisiere_schlagwörter(schlagwörter)
             gesehen.hinzufügen(schlüssel)
     GIB ergebnis ZURÜCK
 ENDE
+// Laufzeit: O(L), L = Gesamtlänge aller Schlagwörter; Nachschlagen in der Menge O(1)
+
 
 FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
     EINGABE:  schlagwörter – normalisierte, nicht leere Liste
@@ -26,7 +28,8 @@ FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
     WENN max_treffer ≤ 0:
         FEHLER "max_treffer muss größer als 0 sein"
 
-    suche ← jedes Schlagwort als all:"wort", verbunden mit OR
+    suche ← jedes Schlagwort ohne Anführungszeichen als all:"wort",
+            verbunden mit OR              // ein " im Wort würde die Phrase beenden
                                           // OR statt AND: mehr Treffer, die
                                           // Feinauswahl macht später BM25
     WENN kategorien nicht leer:
@@ -36,6 +39,10 @@ FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
     GIB Basis-URL + search_query=suche, start=0, max_results=max_treffer,
         sortBy=relevance, sortOrder=descending   (URL-kodiert) ZURÜCK
 ENDE
+// Laufzeit: O(L + K), K = Gesamtlänge der Kategorien
+// Bekannte Grenzen: arXiv ist englischsprachig, deutsche Schlagwörter finden kaum etwas;
+// OR liefert auch Dokumente, die nur ein Schlagwort enthalten
+
 
 STRUKTUR Dokument
     id            – arXiv-Kennung ohne Versionsnummer, z. B. 1409.6928
@@ -47,6 +54,8 @@ STRUKTUR Dokument
     quelle        – Name der Quelle, hier "arxiv"
     text          – titel und abstract, durch eine Leerzeile getrennt
 ENDE
+// Unveränderlich nach dem Erzeugen; id dient später zur Duplikaterkennung in der Datenbank
+
 
 FUNKTION lies_arxiv_feed(xml_text)
     EINGABE:  xml_text – Antwort der arXiv-API (Atom-Feed)
@@ -65,11 +74,16 @@ FUNKTION lies_arxiv_feed(xml_text)
         dokumente.anhängen(Dokument aus den Feldern des Eintrags)
     GIB dokumente ZURÜCK                  // Feed ohne Einträge ergibt []
 ENDE
+// Laufzeit: O(X), X = Länge der Antwort; XML wird einmal vollständig gelesen
+
 
 SCHNITTSTELLE Quelle
     name                                  – Name der Quelle, z. B. "arxiv"
     suche(schlagwörter, max_treffer) → Liste von Dokument
 ENDE
+// Jede weitere Quelle (OpenAlex, Semantic Scholar) setzt dieselbe Schnittstelle um;
+// die Pipeline kennt nur die Schnittstelle
+
 
 FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer)
     EINGABE:  schlagwörter – Liste von Strings, roh vom LLM
@@ -86,3 +100,6 @@ FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer)
         FEHLER "Quelle nicht erreichbar"
     GIB lies_arxiv_feed(antwort) ZURÜCK
 ENDE
+// Laufzeit: ein HTTP-Aufruf, dominiert von Netzwerk und Antwortgröße
+// Bekannte Grenzen: nur Titel und Abstract (Volltext später); keine Drosselung zwischen
+// mehreren Aufrufen, arXiv verlangt Abstand zwischen Anfragen; kein Cache (kommt mit PostgreSQL)
