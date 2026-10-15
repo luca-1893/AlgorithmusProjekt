@@ -118,3 +118,41 @@ FUNKTION berechne_score(query, doc_id, index, laenge, N, avgdl, k1, b)
 ENDE
 // Laufzeit: O(|query|) pro Dokument, jeder Schritt ist ein Dict-Zugriff
 // Offen für Schritt 7: IDF hängt nur am Wort und wird hier pro Dokument neu berechnet
+
+
+FUNKTION top_m(anfrage, index, laenge, N, avgdl, m, k1, b)
+    EINGABE:  anfrage – roher Anfrage-String (Schlagwörter)
+              index, laenge, N, avgdl – Ergebnis von baue_index
+              m       – Anzahl gewünschter Treffer
+              k1, b   – BM25-Parameter
+    AUSGABE:  Liste von (doc_id, score), höchster Score zuerst,
+              bei Gleichstand kleinere doc_id zuerst; höchstens m Einträge,
+              nur Dokumente mit score > 0
+
+    WENN N = 0 ODER m ≤ 0:                        // leerer Index / nichts verlangt
+        RÜCKGABE leere Liste
+
+    query ← Menge(tokenisiere(anfrage))           // nach dem Tokenisieren deduplizieren
+
+    idfs ← leeres Dict                            // IDF einmal pro Wort, nicht pro Dokument
+    FÜR JEDES wort IN query:
+        idfs[wort] ← berechne_idf(len(index.get(wort, {})), N)
+
+    kandidaten ← leere Menge                      // nur Dokumente mit mindestens einem
+    FÜR JEDES wort IN query:                      // Anfragewort → score > 0 automatisch
+        kandidaten ← kandidaten ∪ Dok-IDs in index.get(wort, {})
+
+    bewertet ← leere Liste
+    FÜR JEDE doc_id IN kandidaten:
+        score ← berechne_score(query, doc_id, index, laenge, idfs, avgdl, k1, b)
+        FÜGE (−score, doc_id) ZU bewertet HINZU   // −score: höchster Score wird "kleinster"
+
+    beste ← die m kleinsten Einträge aus bewertet (Heap, nsmallest)
+                                                  // Gleichstand: kleinere doc_id zuerst
+    RÜCKGABE [(doc_id, −neg_score) FÜR JEDES (neg_score, doc_id) IN beste]
+ENDE
+// Laufzeit (C = Anzahl Kandidaten, |q| = Anfragewörter, P = Summe der Posting-Längen):
+//   IDFs:               O(|q|)
+//   Kandidaten sammeln: O(P)
+//   bewerten:           O(C · |q|)
+//   Top-m per Heap:     O(C · log m)   statt O(C · log C) beim kompletten Sortieren
