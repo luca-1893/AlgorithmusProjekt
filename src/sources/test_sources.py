@@ -1,5 +1,6 @@
 import unittest
 from datetime import date
+from urllib.error import URLError
 from urllib.parse import parse_qs, urlparse
 
 import sources
@@ -147,3 +148,60 @@ class TestParseArxivFeed(unittest.TestCase):
     def test_document_text_without_abstract(self):
         document = sources.Document("x", "Title", "", (), date(2024, 1, 1), "u", "arxiv")
         self.assertEqual(document.text, "Title")
+
+
+class FakeFetch:
+    def __init__(self, response="", error=None):
+        self.response = response
+        self.error = error
+        self.urls = []
+
+    def __call__(self, url):
+        self.urls.append(url)
+        if self.error:
+            raise self.error
+        return self.response
+
+
+class TestArxivSource(unittest.TestCase):
+    def test_search_returns_documents(self):
+        source = sources.ArxivSource(fetch=FakeFetch(feed(ENTRY_UML)))
+        self.assertEqual([document.id for document in source.search(["uml"], 5)], ["1409.6928"])
+
+    def test_search_normalizes_keywords(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(fetch=fetch).search(["  UML ", "uml"], 5)
+        self.assertEqual(query_params(fetch.urls[0])["search_query"], 'all:"UML"')
+
+    def test_search_uses_categories(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(categories=("cs.SE",), fetch=fetch).search(["uml"], 5)
+        self.assertEqual(query_params(fetch.urls[0])["search_query"], '(all:"uml") AND (cat:cs.SE)')
+
+    def test_search_fetches_once(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(fetch=fetch).search(["uml"], 5)
+        self.assertEqual(len(fetch.urls), 1)
+
+    def test_search_blank_keywords_without_fetch(self):
+        fetch = FakeFetch(feed())
+        with self.assertRaises(ValueError):
+            sources.ArxivSource(fetch=fetch).search(["  ", ""], 5)
+        self.assertEqual(fetch.urls, [])
+
+    def test_search_network_error(self):
+        source = sources.ArxivSource(fetch=FakeFetch(error=URLError("no route")))
+        with self.assertRaises(sources.SourceError):
+            source.search(["uml"], 5)
+
+    def test_search_timeout(self):
+        source = sources.ArxivSource(fetch=FakeFetch(error=TimeoutError()))
+        with self.assertRaises(sources.SourceError):
+            source.search(["uml"], 5)
+
+    def test_arxiv_source_is_a_source(self):
+        self.assertIsInstance(sources.ArxivSource(), sources.Source)
+
+    def test_source_is_abstract(self):
+        with self.assertRaises(TypeError):
+            sources.Source()

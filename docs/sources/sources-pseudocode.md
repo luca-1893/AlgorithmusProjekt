@@ -65,3 +65,24 @@ FUNKTION lies_arxiv_feed(xml_text)
         dokumente.anhängen(Dokument aus den Feldern des Eintrags)
     GIB dokumente ZURÜCK                  // Feed ohne Einträge ergibt []
 ENDE
+
+SCHNITTSTELLE Quelle
+    name                                  – Name der Quelle, z. B. "arxiv"
+    suche(schlagwörter, max_treffer) → Liste von Dokument
+ENDE
+
+FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer)
+    EINGABE:  schlagwörter – Liste von Strings, roh vom LLM
+              max_treffer  – Anzahl gewünschter Dokumente, > 0
+    AUSGABE:  Liste von Dokument
+
+    bereinigt ← normalisiere_schlagwörter(schlagwörter)
+    url       ← baue_arxiv_url(bereinigt, max_treffer, kategorien der Quelle)
+                                          // wirft bei leeren Schlagwörtern,
+                                          // bevor ein Netzwerkaufruf passiert
+    VERSUCHE:
+        antwort ← HTTP-GET url
+    BEI Netzwerkfehler oder Zeitüberschreitung:
+        FEHLER "Quelle nicht erreichbar"
+    GIB lies_arxiv_feed(antwort) ZURÜCK
+ENDE

@@ -1,12 +1,16 @@
 import re
+import urllib.request
 import xml.etree.ElementTree as ET
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
+from typing import Callable
 from urllib.parse import urlencode
 
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_ERROR_PREFIX = "https://arxiv.org/api/errors"
 ATOM = "{http://www.w3.org/2005/Atom}"
+USER_AGENT = "AlgorithmusProjekt/0.1"
 
 
 class SourceError(Exception):
@@ -107,3 +111,37 @@ def _alternate_link(entry: ET.Element) -> str:
         if link.get("rel") == "alternate":
             return link.get("href", "")
     return ""
+
+
+def http_get(url: str, timeout: float = 20.0) -> str:
+    """Fetches the URL and returns the response body as text."""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read().decode("utf-8")
+
+
+class Source(ABC):
+    """A research source that finds documents for a list of keywords."""
+    name: str
+
+    @abstractmethod
+    def search(self, keywords: list[str], max_results: int) -> list[Document]:
+        """Returns up to max_results documents for the keywords."""
+
+
+class ArxivSource(Source):
+    """Searches arXiv; fetch is injectable so tests run without network."""
+    name = "arxiv"
+
+    def __init__(self, categories: tuple[str, ...] = (), fetch: Callable[[str], str] = http_get):
+        self.categories = categories
+        self.fetch = fetch
+
+    def search(self, keywords: list[str], max_results: int) -> list[Document]:
+        """Returns up to max_results arXiv documents for the keywords."""
+        url = build_arxiv_url(normalize_keywords(keywords), max_results, self.categories)
+        try:
+            xml_text = self.fetch(url)
+        except OSError as error:
+            raise SourceError(f"arXiv is not reachable: {error}") from error
+        return parse_arxiv_feed(xml_text)
