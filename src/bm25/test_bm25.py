@@ -180,6 +180,18 @@ class TestScore(unittest.TestCase):
     def test_term_score_zero_frequency(self):
         self.assertEqual(bm25.compute_term_score(0, 3, 10 / 3, 0.47, 1.5, 0.75), 0.0)
 
+    def test_term_score_k1_zero_missing_term(self):
+        # k1 = 0 makes K = 0, so f + K = 0 for a missing term (former ZeroDivisionError)
+        self.assertEqual(bm25.compute_term_score(0, 3, 10 / 3, 0.47, 0, 0.75), 0.0)
+
+    def test_term_score_k1_zero_is_binary(self):
+        # k1 = 0: TF = f / f = 1, only presence counts, so the contribution equals the IDF
+        self.assertAlmostEqual(bm25.compute_term_score(2, 3, 10 / 3, 0.47, 0, 0.75), 0.47)
+
+    def test_top_m_k1_zero_does_not_crash(self):
+        ranking = bm25.top_m("apfel milch", self.index, self.doc_lengths, self.n_docs, self.avgdl, 10, k1=0)
+        self.assertEqual([doc_id for doc_id, _ in ranking], [3, 0, 1])
+
     def test_score_unknown_terms(self):
         self.assertEqual(self._score(0, {"xyz"}), 0.0)
 
