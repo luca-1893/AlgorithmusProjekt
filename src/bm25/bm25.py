@@ -1,3 +1,4 @@
+import heapq
 import math
 
 JOINERS = "-'’"
@@ -66,3 +67,21 @@ def compute_score(doc_id: int, index: dict[str, dict[int, int]],
         score += compute_term_score(f, dl, avgdl, idf, k1, b)
 
     return score
+
+
+def top_m(query: str, index: dict[str, dict[int, int]], doc_lengths: dict[int, int],
+          n_docs: int, avgdl: float, m: int, k1: float = 1.5, b: float = 0.75) -> list[tuple[int, float]]:
+    """Returns up to m (doc_id, score) pairs with score > 0, best first; ties keep the smaller doc_id first."""
+    if n_docs == 0 or m <= 0:
+        return []
+
+    terms = set(tokenize(query))
+    idfs = {term: compute_idf(len(index.get(term, {})), n_docs) for term in terms}
+
+    candidates = set()
+    for term in terms:
+        candidates.update(index.get(term, {}))
+
+    scored = [(-compute_score(doc_id, index, doc_lengths, idfs, avgdl, k1, b), doc_id) for doc_id in candidates]
+    best = heapq.nsmallest(m, scored)
+    return [(doc_id, -negative_score) for negative_score, doc_id in best]
