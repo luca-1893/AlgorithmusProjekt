@@ -59,18 +59,30 @@ AlgorithmusProjekt/
 └── LICENSE
 ```
 
+## Einrichtung
+
+Python 3.15 und eine virtuelle Umgebung im Projektordner:
+
+```
+brew install python@3.15
+python3.15 -m venv .venv
+source .venv/bin/activate
+```
+
+In PyCharm `.venv/bin/python` als Interpreter wählen. Für die Vektorsuche muss `VOYAGE_API_KEY` gesetzt sein, z. B. in `~/.zshenv`; ohne Schlüssel arbeitet die Pipeline nur mit BM25.
+
 ## Tests ausführen
 
 Alle Module auf einmal, aus dem Projektordner:
 
 ```
-python3 -m unittest discover -s src -t src
+python -m unittest discover -s src -t src
 ```
 
 Einzelnes Modul ohne Abhängigkeit zu anderen Modulen, aus seinem Ordner, z. B. `src/bm25`. Die Pipeline importiert alle anderen Module und läuft deshalb nur über den Befehl oben:
 
 ```
-python3 -m unittest
+python -m unittest
 ```
 
 ## Lizenz
