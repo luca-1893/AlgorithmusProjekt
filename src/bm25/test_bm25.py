@@ -46,3 +46,67 @@ class TestBM25(unittest.TestCase):
 
     def test_tokenize_single_quotes(self):
         self.assertEqual(bm25.tokenize("'Apfel'"), ["apfel"])
+
+    def test_build_index_empty_corpus(self):
+        self.assertEqual(bm25.build_index([]), ({}, {}, 0, 0.0))
+
+    def test_build_index_only_empty_documents(self):
+        for corpus in ([""], ["   "], [".!?"], ["- -- ---"], ["", "\n\t", "?"]):
+            with self.subTest(corpus=corpus):
+                index, doc_lengths, n_docs, avgdl = bm25.build_index(corpus)
+                self.assertEqual(index, {})
+                self.assertEqual(doc_lengths, {})
+                self.assertEqual(n_docs, 0)
+                self.assertEqual(avgdl, 0.0)
+
+    def test_build_index_stable_ids_with_empty_document(self):
+        index, doc_lengths, n_docs, _ = bm25.build_index(["dog", "", "cat"])
+        self.assertEqual(doc_lengths, {0: 1, 2: 1})
+        self.assertEqual(index["cat"], {2: 1})
+        self.assertEqual(n_docs, 2)
+
+    def test_build_index_term_frequency(self):
+        index, doc_lengths, _, _ = bm25.build_index(["dog dog dog cat"])
+        self.assertEqual(index["dog"], {0: 3})
+        self.assertEqual(index["cat"], {0: 1})
+        self.assertEqual(doc_lengths[0], 4)
+
+    def test_build_index_casefold_merges_terms(self):
+        index, _, _, _ = bm25.build_index(["Dog DOG dOg", "Straße STRASSE"])
+        self.assertEqual(index["dog"], {0: 3})
+        self.assertEqual(index["strasse"], {1: 2})
+        self.assertNotIn("Dog", index)
+
+    def test_build_index_joiner_variants_merge(self):
+        index, doc_lengths, _, _ = bm25.build_index(["E-Mail email E–Mail e’mail"])
+        self.assertEqual(index, {"email": {0: 4}})
+        self.assertEqual(doc_lengths[0], 4)
+
+    def test_build_index_identical_documents_get_separate_ids(self):
+        index, _, n_docs, _ = bm25.build_index(["dog", "dog"])
+        self.assertEqual(index["dog"], {0: 1, 1: 1})
+        self.assertEqual(n_docs, 2)
+
+    def test_build_index_avgdl(self):
+        _, _, n_docs, avgdl = bm25.build_index(["a b c", "", "a b c d e f g"])
+        self.assertEqual(n_docs, 2)
+        self.assertAlmostEqual(avgdl, 5.0)
+        self.assertIsInstance(avgdl, float)
+
+    def test_build_index_invariants(self):
+        corpus = ["The dog barks.", "", "The dog and the cat, the dog!", "..."]
+        index, doc_lengths, n_docs, _ = bm25.build_index(corpus)
+
+        for doc_id, length in doc_lengths.items():
+            self.assertEqual(sum(p.get(doc_id, 0) for p in index.values()), length)
+
+        for posting in index.values():
+            self.assertLessEqual(set(posting), set(doc_lengths))
+            self.assertTrue(1 <= len(posting) <= n_docs)
+            self.assertTrue(all(tf >= 1 for tf in posting.values()))
+
+    def test_build_index_does_not_mutate_corpus(self):
+        corpus = ["dog", "", "cat"]
+        original = list(corpus)
+        bm25.build_index(corpus)
+        self.assertEqual(corpus, original)
