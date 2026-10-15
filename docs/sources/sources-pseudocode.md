@@ -36,3 +36,32 @@ FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
     GIB Basis-URL + search_query=suche, start=0, max_results=max_treffer,
         sortBy=relevance, sortOrder=descending   (URL-kodiert) ZURÜCK
 ENDE
+
+STRUKTUR Dokument
+    id            – arXiv-Kennung ohne Versionsnummer, z. B. 1409.6928
+    titel         – Titel, Leerraum vereinheitlicht
+    abstract      – Zusammenfassung, Leerraum vereinheitlicht, darf leer sein
+    autoren       – Liste der Autorennamen
+    veröffentlicht – Datum der Erstveröffentlichung
+    url           – Link auf die Abstract-Seite
+    quelle        – Name der Quelle, hier "arxiv"
+    text          – titel und abstract, durch eine Leerzeile getrennt
+ENDE
+
+FUNKTION lies_arxiv_feed(xml_text)
+    EINGABE:  xml_text – Antwort der arXiv-API (Atom-Feed)
+    AUSGABE:  Liste von Dokument, in der Reihenfolge des Feeds
+
+    WENN xml_text kein gültiges XML:
+        FEHLER "Antwort der Quelle nicht lesbar"
+
+    dokumente ← leere Liste
+    FÜR JEDEN eintrag IN feed:
+        WENN eintrag.id beginnt mit der Fehler-Adresse der API:
+            FEHLER "Quelle meldet Fehler: " + eintrag.summary
+        WENN id, titel ODER veröffentlicht fehlen:
+            WEITER                        // unvollständigen Eintrag überspringen
+        id ← Teil nach "/abs/", Versionsendung "vN" entfernt
+        dokumente.anhängen(Dokument aus den Feldern des Eintrags)
+    GIB dokumente ZURÜCK                  // Feed ohne Einträge ergibt []
+ENDE

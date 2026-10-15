@@ -1,7 +1,54 @@
 import unittest
+from datetime import date
 from urllib.parse import parse_qs, urlparse
 
 import sources
+
+FEED_HEAD = (
+    '<?xml version="1.0" encoding="UTF-8"?>'
+    '<feed xmlns="http://www.w3.org/2005/Atom" xmlns:arxiv="http://arxiv.org/schemas/atom">'
+)
+ENTRY_UML = """
+<entry>
+  <id>http://arxiv.org/abs/1409.6928v1</id>
+  <title>Developing the UML as a
+    Formal Modelling Notation</title>
+  <link href="https://arxiv.org/abs/1409.6928v1" rel="alternate" type="text/html"/>
+  <link href="https://arxiv.org/pdf/1409.6928v1" rel="related" type="application/pdf" title="pdf"/>
+  <summary>The Unified Modeling Language (UML) is rapidly
+    emerging as a de-facto standard.</summary>
+  <published>2014-09-24T12:36:10Z</published>
+  <author><name>Andy Evans</name></author>
+  <author><name>Robert France</name></author>
+</entry>
+"""
+ENTRY_OLD_ID = """
+<entry>
+  <id>http://arxiv.org/abs/cs/0112017v2</id>
+  <title>An old style identifier</title>
+  <summary>Abstract.</summary>
+  <published>2001-12-14T00:00:00Z</published>
+  <author><name>Jane Doe</name></author>
+</entry>
+"""
+ENTRY_WITHOUT_TITLE = """
+<entry>
+  <id>http://arxiv.org/abs/2401.00001v1</id>
+  <summary>No title.</summary>
+  <published>2024-01-01T00:00:00Z</published>
+</entry>
+"""
+ENTRY_ERROR = """
+<entry>
+  <id>https://arxiv.org/api/errors#start_must_be_non-negative</id>
+  <title>Error</title>
+  <summary>start must be non-negative</summary>
+</entry>
+"""
+
+
+def feed(*entries):
+    return FEED_HEAD + "".join(entries) + "</feed>"
 
 
 def query_params(url):
@@ -54,3 +101,49 @@ class TestBuildArxivUrl(unittest.TestCase):
     def test_url_max_results_zero(self):
         with self.assertRaises(ValueError):
             sources.build_arxiv_url(["uml"], 0)
+
+
+class TestParseArxivFeed(unittest.TestCase):
+    def test_parse_example(self):
+        self.assertEqual(sources.parse_arxiv_feed(feed(ENTRY_UML)), [sources.Document(
+            id="1409.6928",
+            title="Developing the UML as a Formal Modelling Notation",
+            abstract="The Unified Modeling Language (UML) is rapidly emerging as a de-facto standard.",
+            authors=("Andy Evans", "Robert France"),
+            published=date(2014, 9, 24),
+            url="https://arxiv.org/abs/1409.6928v1",
+            source="arxiv",
+        )])
+
+    def test_parse_keeps_feed_order(self):
+        ids = [document.id for document in sources.parse_arxiv_feed(feed(ENTRY_UML, ENTRY_OLD_ID))]
+        self.assertEqual(ids, ["1409.6928", "cs/0112017"])
+
+    def test_parse_old_style_id(self):
+        self.assertEqual(sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0].id, "cs/0112017")
+
+    def test_parse_url_falls_back_to_id(self):
+        self.assertEqual(sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0].url, "http://arxiv.org/abs/cs/0112017v2")
+
+    def test_parse_skips_incomplete_entry(self):
+        ids = [document.id for document in sources.parse_arxiv_feed(feed(ENTRY_WITHOUT_TITLE, ENTRY_UML))]
+        self.assertEqual(ids, ["1409.6928"])
+
+    def test_parse_empty_feed(self):
+        self.assertEqual(sources.parse_arxiv_feed(feed()), [])
+
+    def test_parse_error_entry(self):
+        with self.assertRaises(sources.SourceError):
+            sources.parse_arxiv_feed(feed(ENTRY_ERROR))
+
+    def test_parse_invalid_xml(self):
+        with self.assertRaises(sources.SourceError):
+            sources.parse_arxiv_feed("<feed><entry>")
+
+    def test_document_text(self):
+        document = sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0]
+        self.assertEqual(document.text, "An old style identifier\n\nAbstract.")
+
+    def test_document_text_without_abstract(self):
+        document = sources.Document("x", "Title", "", (), date(2024, 1, 1), "u", "arxiv")
+        self.assertEqual(document.text, "Title")
