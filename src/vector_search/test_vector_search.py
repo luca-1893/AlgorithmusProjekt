@@ -59,3 +59,21 @@ class TestTopK(unittest.TestCase):
     def test_top_k_zero(self):
         with self.assertRaises(ValueError):
             vector_search.top_k([0.1], 0)
+
+
+class TestMostSimilar(unittest.TestCase):
+    def test_most_similar_example(self):
+        candidates = [[0, 1], [1, 0], [1, 1]]
+        result = vector_search.most_similar([1, 0], candidates, 2)
+        self.assertEqual([position for position, _ in result], [1, 2])
+
+    def test_most_similar_scores(self):
+        result = vector_search.most_similar([1, 0], [[1, 1]], 1)
+        self.assertAlmostEqual(result[0][1], 1 / 2 ** 0.5)
+
+    def test_most_similar_no_candidates(self):
+        self.assertEqual(vector_search.most_similar([1, 0], [], 3), [])
+
+    def test_most_similar_dimension_mismatch(self):
+        with self.assertRaises(ValueError):
+            vector_search.most_similar([1, 0], [[1, 0, 0]], 1)

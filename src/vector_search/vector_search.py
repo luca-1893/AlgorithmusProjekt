@@ -29,3 +29,9 @@ def top_k(scores: list[float], k: int) -> list[tuple[int, float]]:
             heapq.heapreplace(heap, entry)
 
     return [(-negative_position, score) for score, negative_position in sorted(heap, reverse=True)]
+
+
+def most_similar(query_vector: list[float], candidate_vectors: list[list[float]], k: int) -> list[tuple[int, float]]:
+    """Returns the k candidates most similar to the query as (position, similarity), best first."""
+    similarities = [cosine_similarity(query_vector, candidate) for candidate in candidate_vectors]
+    return top_k(similarities, k)

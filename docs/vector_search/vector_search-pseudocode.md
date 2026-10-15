@@ -36,3 +36,18 @@ FUNKTION top_k(scores, k)
     GIB heap absteigend sortiert, als (position, score) ZURÜCK
 ENDE                                      // Laufzeit O(n · log k) statt
                                           // O(n · log n) für vollständiges Sortieren
+
+FUNKTION ähnlichste(anfrage_vektor, kandidaten_vektoren, k)
+    EINGABE:  anfrage_vektor      – Vektor der Anfrage
+              kandidaten_vektoren – Liste von Vektoren, gleiche Länge wie anfrage_vektor
+              k                   – Anzahl gewünschter Kandidaten, > 0
+    AUSGABE:  Liste von (position, ähnlichkeit), ähnlichster Kandidat zuerst
+
+    ähnlichkeiten ← für jeden kandidat: cosinus_ähnlichkeit(anfrage_vektor, kandidat)
+    GIB top_k(ähnlichkeiten, k) ZURÜCK
+ENDE                                      // Laufzeit O(n · d + n · log k),
+                                          // d = Vektorlänge
+
+SCHNITTSTELLE Einbetter
+    einbetten(texte) → Liste von Vektoren, einer pro Text, gleiche Reihenfolge
+ENDE                                      // konkrete Umsetzung je Anbieter, siehe ADR 0001
