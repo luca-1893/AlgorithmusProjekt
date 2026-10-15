@@ -6,6 +6,8 @@ def reciprocal_rank_fusion(rankings: list[list[int]], k_rrf: int = 60) -> list[t
     scores = {}
     for ranking in rankings:
         for rank, candidate_id in enumerate(ranking, start=1):
+            # only the rank counts, not the raw score: BM25 and cosine values have different scales;
+            # k_rrf damps the gap between the top ranks
             scores[candidate_id] = scores.get(candidate_id, 0.0) + 1 / (k_rrf + rank)
 
     return sorted(scores.items(), key=lambda item: (-item[1], item[0]))

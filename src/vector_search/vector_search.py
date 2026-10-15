@@ -21,6 +21,8 @@ def top_k(scores: list[float], k: int) -> list[tuple[int, float]]:
     if k <= 0:
         raise ValueError("k must be > 0")
 
+    # min-heap of the k best so far; heap[0] is the weakest of them.
+    # -position: on equal scores the larger position counts as weaker and is dropped first.
     heap = []
     for position, score in enumerate(scores):
         entry = (score, -position)
@@ -74,9 +76,11 @@ def mmr_select(relevance: list[float], vectors: list[list[float]], k: int, lambd
     max_similarity = [0.0] * len(relevance)
 
     while remaining and len(selected) < k:
+        # MMR = lambda * relevance - (1 - lambda) * similarity to the closest already selected chunk
         best = max(remaining, key=lambda p: (lambda_ * relevance[p] - (1 - lambda_) * max_similarity[p], -p))
         selected.append(best)
         remaining.remove(best)
+        # only the new pick can raise a candidate's maximum similarity, so one comparison per candidate suffices
         for position in remaining:
             similarity = cosine_similarity(vectors[position], vectors[best])
             max_similarity[position] = max(max_similarity[position], similarity)
