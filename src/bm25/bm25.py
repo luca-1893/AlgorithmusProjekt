@@ -50,23 +50,19 @@ def compute_term_score(f: int, dl: int, avgdl: float, idf: float, k1: float, b: 
     return idf * tf
 
 
-def compute_score(query: set[str], doc_id: int, index: dict[str, dict[int, int]],
-                  doc_lengths: dict[int, int], n_docs: int, avgdl: float,
+def compute_score(doc_id: int, index: dict[str, dict[int, int]],
+                  doc_lengths: dict[int, int], idfs: dict[str, float], avgdl: float,
                   k1: float = 1.5, b: float = 0.75) -> float:
-    """BM25 score of one document for a deduplicated, tokenized query."""
-    if n_docs == 0:                     # empty index: avgdl = 0, avoid division by zero
-        return 0.0
-
+    """BM25 score of one document. The keys of idfs are the deduplicated query terms;
+    avgdl > 0 is guaranteed by the caller (top_m) for every known document."""
     if doc_id not in doc_lengths:       # skipped (empty) or unknown document
         return 0.0
 
     dl = doc_lengths[doc_id]
     score = 0.0
 
-    for term in query:
-        posting = index.get(term, {})
-        f = posting.get(doc_id, 0)      # term not in document → f = 0
-        idf = compute_idf(len(posting), n_docs)
+    for term, idf in idfs.items():
+        f = index.get(term, {}).get(doc_id, 0)
         score += compute_term_score(f, dl, avgdl, idf, k1, b)
 
     return score

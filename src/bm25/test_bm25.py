@@ -157,6 +157,7 @@ class TestIDF(unittest.TestCase):
         for rarer, more_common in zip(idfs, idfs[1:]):
             self.assertGreater(rarer, more_common)
 
+
 class TestScore(unittest.TestCase):
 
     def setUp(self):
@@ -164,8 +165,9 @@ class TestScore(unittest.TestCase):
         self.index, self.doc_lengths, self.n_docs, self.avgdl = bm25.build_index(corpus)
         self.query = {"apfel", "milch"}
 
-    def _score(self, doc_id):
-        return bm25.compute_score(self.query, doc_id, self.index, self.doc_lengths, self.n_docs, self.avgdl)
+    def _score(self, doc_id, query=None):
+        idfs = self._idfs(query if query is not None else self.query)
+        return bm25.compute_score(doc_id, self.index, self.doc_lengths, idfs, self.avgdl)
 
     def test_score_reference_values(self):
         for doc_id, expected in [(0, 0.694), (1, 0.573), (2, 0.0), (3, 0.767)]:
