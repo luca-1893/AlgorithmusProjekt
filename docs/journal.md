@@ -48,3 +48,4 @@
 - Fehler gefunden: Ein Anführungszeichen im Schlagwort hätte die arXiv-Phrase beendet; es wird jetzt entfernt.
 - Module zu Paketen gemacht: Jedes `__init__.py` reicht sein Modul weiter, dadurch bleiben die bestehenden Tests unverändert und alle laufen mit `python3 -m unittest discover -s src -t src`.
 - Pipeline (`src/pipeline/`): Quelle, Chunking, BM25-Vorauswahl, dann entweder direkt die besten k (ohne Einbetter) oder hybrid mit Vektorsuche, RRF und MMR. Fällt der Einbetter aus, liefert sie BM25-Ergebnisse mit Hinweis. Ausgabe als JSON-fähiges Dict für das MCP-Tool. Ohne Einbetter gegen das echte arXiv getestet: 0,5 s, drei passende Paper.
+- Embedding-Anbieter entschieden: Voyage AI (ADR 0001, Nachtrag). `VoyageEmbedder` nur mit Standardbibliothek, Schlüssel aus `VOYAGE_API_KEY`, Modell `voyage-4`. Anfrage und Chunks werden getrennt eingebettet (`input_type`), weil Voyage beide unterschiedlich darstellt. Fehler führen zum BM25-Fallback.

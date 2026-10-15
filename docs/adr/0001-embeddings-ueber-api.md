@@ -1,6 +1,6 @@
 # ADR 0001: Embeddings über eine API statt lokal
 
-- **Status:** angenommen (Anbieter noch offen)
+- **Status:** angenommen, Anbieter Voyage AI (Nachtrag 2026-10-16)
 - **Datum:** 2026-10-15
 - **Entschieden von:** Luca
 
@@ -26,7 +26,22 @@ Die Embeddings kommen von einem externen Anbieter über dessen API. Der API-Schl
 - Wer das Notebook ausführt, braucht einen eigenen Schlüssel. Das ist eine Abweichung von der Hackathon-Vorgabe „lauffähig ohne Anpassung“ und gehört in die Reflexion.
 - Der Anbieter bestimmt die Vektorlänge. Vektoren verschiedener Modelle sind nicht vergleichbar, ein späterer Wechsel des Anbieters erfordert neues Einbetten.
 
-## Offen
+## Nachtrag 2026-10-16: Anbieter Voyage AI
 
-- Welcher Anbieter (Kandidaten: Voyage AI, OpenAI, Cohere, Mistral)
-- Kostenrahmen pro Anfrage, sobald der Anbieter feststeht
+Entschieden von Luca. Umgesetzt als `VoyageEmbedder` in `src/vector_search/`, Modell `voyage-4` (1024 Dimensionen), Schlüssel aus `VOYAGE_API_KEY`.
+
+| Kandidat | Kostenlos | Danach | Bemerkung |
+|---|---|---|---|
+| **Voyage AI** | 200 Mio. Tokens | 0,02–0,12 $ pro Mio. Tokens | von Anthropic empfohlen, getrennte Einbettung für Anfrage und Dokument |
+| Jina AI (`jina-embeddings-v3`) | 10 Mio. Tokens | ab etwa 0,02 $ pro Mio. | Sitz in Berlin, 89 Sprachen |
+| OpenAI (`text-embedding-3-small`) | – | 0,02 $ pro Mio. | verbreitet |
+| Cohere (`embed-v4`) | Test-Schlüssel | 0,10 $ pro Mio. | über 100 Sprachen |
+
+Ausschlaggebend war das große Freikontingent. Pro Anfrage werden die Anfrage und bis zu m = 50 Abstracts eingebettet, grob 10.000 Tokens; 200 Mio. Tokens reichen damit für etwa 20.000 Anfragen.
+
+Konsequenzen:
+
+- Anfrage und Chunks werden in zwei Aufrufen eingebettet (`input_type` „query“ und „document“), weil Voyage beide unterschiedlich darstellt.
+- HTTP-, Netzwerk- und Formatfehler werden zu `EmbeddingError`; die Pipeline liefert dann nur BM25-Ergebnisse mit Hinweis. Der Fehlerpfad im Flowchart ist damit festgelegt.
+- Die hohen Limits gelten erst mit hinterlegter Zahlungsmethode, das Freikontingent bleibt dabei erhalten. Ohne Zahlungsmethode sind die Limits deutlich niedriger.
+- Es gibt kein automatisches Wiederholen bei HTTP 429.
