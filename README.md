@@ -59,6 +59,20 @@ AlgorithmusProjekt/
 └── LICENSE
 ```
 
+## Tests ausführen
+
+Alle Module auf einmal, aus dem Projektordner:
+
+```
+python3 -m unittest discover -s src -t src
+```
+
+Einzelnes Modul, aus seinem Ordner, z. B. `src/bm25`:
+
+```
+python3 -m unittest
+```
+
 ## Lizenz
 
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
