@@ -51,8 +51,7 @@ Das Projekt ist in der Konzeptphase, es gibt noch keinen Code. Aufgaben und Fort
 ```
 AlgorithmusProjekt/
 ├── Phase2/
-│   ├── Flowchart_RAG-Pipeline.drawio   # Flowchart der Pipeline (Anfrage, Indexaufbau)
-│   └── Pseudocode.drawio               # früher Entwurf: Keyword-Satzfilter
+│   └── Flowchart_RAG-Pipeline.drawio   # Flowchart der Pipeline (Anfrage, Indexaufbau)
 ├── docs/
 │   ├── journal.md          # Arbeitsjournal
 │   └── uml/                # UML-Diagramme (PlantUML)
