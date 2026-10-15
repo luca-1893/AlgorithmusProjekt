@@ -1,3 +1,5 @@
+JOINERS = "-'’"
+
 def tokenize(chunk: str) -> list[str]:
     """Normalizes the chunk into a list of casefolded words, stripped of punctuation."""
     folded = chunk.casefold()
