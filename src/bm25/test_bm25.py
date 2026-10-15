@@ -134,10 +134,11 @@ class TestIDF(unittest.TestCase):
 
     def test_compute_idf_known_values(self):
         cases = [
-            (0, 3, math.log(8)),      # unknown term
+            (0, 3, math.log(8)),  # unknown term
             (1, 3, math.log(8 / 3)),
+            (2, 3, math.log(8 / 5)),  # "apfel", "milch" in example corpus → ≈ 0.470
             (3, 3, math.log(8 / 7)),  # term in every doc
-            (0, 0, math.log(2)),      # empty index
+            (0, 0, math.log(2)),  # empty index
         ]
         for df, n_docs, expected in cases:
             with self.subTest(df=df, n_docs=n_docs):
