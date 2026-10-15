@@ -45,6 +45,9 @@ def compute_idf(df: int, n_docs: int) -> float:
 
 def compute_term_score(f: int, dl: int, avgdl: float, idf: float, k1: float, b: float) -> float:
     """BM25 contribution of one term to one document. Requires avgdl > 0; returns 0 for f = 0."""
+    if f == 0:                          # term not in document; also avoids 0 / 0 for k1 = 0
+        return 0.0
+
     length_ratio = dl / avgdl
     k = k1 * (1 - b + b * length_ratio)
     tf = f * (k1 + 1) / (f + k)

@@ -77,6 +77,9 @@ FUNKTION berechne_beitrag(f, dl, avgdl, idf, k1, b)
               b     – Stärke der Längennormalisierung (z. B. 0.75)
     AUSGABE:  beitrag – Anteil dieses Worts am Score (≥ 0, 0 bei f = 0)
 
+    WENN f = 0:                                   // Wort fehlt im Dokument; verhindert
+        RÜCKGABE 0                                // außerdem 0 / 0 bei k1 = 0 (K = 0)
+
     L       ← dl / avgdl
     K       ← k1 · (1 − b + b · L)
     TF      ← f · (k1 + 1) / (f + K)
