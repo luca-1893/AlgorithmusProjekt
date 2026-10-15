@@ -3,7 +3,9 @@ FUNKTION tokenisiere(text)
     AUSGABE:  Liste der Wörter, kleingeschrieben, ohne Satzzeichen,
               NICHT dedupliziert
 
-    VERBINDER ← Bindestrich (-), Gedankenstriche (– —), Apostrophe (' ’)
+    VERBINDER ← Bindestrich (-), Apostrophe (' ’)
+                // Gedankenstriche (– —) sind keine Verbinder: sie trennen
+                // wie Satzzeichen (10–20 → 10, 20)
 
     klein     ← text in Kleinbuchstaben (casefold)
     verbunden ← in klein jeden VERBINDER ersatzlos entfernen
