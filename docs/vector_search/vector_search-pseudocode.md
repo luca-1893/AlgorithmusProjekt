@@ -49,5 +49,20 @@ ENDE                                      // Laufzeit O(n · d + n · log k),
                                           // d = Vektorlänge
 
 SCHNITTSTELLE Einbetter
-    einbetten(texte) → Liste von Vektoren, einer pro Text, gleiche Reihenfolge
-ENDE                                      // konkrete Umsetzung je Anbieter, siehe ADR 0001
+    anbieter_anfrage(texte) → Liste von Vektoren   // je Anbieter umzusetzen, siehe ADR 0001
+ENDE
+
+FUNKTION Einbetter.einbetten(texte)
+    EINGABE:  texte – Liste von Strings
+    AUSGABE:  Liste von Vektoren, einer pro Text, gleiche Reihenfolge
+
+    WENN texte leer:
+        GIB leere Liste ZURÜCK            // kein API-Aufruf ohne Inhalt
+
+    vektoren ← anbieter_anfrage(texte)
+    WENN Anzahl(vektoren) ≠ Anzahl(texte):
+        FEHLER "Anbieter lieferte falsche Anzahl Vektoren"
+    WENN ein Vektor leer ist ODER die Vektoren unterschiedlich lang sind:
+        FEHLER "Anbieter lieferte ungültige Vektoren"
+    GIB vektoren ZURÜCK
+ENDE

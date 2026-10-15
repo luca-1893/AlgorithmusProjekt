@@ -1,5 +1,6 @@
 import heapq
 import math
+from abc import ABC, abstractmethod
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -35,3 +36,27 @@ def most_similar(query_vector: list[float], candidate_vectors: list[list[float]]
     """Returns the k candidates most similar to the query as (position, similarity), best first."""
     similarities = [cosine_similarity(query_vector, candidate) for candidate in candidate_vectors]
     return top_k(similarities, k)
+
+
+class EmbeddingError(Exception):
+    """Raised when the embedding provider fails or returns invalid vectors."""
+
+
+class Embedder(ABC):
+    """Turns texts into vectors; subclasses implement the provider request."""
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        """Returns one vector per text in the same order; checks the provider's answer."""
+        if not texts:
+            return []
+
+        vectors = self._request(texts)
+        if len(vectors) != len(texts):
+            raise EmbeddingError(f"expected {len(texts)} vectors, got {len(vectors)}")
+        if not vectors[0] or any(len(vector) != len(vectors[0]) for vector in vectors):
+            raise EmbeddingError("vectors must be non-empty and of equal length")
+        return vectors
+
+    @abstractmethod
+    def _request(self, texts: list[str]) -> list[list[float]]:
+        """Sends the texts to the provider and returns the raw vectors."""

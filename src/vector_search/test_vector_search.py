@@ -77,3 +77,40 @@ class TestMostSimilar(unittest.TestCase):
     def test_most_similar_dimension_mismatch(self):
         with self.assertRaises(ValueError):
             vector_search.most_similar([1, 0], [[1, 0, 0]], 1)
+
+
+class FakeEmbedder(vector_search.Embedder):
+    def __init__(self, vectors):
+        self.vectors = vectors
+        self.calls = []
+
+    def _request(self, texts):
+        self.calls.append(texts)
+        return self.vectors
+
+
+class TestEmbedder(unittest.TestCase):
+    def test_embed_returns_vectors(self):
+        embedder = FakeEmbedder([[1.0, 0.0], [0.0, 1.0]])
+        self.assertEqual(embedder.embed(["a", "b"]), [[1.0, 0.0], [0.0, 1.0]])
+
+    def test_embed_empty_without_request(self):
+        embedder = FakeEmbedder([])
+        self.assertEqual(embedder.embed([]), [])
+        self.assertEqual(embedder.calls, [])
+
+    def test_embed_wrong_count(self):
+        with self.assertRaises(vector_search.EmbeddingError):
+            FakeEmbedder([[1.0, 0.0]]).embed(["a", "b"])
+
+    def test_embed_unequal_lengths(self):
+        with self.assertRaises(vector_search.EmbeddingError):
+            FakeEmbedder([[1.0, 0.0], [1.0]]).embed(["a", "b"])
+
+    def test_embed_empty_vector(self):
+        with self.assertRaises(vector_search.EmbeddingError):
+            FakeEmbedder([[]]).embed(["a"])
+
+    def test_embedder_is_abstract(self):
+        with self.assertRaises(TypeError):
+            vector_search.Embedder()
