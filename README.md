@@ -76,6 +76,26 @@ In PyCharm `.venv/bin/python` als Interpreter wählen. Für die Vektorsuche muss
 
 `Phase3/Prototyp.ipynb` zeigt die Bausteine einzeln, die ganze Pipeline gegen arXiv (nur BM25 und hybrid), die JSON-Ausgabe, eine Schätzung der Token-Ersparnis und die Fehlerfälle. Starten mit `jupyter notebook Phase3/Prototyp.ipynb` aus der aktivierten Umgebung.
 
+## MCP-Tool
+
+Der Server bietet ein Tool, `research_papers(keywords, k = 5, question = "")`, und gibt die ausgewählten Abschnitte mit Titel, Autoren, Datum und Link als JSON zurück.
+
+Lokal über stdio, z. B. für Claude Code oder Claude Desktop:
+
+```
+PYTHONPATH=src .venv/bin/python -m mcp_server
+```
+
+In diesem Projekt ist das Tool für Claude Code schon in `.mcp.json` eingetragen; Claude Code fragt beim ersten Start, ob es den Server nutzen darf.
+
+Als Webdienst auf dem Server (Endpunkt `/mcp`):
+
+```
+PYTHONPATH=src .venv/bin/python -m mcp_server --transport http --host 0.0.0.0 --port 8000
+```
+
+Über HTTP gibt es noch keine Anmeldung. Den Dienst deshalb nur hinter einem abgesicherten Zugang betreiben, z. B. VPN oder Reverse-Proxy mit Token.
+
 ## Tests ausführen
 
 Alle Module auf einmal, aus dem Projektordner:
@@ -84,7 +104,7 @@ Alle Module auf einmal, aus dem Projektordner:
 python -m unittest discover -s src -t src
 ```
 
-Einzelnes Modul ohne Abhängigkeit zu anderen Modulen, aus seinem Ordner, z. B. `src/bm25`. Die Pipeline importiert alle anderen Module und läuft deshalb nur über den Befehl oben:
+Einzelnes Modul ohne Abhängigkeit zu anderen Modulen, aus seinem Ordner, z. B. `src/bm25`. Pipeline und MCP-Server importieren andere Module und laufen deshalb nur über den Befehl oben; die MCP-Tests brauchen außerdem die `.venv` mit Python 3.15:
 
 ```
 python -m unittest
