@@ -96,6 +96,19 @@ PYTHONPATH=src .venv/bin/python -m mcp_server --transport http --host 0.0.0.0 --
 
 Über HTTP gibt es noch keine Anmeldung. Den Dienst deshalb nur hinter einem abgesicherten Zugang betreiben, z. B. VPN oder Reverse-Proxy mit Token.
 
+## Datenbank
+
+PostgreSQL 18 per Homebrew, Datenbanken `algorithmusprojekt` und `algorithmusprojekt_test`:
+
+```
+brew install postgresql@18
+brew services start postgresql@18
+/opt/homebrew/opt/postgresql@18/bin/createdb algorithmusprojekt
+/opt/homebrew/opt/postgresql@18/bin/createdb algorithmusprojekt_test
+```
+
+Die SQL-Dateien liegen in `sql/`, die Anforderungen in `docs/storage/sql-aufgaben.md`.
+
 ## Tests ausführen
 
 Alle Module auf einmal, aus dem Projektordner:

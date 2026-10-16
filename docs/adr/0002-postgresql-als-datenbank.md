@@ -29,3 +29,11 @@ Dokumente, Chunks und Messläufe werden in PostgreSQL auf dem Server gespeichert
 ## Offen
 
 - Werden die Vektoren mit `pgvector` gespeichert, und übernimmt die Datenbank auch die Ähnlichkeitssuche? Vorschlag: Vektoren speichern, die Cosine Similarity selbst rechnen und `pgvector` in Phase 5 als Vergleich messen.
+
+## Nachtrag 2026-10-16: lokale Einrichtung
+
+- PostgreSQL 18.6 per Homebrew (`postgresql@18`), läuft als Dienst; Datenbanken `algorithmusprojekt` und `algorithmusprojekt_test`.
+- Python-Treiber `psycopg` 3.3.6 (mit Binärpaket, läuft auf Python 3.15).
+- Verbindung über `DATABASE_URL`, Standard `postgresql:///algorithmusprojekt`; Tests nutzen `TEST_DATABASE_URL`, Standard die Test-Datenbank.
+- SQL liegt als Dateien in `sql/` und wird von Luca geschrieben; die Anforderungen stehen in `docs/storage/sql-aufgaben.md`.
+
