@@ -22,20 +22,21 @@ ENDE
 // Wird für das MCP-Tool als JSON ausgegeben
 
 
-FUNKTION recherchiere(schlagwörter, k, quelle, einbetter, frage, konfiguration)
+FUNKTION recherchiere(schlagwörter, k, quelle, einbetter, frage, konfiguration, suchfilter)
     EINGABE:  schlagwörter – Liste von Strings, roh vom LLM
               k            – Anzahl gewünschter Treffer, > 0
               quelle       – eine Quelle, z. B. ArxivQuelle
               einbetter    – ein Einbetter oder LEER (dann ohne Vektorsuche)
               frage        – ursprüngliche Frage für die Vektorsuche, darf leer sein
               konfiguration
+              suchfilter   – Suchfilter oder LEER, wird an die Quelle weitergereicht
     AUSGABE:  Ergebnis
 
     WENN k ≤ 0: FEHLER "k muss größer als 0 sein"
     schlagwörter ← normalisiere_schlagwörter(schlagwörter)
     WENN schlagwörter leer: FEHLER "Keine Schlagwörter"
 
-    dokumente ← quelle.suche(schlagwörter, max_dokumente)   // Quellenfehler gehen an den Aufrufer
+    dokumente ← quelle.suche(schlagwörter, max_dokumente, suchfilter)   // Quellenfehler gehen an den Aufrufer
     WENN dokumente leer: RÜCKGABE Ergebnis([], ["Keine Treffer"])
 
     chunks ← leere Liste

@@ -4,7 +4,7 @@ from typing import Optional
 from bm25 import build_index, top_m
 from chunking import Chunk, create_chunks
 from ranking import normalize_scores, reciprocal_rank_fusion
-from sources import Document, Source, normalize_keywords
+from sources import Document, SearchFilter, Source, normalize_keywords
 from vector_search import Embedder, EmbeddingError, mmr_select, most_similar
 
 
@@ -57,15 +57,16 @@ class ResearchResult:
 
 
 def research(keywords: list[str], k: int, source: Source, embedder: Optional[Embedder] = None,
-             question: str = "", config: PipelineConfig = PipelineConfig()) -> ResearchResult:
-    """Finds documents for the keywords and returns the k best chunks."""
+             question: str = "", config: PipelineConfig = PipelineConfig(),
+             search_filter: Optional[SearchFilter] = None) -> ResearchResult:
+    """Finds documents for the keywords that pass the filter and returns the k best chunks."""
     if k <= 0:
         raise ValueError("k must be > 0")
     keywords = normalize_keywords(keywords)
     if not keywords:
         raise ValueError("keywords must not be empty")
 
-    documents = source.search(keywords, config.max_documents)
+    documents = source.search(keywords, config.max_documents, search_filter)
     if not documents:
         return ResearchResult((), ("Keine Treffer",))
 

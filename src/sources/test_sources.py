@@ -87,6 +87,19 @@ class TestBuildArxivUrl(unittest.TestCase):
         url = sources.build_arxiv_url(["uml"], 5)
         self.assertTrue(url.startswith("https://export.arxiv.org/api/query?"))
 
+    def test_url_date_from_only(self):
+        params = query_params(sources.build_arxiv_url(["uml"], 5, published_from=date(2023, 1, 1)))
+        self.assertEqual(params["search_query"], 'all:"uml" AND submittedDate:[202301010000 TO 999912312359]')
+
+    def test_url_date_range(self):
+        params = query_params(sources.build_arxiv_url(["uml"], 5, (), date(2023, 1, 1), date(2024, 6, 30)))
+        self.assertEqual(params["search_query"], 'all:"uml" AND submittedDate:[202301010000 TO 202406302359]')
+
+    def test_url_date_with_categories(self):
+        params = query_params(sources.build_arxiv_url(["uml"], 5, ("cs.SE",), published_to=date(2020, 12, 31)))
+        self.assertEqual(params["search_query"],
+                         '(all:"uml") AND (cat:cs.SE) AND submittedDate:[199101010000 TO 202012312359]')
+
     def test_url_empty_keywords(self):
         with self.assertRaises(ValueError):
             sources.build_arxiv_url([], 5)
@@ -190,6 +203,18 @@ class TestDocument(unittest.TestCase):
         self.assertEqual(document.text, "Title")
 
 
+class TestSearchFilter(unittest.TestCase):
+    def test_filter_defaults_restrict_nothing(self):
+        self.assertEqual(sources.SearchFilter(), sources.SearchFilter(None, None, (), False))
+
+    def test_filter_from_after_to(self):
+        with self.assertRaises(ValueError):
+            sources.SearchFilter(published_from=date(2024, 1, 1), published_to=date(2023, 1, 1))
+
+    def test_filter_same_day(self):
+        self.assertEqual(sources.SearchFilter(date(2024, 1, 1), date(2024, 1, 1)).published_from, date(2024, 1, 1))
+
+
 class FakeFetch:
     def __init__(self, response="", error=None):
         self.response = response
@@ -218,6 +243,16 @@ class TestArxivSource(unittest.TestCase):
         sources.ArxivSource(fetch=fetch).search(["uml"], 5)
         self.assertEqual(len(fetch.urls), 1)
 
+    def test_search_filter_categories_override_source(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(categories=("cs.SE",), fetch=fetch).search(["uml"], 5, sources.SearchFilter(categories=("cs.AI",)))
+        self.assertEqual(query_params(fetch.urls[0])["search_query"], '(all:"uml") AND (cat:cs.AI)')
+
+    def test_search_filter_dates_in_url(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(fetch=fetch).search(["uml"], 5, sources.SearchFilter(published_from=date(2023, 1, 1)))
+        self.assertIn("submittedDate:[202301010000", query_params(fetch.urls[0])["search_query"])
+
     def test_search_network_error(self):
         source = sources.ArxivSource(fetch=FakeFetch(error=URLError("no route")))
         with self.assertRaises(sources.SourceError):
@@ -227,6 +262,20 @@ class TestArxivSource(unittest.TestCase):
         fetch = FakeFetch(feed())
         sources.ArxivSource(fetch=fetch).search(["  UML ", "uml"], 5)
         self.assertEqual(query_params(fetch.urls[0])["search_query"], 'all:"UML"')
+
+    def test_search_peer_reviewed_only(self):
+        source = sources.ArxivSource(fetch=FakeFetch(feed(ENTRY_OLD_ID, ENTRY_UML)))
+        documents = source.search(["uml"], 5, sources.SearchFilter(peer_reviewed_only=True))
+        self.assertEqual([document.id for document in documents], ["1409.6928"])
+
+    def test_search_peer_reviewed_only_fetches_more(self):
+        fetch = FakeFetch(feed())
+        sources.ArxivSource(fetch=fetch).search(["uml"], 5, sources.SearchFilter(peer_reviewed_only=True))
+        self.assertEqual(query_params(fetch.urls[0])["max_results"], str(5 * sources.PEER_REVIEW_OVERFETCH))
+
+    def test_search_peer_reviewed_only_respects_max_results(self):
+        source = sources.ArxivSource(fetch=FakeFetch(feed(ENTRY_UML, ENTRY_UML, ENTRY_UML)))
+        self.assertEqual(len(source.search(["uml"], 2, sources.SearchFilter(peer_reviewed_only=True))), 2)
 
     def test_search_returns_documents(self):
         source = sources.ArxivSource(fetch=FakeFetch(feed(ENTRY_UML)))

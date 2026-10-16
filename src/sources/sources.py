@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import date
-from typing import Callable
+from typing import Callable, Optional
 from urllib.parse import urlencode
 
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
@@ -12,6 +12,7 @@ ARXIV_ERROR_PREFIX = "https://arxiv.org/api/errors"
 ATOM = "{http://www.w3.org/2005/Atom}"
 ARXIV = "{http://arxiv.org/schemas/atom}"
 USER_AGENT = "AlgorithmusProjekt/0.1"
+PEER_REVIEW_OVERFETCH = 3
 
 
 class SourceError(Exception):
@@ -43,6 +44,19 @@ class Document:
         return f"{self.title}\n\n{self.abstract}" if self.abstract else self.title
 
 
+@dataclass(frozen=True)
+class SearchFilter:
+    """Restricts a search; empty fields mean no restriction."""
+    published_from: Optional[date] = None
+    published_to: Optional[date] = None
+    categories: tuple[str, ...] = ()
+    peer_reviewed_only: bool = False
+
+    def __post_init__(self):
+        if self.published_from and self.published_to and self.published_from > self.published_to:
+            raise ValueError("published_from must not be after published_to")
+
+
 def normalize_keywords(keywords: list[str]) -> list[str]:
     """Strips and collapses whitespace, drops empty keywords and case-insensitive duplicates."""
     result = []
@@ -56,8 +70,9 @@ def normalize_keywords(keywords: list[str]) -> list[str]:
     return result
 
 
-def build_arxiv_url(keywords: list[str], max_results: int, categories: tuple[str, ...] = ()) -> str:
-    """Builds the arXiv query URL; keywords are OR-combined, categories restrict the search."""
+def build_arxiv_url(keywords: list[str], max_results: int, categories: tuple[str, ...] = (),
+                    published_from: Optional[date] = None, published_to: Optional[date] = None) -> str:
+    """Builds the arXiv query URL; keywords are OR-combined, categories and dates restrict the search."""
     if not keywords:
         raise ValueError("keywords must not be empty")
     if max_results <= 0:
@@ -68,6 +83,10 @@ def build_arxiv_url(keywords: list[str], max_results: int, categories: tuple[str
     if categories:
         category_filter = " OR ".join(f"cat:{category}" for category in categories)
         query = f"({query}) AND ({category_filter})"
+    if published_from or published_to:
+        start = (published_from or date(1991, 1, 1)).strftime("%Y%m%d")
+        end = (published_to or date(9999, 12, 31)).strftime("%Y%m%d")
+        query = f"{query} AND submittedDate:[{start}0000 TO {end}2359]"
 
     params = {
         "search_query": query,
@@ -138,8 +157,9 @@ class Source(ABC):
     name: str
 
     @abstractmethod
-    def search(self, keywords: list[str], max_results: int) -> list[Document]:
-        """Returns up to max_results documents for the keywords."""
+    def search(self, keywords: list[str], max_results: int,
+               search_filter: Optional[SearchFilter] = None) -> list[Document]:
+        """Returns up to max_results documents for the keywords that pass the filter."""
 
 
 class ArxivSource(Source):
@@ -150,11 +170,19 @@ class ArxivSource(Source):
         self.categories = categories
         self.fetch = fetch
 
-    def search(self, keywords: list[str], max_results: int) -> list[Document]:
-        """Returns up to max_results arXiv documents for the keywords."""
-        url = build_arxiv_url(normalize_keywords(keywords), max_results, self.categories)
+    def search(self, keywords: list[str], max_results: int,
+               search_filter: Optional[SearchFilter] = None) -> list[Document]:
+        """Returns up to max_results arXiv documents; dates and categories are filtered by arXiv itself."""
+        search_filter = search_filter or SearchFilter()
+        fetch_count = max_results * PEER_REVIEW_OVERFETCH if search_filter.peer_reviewed_only else max_results
+        url = build_arxiv_url(normalize_keywords(keywords), fetch_count, search_filter.categories or self.categories,
+                              search_filter.published_from, search_filter.published_to)
         try:
             xml_text = self.fetch(url)
         except OSError as error:
             raise SourceError(f"arXiv is not reachable: {error}") from error
-        return parse_arxiv_feed(xml_text)
+
+        documents = parse_arxiv_feed(xml_text)
+        if search_filter.peer_reviewed_only:
+            documents = [document for document in documents if document.peer_reviewed]
+        return documents[:max_results]

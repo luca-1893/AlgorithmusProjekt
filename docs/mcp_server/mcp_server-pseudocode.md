@@ -13,10 +13,12 @@ ENDE
 // Quelle und Einbetter werden übergeben, damit Tests ohne Netzwerk laufen
 
 
-FUNKTION research_papers(schlagwörter, k, frage)
+FUNKTION research_papers(schlagwörter, k, frage, veröffentlicht_ab, nur_begutachtet)
     EINGABE:  schlagwörter – 2 bis 8 englische Fachbegriffe vom Sprachmodell
               k            – Anzahl gewünschter Abschnitte, 1 bis MAX_K (20)
               frage        – ursprüngliche Frage in beliebiger Sprache, darf leer sein
+              veröffentlicht_ab – "JJJJ" oder "JJJJ-MM-TT", leer = keine Grenze
+              nur_begutachtet   – WAHR: nur Paper mit Zeitschriftenverweis oder DOI
     AUSGABE:  {hits: [...], warnings: [...]} als JSON
 
     WENN k < 1 ODER k > MAX_K:
@@ -24,8 +26,9 @@ FUNKTION research_papers(schlagwörter, k, frage)
                                           // schützt vor riesigen Antworten,
                                           // die die Token-Ersparnis zunichtemachen
     VERSUCHE:
-        ergebnis ← recherchiere(schlagwörter, k, quelle, einbetter, frage, konfiguration)
-    BEI ungültiger Eingabe:   TOOL-FEHLER mit der Meldung
+        suchfilter ← Suchfilter(ab = Datum aus veröffentlicht_ab, nur_begutachtet)
+        ergebnis ← recherchiere(schlagwörter, k, quelle, einbetter, frage, konfiguration, suchfilter)
+    BEI ungültiger Eingabe (auch unlesbares Datum): TOOL-FEHLER mit der Meldung
     BEI Quellenfehler:        TOOL-FEHLER "Recherche-Quelle nicht erreichbar: …"
     GIB ergebnis als Dict ZURÜCK
 ENDE

@@ -3,14 +3,14 @@ import unittest
 from datetime import date
 from unittest import mock
 
-from sources import Document, Source, SourceError
+from sources import Document, SearchFilter, Source, SourceError
 from vector_search import Embedder
 
 HAS_FASTMCP = importlib.util.find_spec("fastmcp") is not None
 if HAS_FASTMCP:
     from fastmcp import Client
 
-    from mcp_server.mcp_server import MAX_K, build_server, default_embedder
+    from mcp_server.mcp_server import MAX_K, build_server, default_embedder, parse_date
 
 UML = Document("1", "UML class diagrams", "Class diagrams describe classes in UML.",
                ("Ada",), date(2020, 1, 1), "https://arxiv.org/abs/1", "arxiv")
@@ -24,8 +24,10 @@ class FakeSource(Source):
     def __init__(self, documents=(), error=None):
         self.documents = list(documents)
         self.error = error
+        self.filters = []
 
-    def search(self, keywords, max_results):
+    def search(self, keywords, max_results, search_filter=None):
+        self.filters.append(search_filter)
         if self.error:
             raise self.error
         return self.documents[:max_results]
@@ -53,6 +55,15 @@ class TestMcpServer(unittest.IsolatedAsyncioTestCase):
     async def test_tool_default_k_is_five(self):
         result = await self.call(build_server(FakeSource(MANY)), {"keywords": ["uml"]})
         self.assertEqual(len(result.structured_content["hits"]), 5)
+
+    async def test_tool_filter_reaches_source(self):
+        source = FakeSource([UML])
+        await self.call(build_server(source), {"keywords": ["uml"], "published_after": "2023", "peer_reviewed_only": True})
+        self.assertEqual(source.filters[0], SearchFilter(published_from=date(2023, 1, 1), peer_reviewed_only=True))
+
+    async def test_tool_invalid_date(self):
+        result = await self.call(build_server(FakeSource([UML])), {"keywords": ["uml"], "published_after": "letztes Jahr"})
+        self.assertTrue(result.is_error)
 
     async def test_tool_is_listed_read_only(self):
         async with Client(build_server(FakeSource())) as client:
@@ -86,6 +97,22 @@ class TestMcpServer(unittest.IsolatedAsyncioTestCase):
         embedder = RecordingEmbedder()
         await self.call(build_server(FakeSource([UML]), embedder), {"keywords": ["uml"], "question": "Was sind Klassendiagramme?"})
         self.assertEqual(embedder.calls[0], (["Was sind Klassendiagramme?"], "query"))
+
+
+@unittest.skipUnless(HAS_FASTMCP, "fastmcp needs Python 3.10 or newer, use .venv")
+class TestParseDate(unittest.TestCase):
+    def test_parse_date_empty(self):
+        self.assertIsNone(parse_date("  "))
+
+    def test_parse_date_full(self):
+        self.assertEqual(parse_date("2023-05-17"), date(2023, 5, 17))
+
+    def test_parse_date_invalid(self):
+        with self.assertRaises(ValueError):
+            parse_date("17.05.2023")
+
+    def test_parse_date_year(self):
+        self.assertEqual(parse_date("2023"), date(2023, 1, 1))
 
 
 @unittest.skipUnless(HAS_FASTMCP, "fastmcp needs Python 3.10 or newer, use .venv")

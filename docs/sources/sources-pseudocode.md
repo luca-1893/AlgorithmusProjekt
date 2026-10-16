@@ -17,10 +17,23 @@ ENDE
 // Laufzeit: O(L), L = Gesamtlänge aller Schlagwörter; Nachschlagen in der Menge O(1)
 
 
-FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
+STRUKTUR Suchfilter
+    veröffentlicht_ab  – frühestes Datum der Erstveröffentlichung, LEER = keine Grenze
+    veröffentlicht_bis – spätestes Datum, LEER = keine Grenze
+    kategorien         – arXiv-Kategorien, leer = Standard der Quelle
+    nur_begutachtet    – WAHR: nur Dokumente mit Zeitschriftenverweis oder DOI
+
+    WENN veröffentlicht_ab > veröffentlicht_bis: FEHLER "Zeitraum ungültig"
+ENDE
+// Zeitraum und Kategorien filtert arXiv selbst, nur_begutachtet das Programm danach
+// Bekannte Grenzen: Seitenzahl ist kein Filter, sie steht nur unregelmäßig im Kommentarfeld
+
+
+FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien, ab, bis)
     EINGABE:  schlagwörter – normalisierte, nicht leere Liste
               max_treffer  – Anzahl gewünschter Dokumente, > 0
               kategorien   – Liste von arXiv-Kategorien, z. B. cs.SE, darf leer sein
+              ab, bis      – Datumsgrenzen, beide dürfen LEER sein
     AUSGABE:  URL der arXiv-Abfrage
 
     WENN schlagwörter leer:
@@ -35,6 +48,8 @@ FUNKTION baue_arxiv_url(schlagwörter, max_treffer, kategorien)
     WENN kategorien nicht leer:
         filter ← jede Kategorie als cat:kategorie, verbunden mit OR
         suche  ← (suche) AND (filter)
+    WENN ab oder bis gesetzt:
+        suche ← suche AND submittedDate:[ab, sonst 1991-01-01, 00:00 TO bis, sonst 9999-12-31, 23:59]
 
     GIB Basis-URL + search_query=suche, start=0, max_results=max_treffer,
         sortBy=relevance, sortOrder=descending   (URL-kodiert) ZURÜCK
@@ -84,26 +99,33 @@ ENDE
 
 SCHNITTSTELLE Quelle
     name                                  – Name der Quelle, z. B. "arxiv"
-    suche(schlagwörter, max_treffer) → Liste von Dokument
+    suche(schlagwörter, max_treffer, suchfilter) → Liste von Dokument
 ENDE
 // Jede weitere Quelle (OpenAlex, Semantic Scholar) setzt dieselbe Schnittstelle um;
 // die Pipeline kennt nur die Schnittstelle
 
 
-FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer)
+FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer, suchfilter)
     EINGABE:  schlagwörter – Liste von Strings, roh vom LLM
               max_treffer  – Anzahl gewünschter Dokumente, > 0
+              suchfilter   – Suchfilter oder LEER (dann keine Einschränkung)
     AUSGABE:  Liste von Dokument
 
     bereinigt ← normalisiere_schlagwörter(schlagwörter)
-    url       ← baue_arxiv_url(bereinigt, max_treffer, kategorien der Quelle)
+    abrufen   ← max_treffer · 3, WENN nur_begutachtet, SONST max_treffer
+                                          // nach dem Filtern sollen genug übrig bleiben
+    url       ← baue_arxiv_url(bereinigt, abrufen, kategorien des Filters, sonst der Quelle,
+                               veröffentlicht_ab, veröffentlicht_bis)
                                           // wirft bei leeren Schlagwörtern,
                                           // bevor ein Netzwerkaufruf passiert
     VERSUCHE:
         antwort ← HTTP-GET url
     BEI Netzwerkfehler oder Zeitüberschreitung:
         FEHLER "Quelle nicht erreichbar"
-    GIB lies_arxiv_feed(antwort) ZURÜCK
+    dokumente ← lies_arxiv_feed(antwort)
+    WENN nur_begutachtet:
+        dokumente ← nur die dokumente mit begutachtet = WAHR
+    GIB die ersten max_treffer von dokumente ZURÜCK
 ENDE
 // Laufzeit: ein HTTP-Aufruf, dominiert von Netzwerk und Antwortgröße
 // Bekannte Grenzen: nur Titel und Abstract (Volltext später); keine Drosselung zwischen
