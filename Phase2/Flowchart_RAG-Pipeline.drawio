@@ -7,10 +7,10 @@
         <mxCell id="start" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fillColor=#d5e8d4;strokeColor=#82b366;" value="Start: MCP-Tool wird aufgerufen" vertex="1">
           <mxGeometry x="360" y="20" width="240" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="in" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Eingabe: Schlagwörter, k, Frage (optional)" vertex="1">
+        <mxCell id="in" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Eingabe: Schlagwörter, k, Frage und Filter (optional)" vertex="1">
           <mxGeometry x="310" y="100" width="340" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="d_in" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Schlagwörter leer&lt;br/&gt;ODER k ≤ 0?" vertex="1">
+        <mxCell id="d_in" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R1: Schlagwörter leer ODER&lt;br/&gt;k nicht zwischen 1 und 20?" vertex="1">
           <mxGeometry x="380" y="180" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="err_in" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Fehlermeldung:&lt;br/&gt;'Ungültige Eingabe'" vertex="1">
@@ -19,10 +19,10 @@
         <mxCell id="norm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Schlagwörter normalisieren" vertex="1">
           <mxGeometry x="360" y="330" width="240" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Quelle (arXiv) mit den Schlagwörtern abfragen,&lt;br/&gt;höchstens max_dokumente, Titel und Abstract" vertex="1">
-          <mxGeometry x="310" y="420" width="340" height="70" as="geometry"/>
+        <mxCell id="api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Quelle (arXiv) mit Schlagwörtern und Filter abfragen,&lt;br/&gt;höchstens max_dokumente, Titel und Abstract&lt;br/&gt;(R3: nur begutachtet → dreifach holen, dann filtern)" vertex="1">
+          <mxGeometry x="300" y="415" width="360" height="80" as="geometry"/>
         </mxCell>
-        <mxCell id="d_api" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Quelle erreichbar und&lt;br/&gt;Antwort gültig?" vertex="1">
+        <mxCell id="d_api" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R2: Quelle erreichbar&lt;br/&gt;und Antwort gültig?" vertex="1">
           <mxGeometry x="380" y="530" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="err_api" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" value="Fehlermeldung:&lt;br/&gt;'Recherche-Quelle nicht erreichbar'" vertex="1">
@@ -31,7 +31,7 @@
         <mxCell id="end_err" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fillColor=#f8cecc;strokeColor=#b85450;" value="Ende: Fehler" vertex="1">
           <mxGeometry x="-145" y="385" width="130" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="d_docs" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Dokumente&lt;br/&gt;gefunden?" vertex="1">
+        <mxCell id="d_docs" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R4: Dokumente&lt;br/&gt;gefunden?" vertex="1">
           <mxGeometry x="380" y="670" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="out_none" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Ausgabe: leere Liste +&lt;br/&gt;Hinweis 'Keine Treffer'" vertex="1">
@@ -40,7 +40,7 @@
         <mxCell id="end_none" parent="1" style="rounded=1;whiteSpace=wrap;html=1;arcSize=40;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Ende: keine Treffer" vertex="1">
           <mxGeometry x="775" y="790" width="170" height="40" as="geometry"/>
         </mxCell>
-        <mxCell id="d_loop" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Noch unverarbeitete&lt;br/&gt;Dokumente?" vertex="1">
+        <mxCell id="d_loop" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="S1: Noch unverarbeitete&lt;br/&gt;Dokumente?" vertex="1">
           <mxGeometry x="380" y="830" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="load" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Titel und Abstract&lt;br/&gt;zu einem Text verbinden" vertex="1">
@@ -49,7 +49,7 @@
         <mxCell id="chunk" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="In überlappende Chunks zerlegen,&lt;br/&gt;Verweis aufs Dokument über die ID" vertex="1">
           <mxGeometry x="340" y="1090" width="280" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="d_chunks" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Chunks&lt;br/&gt;vorhanden?" vertex="1">
+        <mxCell id="d_chunks" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R5: Chunks&lt;br/&gt;vorhanden?" vertex="1">
           <mxGeometry x="380" y="1240" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="out_nosrc" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Ausgabe: leere Liste + Hinweis&lt;br/&gt;'Keine verwertbaren Quellen'" vertex="1">
@@ -61,10 +61,10 @@
         <mxCell id="bm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Invertierten Index aufbauen,&lt;br/&gt;Keyword-Vorauswahl per BM25:&lt;br/&gt;die besten m Chunks" vertex="1">
           <mxGeometry x="330" y="1400" width="300" height="70" as="geometry"/>
         </mxCell>
-        <mxCell id="d_emb" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Einbetter&lt;br/&gt;konfiguriert?" vertex="1">
+        <mxCell id="d_emb" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R6: Einbetter&lt;br/&gt;konfiguriert?" vertex="1">
           <mxGeometry x="380" y="1520" width="200" height="100" as="geometry"/>
         </mxCell>
-        <mxCell id="d_bmhit" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="BM25-Treffer&lt;br/&gt;vorhanden?" vertex="1">
+        <mxCell id="d_bmhit" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R7: BM25-Treffer&lt;br/&gt;vorhanden?" vertex="1">
           <mxGeometry x="840" y="1520" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="out_nokw" parent="1" style="shape=parallelogram;perimeter=parallelogramPerimeter;whiteSpace=wrap;html=1;fixedSize=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="Ausgabe: leere Liste + Hinweis&lt;br/&gt;'Kein Chunk enthält ein Schlagwort'" vertex="1">
@@ -76,7 +76,7 @@
         <mxCell id="bm_top" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Die besten k Chunks&lt;br/&gt;nach BM25-Score" vertex="1">
           <mxGeometry x="820" y="1700" width="240" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="d_cand" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="BM25-Treffer&lt;br/&gt;vorhanden?" vertex="1">
+        <mxCell id="d_cand" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R8: BM25-Treffer&lt;br/&gt;vorhanden?" vertex="1">
           <mxGeometry x="380" y="1680" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="cand_all" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Kandidaten = alle Chunks&lt;br/&gt;(nur die Vektorsuche entscheidet)" vertex="1">
@@ -85,10 +85,10 @@
         <mxCell id="cand_bm" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Kandidaten = BM25-Treffer" vertex="1">
           <mxGeometry x="360" y="1830" width="240" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="embed" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Voyage: Anfrage einbetten (Frage, sonst Schlagwörter; 'query'),&lt;br/&gt;Kandidaten einbetten ('document')" vertex="1">
+        <mxCell id="embed" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Voyage: Anfrage einbetten (R9: Frage, sonst Schlagwörter; 'query'),&lt;br/&gt;Kandidaten einbetten ('document')" vertex="1">
           <mxGeometry x="270" y="1930" width="420" height="60" as="geometry"/>
         </mxCell>
-        <mxCell id="d_embok" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Einbettung&lt;br/&gt;erfolgreich?" vertex="1">
+        <mxCell id="d_embok" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="R10: Einbettung&lt;br/&gt;erfolgreich?" vertex="1">
           <mxGeometry x="380" y="2040" width="200" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="fb" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" value="Hinweis setzen:&lt;br/&gt;'Vektorsuche nicht verfügbar, nur BM25'" vertex="1">
@@ -97,13 +97,13 @@
         <mxCell id="vec" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Vektorsuche: Cosine Similarity&lt;br/&gt;zwischen Anfrage und jedem Kandidaten,&lt;br/&gt;daraus eine zweite Rangliste" vertex="1">
           <mxGeometry x="310" y="2190" width="340" height="70" as="geometry"/>
         </mxCell>
-        <mxCell id="rrf" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Rangfusion (RRF) aus BM25- und Vektor-Rangliste,&lt;br/&gt;Scores auf 0 bis 1 normalisieren" vertex="1">
-          <mxGeometry x="290" y="2300" width="380" height="60" as="geometry"/>
+        <mxCell id="rrf" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Rangfusion (RRF) aus BM25- und Vektor-Rangliste,&lt;br/&gt;Scores auf 0 bis 1 normalisieren (R12: Gleichstand → kleinere Position)" vertex="1">
+          <mxGeometry x="260" y="2300" width="440" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="init" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Auswahl = leer" vertex="1">
           <mxGeometry x="380" y="2400" width="200" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="d_sel" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="Kandidaten übrig UND&lt;br/&gt;weniger als k gewählt?" vertex="1">
+        <mxCell id="d_sel" parent="1" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="S2: Kandidaten übrig UND&lt;br/&gt;weniger als k gewählt?" vertex="1">
           <mxGeometry x="360" y="2490" width="240" height="110" as="geometry"/>
         </mxCell>
         <mxCell id="pick" parent="1" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="Duplikat-Filter (MMR):&lt;br/&gt;Kandidaten wählen, der hoch bewertet ist und&lt;br/&gt;den bereits Gewählten am wenigsten ähnelt" vertex="1">
@@ -126,6 +126,9 @@
         </mxCell>
         <mxCell id="n3" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="Eingebettet werden nur die Kandidaten,&lt;br/&gt;nicht alle Chunks (ADR 0001)." vertex="1">
           <mxGeometry x="-125" y="2050" width="250" height="50" as="geometry"/>
+        </mxCell>
+        <mxCell id="n5" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="R1 bis R12: Entscheidungsregeln,&lt;br/&gt;S1, S2: Schleifen;&lt;br/&gt;siehe Phase2/Pseudocode.md" vertex="1">
+          <mxGeometry x="745" y="20" width="230" height="60" as="geometry"/>
         </mxCell>
         <mxCell id="n4" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="Kein Token-Budget als Parameter:&lt;br/&gt;Die Antwortgröße ist durch k und die&lt;br/&gt;Chunk-Größe begrenzt." vertex="1">
           <mxGeometry x="-115" y="2505" width="230" height="70" as="geometry"/>

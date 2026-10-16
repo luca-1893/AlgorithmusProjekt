@@ -15,7 +15,7 @@ Ziele:
 - weniger Halluzinationen, weil das Modell auf belegten Quellen antwortet
 - weniger Tokens und kürzere Laufzeit, weil die Vorauswahl algorithmisch passiert
 
-## Geplante Bausteine
+## Bausteine
 
 | # | Baustein | Verfahren |
 |---|---|---|
@@ -33,7 +33,7 @@ Die Pipeline arbeitet ohne Token-Budget: Die Größe der Antwort ist durch `k` u
 
 ## Stand
 
-Das Projekt ist in der Konzeptphase, es gibt noch keinen Code. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
+Phase 3 (erste Implementierung) ist umgesetzt: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit über 240 Unittests. Offen sind die Datenbank-Anbindung, die Gewichtung nach Metadaten und die Evaluation. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
 
 ## Hackathon-Phasen
 
@@ -51,10 +51,28 @@ Das Projekt ist in der Konzeptphase, es gibt noch keinen Code. Aufgaben und Fort
 ```
 AlgorithmusProjekt/
 ├── Phase2/
-│   └── Flowchart_RAG-Pipeline.drawio   # Flowchart der Pipeline (Anfrage, Indexaufbau)
+│   ├── Flowchart_RAG-Pipeline.drawio   # Flowchart mit Entscheidungsregeln R1–R12
+│   └── Pseudocode.md                   # Gesamtablauf, Start-/Endbedingungen, Regeln
+├── Phase3/
+│   └── Prototyp.ipynb                  # lauffähiger Prototyp
+├── src/
+│   ├── bm25/            # Tokenizer, invertierter Index, BM25, top_m
+│   ├── chunking/        # Chunks mit Überlappung
+│   ├── sources/         # arXiv-Anbindung, Dokumente, Suchfilter
+│   ├── vector_search/   # Cosinus, Top-k, Voyage-Einbetter, MMR
+│   ├── ranking/         # Rangfusion (RRF), Normalisierung
+│   ├── pipeline/        # verbindet alle Bausteine
+│   ├── mcp_server/      # MCP-Tool research_papers
+│   └── storage/         # PostgreSQL-Verbindung
+├── sql/                 # SQL-Dateien (Luca)
 ├── docs/
-│   ├── journal.md          # Arbeitsjournal
-│   └── uml/                # UML-Diagramme (PlantUML)
+│   ├── <modul>/         # Pseudocode und Formelsammlungen je Modul
+│   ├── adr/             # Architekturentscheidungen
+│   ├── storage/         # Anforderungen an die SQL-Dateien
+│   ├── journal.md       # Arbeitsjournal
+│   └── uml/             # UML-Diagramme (PlantUML)
+├── .mcp.json            # MCP-Tool für Claude Code (macOS/Linux-Pfade)
+├── requirements.txt
 ├── README.md
 └── LICENSE
 ```
@@ -70,7 +88,18 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-In PyCharm `.venv/bin/python` als Interpreter wählen. Für die Vektorsuche muss `VOYAGE_API_KEY` gesetzt sein, z. B. in `~/.zshenv`; ohne Schlüssel arbeitet die Pipeline nur mit BM25.
+Unter Windows (PowerShell):
+
+```
+py -3.15 -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+setx VOYAGE_API_KEY "dein-schlüssel"
+```
+
+`setx` gilt erst in neu geöffneten Terminals. Die Pfade in `.mcp.json` sind für macOS/Linux; unter Windows dort `.venv\\Scripts\\python.exe` eintragen.
+
+In PyCharm `.venv/bin/python` (Windows: `.venv\Scripts\python.exe`) als Interpreter wählen. Für die Vektorsuche muss `VOYAGE_API_KEY` gesetzt sein, z. B. in `~/.zshenv`; ohne Schlüssel arbeitet die Pipeline nur mit BM25.
 
 ## Prototyp
 
