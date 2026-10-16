@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "recherche": {
+      "command": ".venv/bin/python",
+      "args": ["-m", "mcp_server"],
+      "env": {
+        "PYTHONPATH": "src",
+        "VOYAGE_API_KEY": "${VOYAGE_API_KEY}"
+      }
+    }
+  }
+}
