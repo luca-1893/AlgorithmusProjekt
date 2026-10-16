@@ -67,9 +67,14 @@ Python 3.15 und eine virtuelle Umgebung im Projektordner:
 brew install python@3.15
 python3.15 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
 In PyCharm `.venv/bin/python` als Interpreter wählen. Für die Vektorsuche muss `VOYAGE_API_KEY` gesetzt sein, z. B. in `~/.zshenv`; ohne Schlüssel arbeitet die Pipeline nur mit BM25.
+
+## Prototyp
+
+`Phase3/Prototyp.ipynb` zeigt die Bausteine einzeln, die ganze Pipeline gegen arXiv (nur BM25 und hybrid), die JSON-Ausgabe, eine Schätzung der Token-Ersparnis und die Fehlerfälle. Starten mit `jupyter notebook Phase3/Prototyp.ipynb` aus der aktivierten Umgebung.
 
 ## Tests ausführen
 
