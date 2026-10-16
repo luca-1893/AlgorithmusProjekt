@@ -111,6 +111,10 @@ class TestResultToDict(unittest.TestCase):
             "published": "2020-01-01",
             "url": "https://arxiv.org/abs/1",
             "source": "arxiv",
+            "categories": [],
+            "peer_reviewed": False,
+            "journal_ref": "",
+            "doi": "",
             "chunk_position": 0,
             "text": " ".join(UML.text.split()),
         })

@@ -18,9 +18,13 @@ ENTRY_UML = """
   <link href="https://arxiv.org/pdf/1409.6928v1" rel="related" type="application/pdf" title="pdf"/>
   <summary>The Unified Modeling Language (UML) is rapidly
     emerging as a de-facto standard.</summary>
+  <category term="cs.SE" scheme="http://arxiv.org/schemas/atom"/>
+  <category term="cs.LO" scheme="http://arxiv.org/schemas/atom"/>
   <published>2014-09-24T12:36:10Z</published>
+  <arxiv:journal_ref>UML'98 Beyond the notation. 1998</arxiv:journal_ref>
   <author><name>Andy Evans</name></author>
   <author><name>Robert France</name></author>
+  <arxiv:doi>10.1007/978-3-540-48480-6_26</arxiv:doi>
 </entry>
 """
 ENTRY_OLD_ID = """
@@ -134,6 +138,9 @@ class TestParseArxivFeed(unittest.TestCase):
             published=date(2014, 9, 24),
             url="https://arxiv.org/abs/1409.6928v1",
             source="arxiv",
+            categories=("cs.SE", "cs.LO"),
+            journal_ref="UML'98 Beyond the notation. 1998",
+            doi="10.1007/978-3-540-48480-6_26",
         )])
 
     def test_parse_invalid_xml(self):
@@ -146,6 +153,10 @@ class TestParseArxivFeed(unittest.TestCase):
 
     def test_parse_old_style_id(self):
         self.assertEqual(sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0].id, "cs/0112017")
+
+    def test_parse_preprint_without_journal_ref_and_doi(self):
+        document = sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0]
+        self.assertEqual((document.categories, document.journal_ref, document.doi), ((), "", ""))
 
     def test_parse_skips_incomplete_entry(self):
         ids = [document.id for document in sources.parse_arxiv_feed(feed(ENTRY_WITHOUT_TITLE, ENTRY_UML))]
@@ -160,6 +171,15 @@ class TestDocument(unittest.TestCase):
         document = sources.Document("x", "Title", "", (), date(2024, 1, 1), "u", "arxiv")
         with self.assertRaises(AttributeError):
             document.title = "anders"
+
+    def test_document_peer_reviewed_with_doi(self):
+        self.assertTrue(sources.Document("x", "T", "", (), date(2024, 1, 1), "u", "arxiv", doi="10.1/x").peer_reviewed)
+
+    def test_document_peer_reviewed_with_journal_ref(self):
+        self.assertTrue(sources.Document("x", "T", "", (), date(2024, 1, 1), "u", "arxiv", journal_ref="J").peer_reviewed)
+
+    def test_document_preprint_is_not_peer_reviewed(self):
+        self.assertFalse(sources.Document("x", "T", "", (), date(2024, 1, 1), "u", "arxiv").peer_reviewed)
 
     def test_document_text(self):
         document = sources.parse_arxiv_feed(feed(ENTRY_OLD_ID))[0]

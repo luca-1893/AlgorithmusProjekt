@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_ERROR_PREFIX = "https://arxiv.org/api/errors"
 ATOM = "{http://www.w3.org/2005/Atom}"
+ARXIV = "{http://arxiv.org/schemas/atom}"
 USER_AGENT = "AlgorithmusProjekt/0.1"
 
 
@@ -27,6 +28,14 @@ class Document:
     published: date
     url: str
     source: str
+    categories: tuple[str, ...] = ()
+    journal_ref: str = ""
+    doi: str = ""
+
+    @property
+    def peer_reviewed(self) -> bool:
+        """True if the paper has a journal reference or DOI, i.e. was published beyond the preprint."""
+        return bool(self.journal_ref or self.doi)
 
     @property
     def text(self) -> str:
@@ -96,13 +105,16 @@ def parse_arxiv_feed(xml_text: str) -> list[Document]:
             published=date.fromisoformat(published[:10]),
             url=_alternate_link(entry) or entry_id,
             source="arxiv",
+            categories=tuple(category.get("term", "") for category in entry.findall(f"{ATOM}category")),
+            journal_ref=_text(entry, "journal_ref", ARXIV),
+            doi=_text(entry, "doi", ARXIV),
         ))
     return documents
 
 
-def _text(element: ET.Element, tag: str) -> str:
+def _text(element: ET.Element, tag: str, namespace: str = ATOM) -> str:
     """Returns the whitespace-normalized text of a child element, or an empty string."""
-    child = element.find(f"{ATOM}{tag}")
+    child = element.find(f"{namespace}{tag}")
     return " ".join(child.text.split()) if child is not None and child.text else ""
 
 

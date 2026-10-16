@@ -52,6 +52,10 @@ STRUKTUR Dokument
     veröffentlicht – Datum der Erstveröffentlichung
     url           – Link auf die Abstract-Seite
     quelle        – Name der Quelle, hier "arxiv"
+    kategorien    – arXiv-Kategorien, z. B. cs.SE, darf leer sein
+    zeitschrift   – Zeitschriften- oder Konferenzverweis, leer bei reinen Preprints
+    doi           – DOI, leer wenn keine vergeben
+    begutachtet   – WAHR, wenn zeitschrift oder doi gesetzt ist
     text          – titel und abstract, durch eine Leerzeile getrennt
 ENDE
 // Unveränderlich nach dem Erzeugen; id dient später zur Duplikaterkennung in der Datenbank
@@ -71,6 +75,7 @@ FUNKTION lies_arxiv_feed(xml_text)
         WENN id, titel ODER veröffentlicht fehlen:
             WEITER                        // unvollständigen Eintrag überspringen
         id ← Teil nach "/abs/", Versionsendung "vN" entfernt
+        kategorien, zeitschrift, doi aus den Feldern category, arxiv:journal_ref, arxiv:doi
         dokumente.anhängen(Dokument aus den Feldern des Eintrags)
     GIB dokumente ZURÜCK                  // Feed ohne Einträge ergibt []
 ENDE
