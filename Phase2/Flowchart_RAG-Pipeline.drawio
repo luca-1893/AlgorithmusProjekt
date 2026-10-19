@@ -133,8 +133,8 @@
         <mxCell id="n1" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="Weitere Quellen setzen dieselbe&lt;br/&gt;Schnittstelle um." vertex="1">
           <mxGeometry x="-60" y="560" width="220" height="50" as="geometry"/>
         </mxCell>
-        <mxCell id="n2" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="BM25 gewichtet seltene Schlagwörter stärker&lt;br/&gt;und dämpft bloße Wiederholung." vertex="1">
-          <mxGeometry x="-125" y="1640" width="250" height="60" as="geometry"/>
+        <mxCell id="n2" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="BM25 gewichtet seltene Schlagwörter stärker&lt;br/&gt;und dämpft bloße Wiederholung.&lt;br/&gt;Einschränkung (ADR 0004): Auf Abstracts&lt;br/&gt;sortiert die Vorauswahl nur Chunks ohne&lt;br/&gt;Schlagwort aus; die IDF hängt am Treffersatz." vertex="1">
+          <mxGeometry x="-130" y="1615" width="280" height="100" as="geometry"/>
         </mxCell>
         <mxCell id="n3" parent="1" style="shape=note;whiteSpace=wrap;html=1;size=14;align=left;spacingLeft=6;fillColor=#f5f5f5;strokeColor=#999999;fontColor=#333333;" value="Eingebettet werden nur die Kandidaten,&lt;br/&gt;nicht alle Chunks (ADR 0001)." vertex="1">
           <mxGeometry x="-125" y="2285" width="250" height="50" as="geometry"/>

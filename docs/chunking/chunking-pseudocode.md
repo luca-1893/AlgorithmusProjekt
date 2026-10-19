@@ -26,6 +26,11 @@ FUNKTION zerlege_in_chunks(text, chunk_größe, überlappung)
 ENDE
 // Laufzeit: O(n), n = Anzahl Wörter; jedes Wort landet in höchstens
 // ⌈chunk_größe / schritt⌉ Chunks, bei überlappung < chunk_größe / 2 also in höchstens zwei
+// Warum überlappung = 40 (Messung auf 160 Volltexten, messungen/2026-10-19_review-pr24/):
+// Ein Satz mit höchstens überlappung + 1 Wörtern liegt immer ganz in einem Chunk; mit 40 sind
+// das 88 % aller Sätze (Median 20 Wörter). Relevante Sätze ganz: 0 → 83 %, 20 → 92 %, 40 → 95 %,
+// 60 → 97 %. Ab 40 steigen dafür vor allem die doppelten Wörter in der Auswahl
+// (40 → 7 %, 60 → 11 %, 100 → 22 %). 40 liegt also am Knick.
 // Bekannte Grenzen: Einheit sind Wörter, nicht LLM-Tokens; Absätze und Zeilenumbrüche
 // gehen verloren; Chunks können mitten im Satz beginnen und enden
 

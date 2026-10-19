@@ -33,7 +33,9 @@ Die Pipeline arbeitet ohne Token-Budget: Die Größe der Antwort ist durch `k` u
 
 ## Stand
 
-Phase 3 (erste Implementierung) ist umgesetzt: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit über 240 Unittests. Offen sind die Datenbank-Anbindung, die Gewichtung nach Metadaten und die Evaluation. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
+Phase 3 (erste Implementierung) ist umgesetzt: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit über 240 Unittests. Offen sind die Datenbank-Anbindung, die Gewichtung nach Metadaten und die Evaluation.
+
+**Bekannte Einschränkungen** (ADR 0004, Messungen in `messungen/2026-10-19_review-pr24/`): Auf Titel und Abstract filtert die BM25-Vorauswahl nur Chunks ganz ohne Schlagwort aus, und das Hauptschlagwort bekommt eine IDF nahe null, weil arXiv die Dokumente gerade wegen der Schlagwörter liefert. Beides löst erst der Volltext mit Datenbank-Cache. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
 
 ## Hackathon-Phasen
 
@@ -65,6 +67,7 @@ AlgorithmusProjekt/
 │   ├── mcp_server/      # MCP-Tool research_papers
 │   └── storage/         # PostgreSQL-Verbindung
 ├── sql/                 # SQL-Dateien (Luca)
+├── messungen/           # Messskripte und Ergebnisse, z. B. zum Review von PR #24
 ├── docs/
 │   ├── <modul>/         # Pseudocode und Formelsammlungen je Modul
 │   ├── adr/             # Architekturentscheidungen

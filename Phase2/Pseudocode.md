@@ -176,4 +176,13 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 - Kein Token-Budget als Parameter; die Antwortgröße ist durch k und die Chunk-Größe begrenzt.
 - Dokumente und Vektoren veralten nicht: Derselbe Text mit demselben Modell ergibt denselben Vektor. Veralten kann nur das Suchergebnis, weil täglich neue Paper erscheinen; deshalb gilt das Höchstalter von 7 Tagen nur für den Such-Cache.
 - Relevanz (BM25-Score, Cosinus-Ähnlichkeit) wird nie gespeichert, weil sie von der Anfrage abhängt.
+
+## Bekannte Einschränkungen (ADR 0004)
+
+Gemessen mit 8 echten arXiv-Anfragen (`messungen/2026-10-19_review-pr24/`):
+
+- **Die Keyword-Vorauswahl greift auf Abstracts kaum.** 20 Abstracts ergeben nur 22 bis 29 Chunks, also weniger als m = 50. `top_m` sortiert nur Chunks ganz ohne Schlagwort aus (rund 10 %). BM25 ist hier vor allem ein Ranking-Signal für die Rangfusion. Mit Volltext sortiert die Vorauswahl 90 bis 96 % aus.
+- **Die IDF hängt am Treffersatz.** arXiv liefert die Dokumente wegen der Schlagwörter, das Hauptschlagwort steht deshalb in fast jedem Chunk und bekommt eine IDF nahe null. BM25 rankt dann nach seltenen Nebenbegriffen. Volltext entschärft das, gelöst ist es erst mit einer IDF über alle gespeicherten Chunks.
+
+Geplant nach dem SQL: Volltext mit Cache, danach die IDF über die Datenbank.
 - arXiv ist englischsprachig; deutsche Schlagwörter finden kaum etwas, die Vektorsuche gleicht das nur für die Frage aus.
