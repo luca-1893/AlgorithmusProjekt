@@ -45,7 +45,7 @@ Ein Dokument speichern; gibt es die ID schon, werden die Felder aktualisiert. Pa
 
 ### 3. `find_cached_search.sql`
 
-Liefert die Dokument-IDs einer früheren Suche mit denselben Schlagwörtern und demselben Filter, aber nur, wenn sie jünger als `%(max_age)s` ist. Überleg, wie du die Schlagwörter vergleichbar machst (Reihenfolge, Groß-/Kleinschreibung).
+Liefert die Dokument-IDs einer früheren Suche mit denselben Schlagwörtern und demselben Filter, aber nur, wenn sie jünger als `%(max_age)s` ist. Entschieden: 7 Tage (R13 in `Phase2/Pseudocode.md`). Dokumente und Embeddings selbst veralten nicht. Überleg, wie du die Schlagwörter vergleichbar machst (Reihenfolge, Groß-/Kleinschreibung).
 
 ### 4. `insert_run.sql`
 

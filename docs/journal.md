@@ -57,3 +57,8 @@
 - Filter: `SearchFilter` mit Zeitraum, Kategorien und „nur begutachtet“. Zeitraum und Kategorien filtert arXiv selbst (`submittedDate`, `cat:`), „nur begutachtet“ behält nur Paper mit Zeitschriftenverweis oder DOI; dafür wird das Dreifache geholt. Seitenzahl ist kein Filter, weil sie nur unregelmäßig im Kommentarfeld steht. Durchgereicht über Pipeline und MCP-Tool (`published_after`, `peer_reviewed_only`). Live geprüft. Beobachtung: Zwei arXiv-Einträge (1409.6928 und 1409.6919) tragen dieselbe DOI, die DOI eignet sich also zur Duplikaterkennung in der Datenbank.
 - PostgreSQL 18.6 lokal per Homebrew eingerichtet, Datenbanken `algorithmusprojekt` und `algorithmusprojekt_test`, Treiber `psycopg` 3.3.6. `src/storage/` baut die Verbindung auf (`DATABASE_URL`) und führt SQL-Dateien aus `sql/` aus; das SQL selbst schreibt Luca, die Anforderungen dafür stehen in `docs/storage/sql-aufgaben.md`.
 - Phase-2-Nachzug: `Phase2/Pseudocode.md` mit Eingaben und Parametern, Start- und Endbedingungen, Gesamtalgorithmus, Entscheidungsregeln R1 bis R12, Schleifen S1 und S2, Komplexität und Annahmen. Die Rauten im Flowchart tragen dieselben Nummern. README-Projektstruktur und -Stand aktualisiert, Einrichtung unter Windows ergänzt.
+
+## 2026-10-19
+
+- Cache-Verhalten entschieden und in `Phase2/Pseudocode.md` und das Flowchart übernommen (R13 bis R16): Der Such-Cache gilt 7 Tage, weil täglich neue Paper erscheinen. Dokumente und Embeddings veralten nicht und bleiben unbegrenzt, Embeddings gebunden an Modell und Chunk-Parameter. Ist die Datenbank nicht erreichbar, läuft die Recherche ohne Cache weiter. Umsetzung folgt mit dem SQL.
+- DataGrip auf dem Mac installiert; System-Prompt für einen SQL-Tutor-Thread erstellt, weil Luca SQL von Grund auf lernt.

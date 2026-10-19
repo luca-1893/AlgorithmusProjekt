@@ -1,6 +1,6 @@
 # Pseudocode: Recherche-Pipeline
 
-Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`. Die Regelnummern R1 bis R12 und die Schleifen S1 und S2 stehen auch an den Rauten im Flowchart. Den Pseudocode der einzelnen Funktionen gibt es pro Modul unter `docs/<modul>/<modul>-pseudocode.md`.
+Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`. Die Regelnummern R1 bis R16 und die Schleifen S1 und S2 stehen auch an den Rauten im Flowchart. Den Pseudocode der einzelnen Funktionen gibt es pro Modul unter `docs/<modul>/<modul>-pseudocode.md`.
 
 ## Eingaben und Parameter
 
@@ -16,10 +16,13 @@ Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`.
 | `k1`, `b` | BM25-Parameter: Sättigung, Längenbremse | 1,5, 0,75 |
 | `k_rrf` | Glättung der Rangfusion | 60 |
 | `λ` | MMR-Gewicht Relevanz gegen Vielfalt | 0,7 |
+| `max_alter_suche` | wie lange ein Eintrag im Such-Cache gilt | 7 Tage |
 
 ## Startbedingung
 
-Ein MCP-Client (z. B. Claude Code) ruft das Tool `research_papers` mit mindestens einem Schlagwort auf. Die Vektorsuche ist nur aktiv, wenn `VOYAGE_API_KEY` gesetzt ist; sonst arbeitet der Algorithmus nur mit BM25.
+Ein MCP-Client (z. B. Claude Code) ruft das Tool `research_papers` mit mindestens einem Schlagwort auf. Die Vektorsuche ist nur aktiv, wenn `VOYAGE_API_KEY` gesetzt ist; sonst arbeitet der Algorithmus nur mit BM25. Die Datenbank ist ebenfalls optional; ohne sie läuft jede Suche direkt gegen arXiv.
+
+Die Cache-Regeln R13 bis R16 sind entworfen, die Umsetzung folgt, sobald die SQL-Dateien stehen (Karte #20).
 
 ## Endbedingungen
 
@@ -38,12 +41,24 @@ ALGORITHMUS Recherche(schlagwörter, k, frage, suchfilter)
     WENN schlagwörter leer ODER k < 1 ODER k > 20:
         FEHLER "Ungültige Eingabe"                          → Ende: Fehler
     schlagwörter ← normalisiere_schlagwörter(schlagwörter)
+    hinweise     ← leere Liste
 
-    // R2, R3: Dokumente holen
+    // R13, R15: erst im Cache nachsehen
+    dokumente ← LEER
     VERSUCHE:
-        dokumente ← quelle.suche(schlagwörter, max_dokumente, suchfilter)
-    BEI Netzwerkfehler, Zeitüberschreitung oder ungültiger Antwort:
-        FEHLER "Recherche-Quelle nicht erreichbar"          → Ende: Fehler
+        dokumente ← cache.suche(schlagwörter, suchfilter, jünger als max_alter_suche)
+    BEI Datenbank nicht erreichbar:
+        hinweise.anhängen("Cache nicht verfügbar")      // weiter ohne Cache
+
+    WENN dokumente LEER:
+        // R2, R3: Dokumente von der Quelle holen
+        VERSUCHE:
+            dokumente ← quelle.suche(schlagwörter, max_dokumente, suchfilter)
+        BEI Netzwerkfehler, Zeitüberschreitung oder ungültiger Antwort:
+            FEHLER "Recherche-Quelle nicht erreichbar"      → Ende: Fehler
+        // R14
+        WENN Datenbank erreichbar:
+            cache.speichere(schlagwörter, suchfilter, dokumente)
 
     // R4
     WENN dokumente leer:
@@ -78,7 +93,9 @@ ALGORITHMUS Recherche(schlagwörter, k, frage, suchfilter)
     anfrage ← frage, WENN frage nicht leer, SONST schlagwörter verbunden
     VERSUCHE:
         anfrage_vektor      ← einbetten([anfrage], "query")
-        kandidaten_vektoren ← einbetten(Texte der kandidaten, "document")
+        // R16: nur Kandidaten ohne gespeicherten Vektor einbetten
+        kandidaten_vektoren ← gespeicherte Vektoren (gleiches Modell, gleiche Chunk-Parameter),
+                              fehlende per einbetten(…, "document") ergänzen und speichern
     BEI Einbettungsfehler:
         RÜCKGABE nur_bm25(bm25, k, ["Vektorsuche nicht verfügbar, nur BM25"])
 
@@ -123,6 +140,12 @@ ENDE
 | R10 | Einbettung schlägt fehl (Schlüssel ungültig, Limit, Netz) | Hinweis setzen, weiter wie nur BM25 (R7) |
 | R11 | Wort aus der Anfrage kommt in keinem Chunk vor | trägt nichts zum BM25-Score bei; leere Dokumente werden beim Indexaufbau übersprungen |
 | R12 | Gleichstand bei Score oder Rang | kleinere Position bzw. kleinere Dok-ID zuerst |
+| R13 | gleiche Suche (gleiche Schlagwörter, gleicher Filter) im Cache und jünger als 7 Tage | Dokumente aus der Datenbank, arXiv nicht fragen |
+| R14 | Dokumente kamen von der Quelle | Dokumente und Suche in der Datenbank speichern; bekannte Dokumente aktualisieren (DOI und Zeitschriftenverweis kommen oft später dazu) |
+| R15 | Datenbank nicht erreichbar | ohne Cache weiter, Hinweis „Cache nicht verfügbar“; die Recherche scheitert nicht daran |
+| R16 | Vektor zu Chunk, Modell und Chunk-Parametern schon gespeichert | wiederverwenden statt neu einbetten |
+
+R13 bis R16 sind entworfen, aber noch nicht umgesetzt; sie hängen an den SQL-Dateien.
 
 ## Schleifen
 
@@ -137,10 +160,11 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 
 | Schritt | Laufzeit |
 |---|---|
+| Cache abfragen | eine Datenbankabfrage; bei Treffer entfällt der arXiv-Aufruf |
 | Quelle abfragen | ein HTTP-Aufruf, dominiert vom Netzwerk |
 | Chunking und Indexaufbau | O(T), T = Wörter aller Dokumente |
 | BM25-Vorauswahl | O(P + C · \|q\| + C · log m), P = Postings der Anfragewörter, C = Kandidaten, \|q\| = Anfragewörter |
-| Einbetten | zwei API-Aufrufe (Anfrage, Kandidaten) |
+| Einbetten | zwei API-Aufrufe (Anfrage, Kandidaten); mit R16 nur für noch nicht gespeicherte Chunks |
 | Vektorsuche | O(m · d), d = Vektorlänge (1024) |
 | Rangfusion | O(m · log m) |
 | MMR | O(k · m · d) |
@@ -150,4 +174,6 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 - Nur Titel und Abstract, kein Volltext.
 - Chunks werden in Wörtern gemessen, nicht in LLM-Tokens.
 - Kein Token-Budget als Parameter; die Antwortgröße ist durch k und die Chunk-Größe begrenzt.
+- Dokumente und Vektoren veralten nicht: Derselbe Text mit demselben Modell ergibt denselben Vektor. Veralten kann nur das Suchergebnis, weil täglich neue Paper erscheinen; deshalb gilt das Höchstalter von 7 Tagen nur für den Such-Cache.
+- Relevanz (BM25-Score, Cosinus-Ähnlichkeit) wird nie gespeichert, weil sie von der Anfrage abhängt.
 - arXiv ist englischsprachig; deutsche Schlagwörter finden kaum etwas, die Vektorsuche gleicht das nur für die Frage aus.
