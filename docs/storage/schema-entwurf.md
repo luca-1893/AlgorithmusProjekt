@@ -71,3 +71,5 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 
 - Python liefert fehlende Werte als `""`; vor dem Speichern muss daraus `None` werden.
 - Die ID vergibt Postgres; Python braucht sie für die Chunks zurück (`RETURNING`, bei `upsert_document.sql`).
+- Vektoren: R16 in `Phase2/Pseudocode.md` will gespeicherte Vektoren je Chunk, Modell und Chunk-Parametern wiederverwenden. Wo und wie sie gespeichert werden, ist offen (ADR 0002, `pgvector`).
+- R13 legt das Höchstalter des Such-Caches auf 7 Tage fest.
