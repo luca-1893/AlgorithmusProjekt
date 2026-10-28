@@ -7,7 +7,7 @@ Entwurf für `sql/schema.sql`, bevor das SQL geschrieben wird. Die Begründungen
 ```
 documents ──1:n──▶ chunks
     │
-    └──n:m──▶ Such-Cache (offen)
+    └──n:m──▶ searches (über search_documents)
 
 runs (Messläufe, unabhängig, offen)
 ```
@@ -46,7 +46,20 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 
 ## Such-Cache
 
-*offen*
+Der Cache ersetzt nur den Aufruf der Quelle: Er merkt sich, welche Dokumente eine Suche geliefert hat. BM25 und Vektorsuche laufen danach bei jedem Aufruf neu.
+
+### `searches`
+
+*offen: Spalten für Schlagwörter, Filter und Zeitpunkt*
+
+### `search_documents`
+
+| Spalte | Typ | NULL? | Regel | Begründung |
+|---|---|---|---|---|
+| search_id | integer | nein | FK → `searches`, `ON DELETE CASCADE` | E15 |
+| document_id | integer | nein | FK → `documents`, `ON DELETE` *offen* | |
+| position | integer | nein | | E14 |
+| | | | PRIMARY KEY `(search_id, document_id)` | |
 
 ## `runs`
 
@@ -67,6 +80,10 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 | 9 | Chunk-Parameter am Dokument, `NOT NULL` | Alle Chunks eines Dokuments teilen die Parameter, am Chunk wären sie redundant. Veraltete Chunks findet ein einfaches `WHERE`. Fehlen die Parameter, soll das Speichern scheitern. |
 | 10 | Chunks werden mit ihrem Dokument gelöscht | Ein Chunk ohne sein Dokument ergibt keinen Sinn (`ON DELETE CASCADE`). |
 | 11 | Chunk-Parameter auch in der Datenbank prüfen | Dieselbe Regel wie `split_into_chunks` als zweite Absicherung. `BETWEEN` scheidet aus, weil es `overlap = chunk_size` erlauben würde. |
+| 12 | Such-Cache als m:n über `search_documents` | Eine Suche liefert viele Dokumente, ein Dokument kommt in vielen Suchen vor. |
+| 13 | Schlagwörter in Python normalisieren (kleinschreiben, sortieren) | `normalize_keywords` behält Groß- und Kleinschreibung und Reihenfolge. Speichern (R14) und Nachschlagen (R13) müssen exakt dieselbe Normalisierung nutzen. |
+| 14 | Reihenfolge der Quelle speichern, keinen BM25-Score | arXiv liefert nach Relevanz sortiert; das relevanteste Dokument steht vorn. Ein BM25-Score hängt an Anfrage, Chunk und Korpus, nicht an Suche und Dokument. |
+| 15 | Alte Suchen löschen, Dokumente behalten | Suchen sind nach 7 Tagen veraltet (R13), ihre Zuordnungen gehen per `CASCADE` mit. Dokumente leben länger, weil andere Suchen sie liefern können. |
 
 ## Offene Punkte
 
