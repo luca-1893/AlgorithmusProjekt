@@ -57,7 +57,7 @@ Der Cache ersetzt nur den Aufruf der Quelle: Er merkt sich, welche Dokumente ein
 | Spalte | Typ | NULL? | Regel | Begründung |
 |---|---|---|---|---|
 | search_id | integer | nein | FK → `searches`, `ON DELETE CASCADE` | E15 |
-| document_id | integer | nein | FK → `documents`, `ON DELETE` *offen* | |
+| document_id | integer | nein | FK → `documents`, `ON DELETE CASCADE` | E16 |
 | position | integer | nein | | E14 |
 | | | | PRIMARY KEY `(search_id, document_id)` | |
 
@@ -84,6 +84,7 @@ Der Cache ersetzt nur den Aufruf der Quelle: Er merkt sich, welche Dokumente ein
 | 13 | Schlagwörter in Python normalisieren (kleinschreiben, sortieren) | `normalize_keywords` behält Groß- und Kleinschreibung und Reihenfolge. Speichern (R14) und Nachschlagen (R13) müssen exakt dieselbe Normalisierung nutzen. |
 | 14 | Reihenfolge der Quelle speichern, keinen BM25-Score | arXiv liefert nach Relevanz sortiert; das relevanteste Dokument steht vorn. Ein BM25-Score hängt an Anfrage, Chunk und Korpus, nicht an Suche und Dokument. |
 | 15 | Alte Suchen löschen, Dokumente behalten | Suchen sind nach 7 Tagen veraltet (R13), ihre Zuordnungen gehen per `CASCADE` mit. Dokumente leben länger, weil andere Suchen sie liefern können. |
+| 16 | Zuordnungen gehen mit dem Dokument | Ohne `CASCADE` würde der Fremdschlüssel das Löschen eines Dokuments blockieren, solange eine Suche darauf zeigt. |
 
 ## Offene Punkte
 
