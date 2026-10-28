@@ -31,8 +31,8 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 | journal_ref | text | ja | `NULL` statt `''` | E4 |
 | origin | text | nein | `CHECK`: `html`, `pdf`, `abstract` | E7, E8 |
 | full_text | text | ja | `NULL` genau dann, wenn `origin = 'abstract'` | E6, E8 |
-| chunk_size | integer | nein | | E9 |
-| overlap | integer | nein | | E9 |
+| chunk_size | integer | nein | `CHECK (chunk_size > 0)` | E9 |
+| overlap | integer | nein | `CHECK (overlap >= 0 AND overlap < chunk_size)` | E9, E11 |
 | fetched_at | timestamptz | nein | `DEFAULT` aktueller Zeitpunkt | Zeitpunkt mit Zeitzone, von der Datenbank gesetzt. |
 
 ## `chunks`
@@ -66,6 +66,7 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 | 8 | Dokumente ohne Volltext behalten (`origin = 'abstract'`) | Robust: Titel und Abstract sind chunkbar, das Dokument bleibt find- und zitierbar, der Volltext lässt sich später nachholen. |
 | 9 | Chunk-Parameter am Dokument, `NOT NULL` | Alle Chunks eines Dokuments teilen die Parameter, am Chunk wären sie redundant. Veraltete Chunks findet ein einfaches `WHERE`. Fehlen die Parameter, soll das Speichern scheitern. |
 | 10 | Chunks werden mit ihrem Dokument gelöscht | Ein Chunk ohne sein Dokument ergibt keinen Sinn (`ON DELETE CASCADE`). |
+| 11 | Chunk-Parameter auch in der Datenbank prüfen | Dieselbe Regel wie `split_into_chunks` als zweite Absicherung. `BETWEEN` scheidet aus, weil es `overlap = chunk_size` erlauben würde. |
 
 ## Offene Punkte
 
