@@ -78,7 +78,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | Spalte | Typ | NULL? | Regel | Begründung |
 |---|---|---|---|---|
 | *ID* | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
-| run_at | *offen* | | | |
+| run_at | timestamptz | nein | von Python übergeben, kein `DEFAULT` | E25 |
 | variant | text | nein | `CHECK`: `agent_websearch`, `bm25`, `hybrid` | E20 |
 | keywords | text[] | ja | `NULL` genau dann, wenn `variant = 'agent_websearch'` | E21 |
 | question | text | nein | | E22 |
@@ -116,6 +116,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | 22 | `question` immer gesetzt | Varianten sind nur über dieselbe Frage vergleichbar. |
 | 23 | Tokens exakt, Dauer in Millisekunden, alles `integer` und nicht negativ | Gerundete Werte verwischen das Delta (z. B. 4.237 gegen 4.611 Tokens); ganze Sekunden würden BM25 (0,1 s) und hybrid (1,3 s) kaum trennen. `integer` reicht bis rund 2,1 Mrd., also für Hunderttausende Tokens und Stunden in ms. Dauer = vom Senden des Prompts bis zur Antwort des Agenten. |
 | 24 | `found_source` darf `NULL` sein | Ein Lauf wird zuerst gespeichert und später bewertet; `NULL` heißt „noch nicht bewertet“. |
+| 25 | `run_at` ist der Startzeitpunkt, von Python übergeben | Gespeichert wird erst nach der Antwort; ein `DEFAULT` würde das Ende eintragen. Ohne `DEFAULT` fällt ein vergessener Startzeitpunkt sofort auf (wie E9). |
 
 ## Offene Punkte
 
