@@ -9,8 +9,10 @@ documents ──1:n──▶ chunks ──1:n──▶ chunk_embeddings
     │
     └──n:m──▶ searches (über search_documents)
 
-runs (Messläufe, unabhängig, offen)
+runs (Messläufe, unabhängig)
 ```
+
+Ausführlich mit allen Spalten: [`schema.drawio`](schema.drawio) (mit draw.io öffnen).
 
 ## `documents`
 
