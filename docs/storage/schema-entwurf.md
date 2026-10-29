@@ -50,7 +50,17 @@ Der Cache ersetzt nur den Aufruf der Quelle: Er merkt sich, welche Dokumente ein
 
 ### `searches`
 
-*offen: Spalten für Schlagwörter, Filter und Zeitpunkt*
+Eine Zeile ist ein Aufruf der Quelle. Wiederholt sich eine Suche nach Ablauf des Höchstalters, entsteht eine neue Zeile.
+
+| Spalte | Typ | NULL? | Regel | Begründung |
+|---|---|---|---|---|
+| *ID* | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
+| keywords | text[] | nein | normalisiert: kleingeschrieben, alphabetisch sortiert | E13 |
+| published_from | date | ja | `NULL` = keine Untergrenze | E18 |
+| published_to | date | ja | `NULL` = keine Obergrenze | E18 |
+| categories | text[] | nein | leeres Array = kein Filter, sortiert | E13, E5 |
+| peer_reviewed_only | boolean | nein | | Python liefert immer `True` oder `False`. |
+| searched_at | timestamptz | nein | `DEFAULT` aktueller Zeitpunkt | E19 |
 
 ### `search_documents`
 
@@ -85,6 +95,9 @@ Der Cache ersetzt nur den Aufruf der Quelle: Er merkt sich, welche Dokumente ein
 | 14 | Reihenfolge der Quelle speichern, keinen BM25-Score | arXiv liefert nach Relevanz sortiert; das relevanteste Dokument steht vorn. Ein BM25-Score hängt an Anfrage, Chunk und Korpus, nicht an Suche und Dokument. |
 | 15 | Alte Suchen löschen, Dokumente behalten | Suchen sind nach 7 Tagen veraltet (R13), ihre Zuordnungen gehen per `CASCADE` mit. Dokumente leben länger, weil andere Suchen sie liefern können. |
 | 16 | Zuordnungen gehen mit dem Dokument | Ohne `CASCADE` würde der Fremdschlüssel das Löschen eines Dokuments blockieren, solange eine Suche darauf zeigt. |
+| 17 | Wiederholte Suche als neue Zeile, ohne Verweis auf die alte | Neue Ergebnisse sind möglich. Gleiche Suchen erkennt man an gleichen, normalisierten Parametern; die alte Zeile wird ohnehin aufgeräumt (E15). |
+| 18 | Fehlender Zeitraum als `NULL` | `None` im `SearchFilter` heißt „keine Grenze“. Beim Wiederfinden braucht der Vergleich `IS NOT DISTINCT FROM`, weil `NULL = NULL` nicht `true` ist. |
+| 19 | `searched_at` als `timestamptz`, von der Datenbank gesetzt | Ein `date` ist für das Höchstalter zu ungenau (23:59 gegen 00:01). Gesetzt und verglichen wird mit derselben Uhr, der der Datenbank. |
 
 ## Offene Punkte
 
