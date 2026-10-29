@@ -33,7 +33,7 @@ Die Pipeline arbeitet ohne Token-Budget: Die Größe der Antwort ist durch `k` u
 
 ## Stand
 
-Phase 3 (erste Implementierung) ist umgesetzt: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit über 240 Unittests. Offen sind die Datenbank-Anbindung, die Gewichtung nach Metadaten und die Evaluation.
+Phase 3 (erste Implementierung) ist umgesetzt: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit über 240 Unittests. Das Datenbankschema ist entworfen (sechs Tabellen, siehe [Datenbank](#datenbank)); umgesetzt ist bisher die Tabelle `documents`. Offen sind die übrigen Tabellen und SQL-Abfragen, die Anbindung des Caches in Python, die Gewichtung nach Metadaten und die Evaluation.
 
 **Bekannte Einschränkungen** (ADR 0004, Messungen in `messungen/2026-10-19_review-pr24/`): Auf Titel und Abstract filtert die BM25-Vorauswahl nur Chunks ganz ohne Schlagwort aus, und das Hauptschlagwort bekommt eine IDF nahe null, weil arXiv die Dokumente gerade wegen der Schlagwörter liefert. Beides löst erst der Volltext mit Datenbank-Cache. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
 
@@ -66,12 +66,13 @@ AlgorithmusProjekt/
 │   ├── pipeline/        # verbindet alle Bausteine
 │   ├── mcp_server/      # MCP-Tool research_papers
 │   └── storage/         # PostgreSQL-Verbindung
-├── sql/                 # SQL-Dateien (Luca)
+├── sql/                 # SQL-Dateien (Luca): schema.sql, Abfragen
+│   └── uebungen/        # Testfälle zum Ausprobieren in DataGrip
 ├── messungen/           # Messskripte und Ergebnisse, z. B. zum Review von PR #24
 ├── docs/
 │   ├── <modul>/         # Pseudocode und Formelsammlungen je Modul
 │   ├── adr/             # Architekturentscheidungen
-│   ├── storage/         # Anforderungen an die SQL-Dateien
+│   ├── storage/         # SQL-Anforderungen, Schema-Entwurf, ER-Diagramm, SQL-Cheatsheet
 │   ├── journal.md       # Arbeitsjournal
 │   └── uml/             # UML-Diagramme (PlantUML)
 ├── .mcp.json            # MCP-Tool für Claude Code (macOS/Linux-Pfade)
@@ -139,7 +140,23 @@ brew services start postgresql@18
 /opt/homebrew/opt/postgresql@18/bin/createdb algorithmusprojekt_test
 ```
 
-Die SQL-Dateien liegen in `sql/`, die Anforderungen in `docs/storage/sql-aufgaben.md`.
+Das Schema hat sechs Tabellen: `documents` (ein Eintrag je Quelle, mit Volltext), `chunks`, `chunk_embeddings` (ein Vektor je Chunk und Modell), `searches` und `search_documents` (Such-Cache, 7 Tage gültig) sowie `runs` (Messläufe der Varianten `agent_websearch`, `bm25` und `hybrid`).
+
+| Datei | Inhalt | Stand |
+|---|---|---|
+| `docs/storage/sql-aufgaben.md` | Anforderungen an die SQL-Dateien | fertig |
+| `docs/storage/schema-entwurf.md` | Tabellen, Spalten und 29 begründete Entscheidungen | fertig |
+| `docs/storage/schema.drawio` | ER-Diagramm (mit draw.io öffnen) | fertig |
+| `docs/storage/sql-cheatsheet.md` | Syntax und Beispiele aus den SQL-Übungen | fertig |
+| `sql/schema.sql` | alle Tabellen, mehrfach ausführbar | `documents` umgesetzt |
+| `sql/uebungen/test_documents.sql` | Testfälle für die Regeln in `documents` | fertig |
+| `upsert_document.sql`, `find_cached_search.sql`, `insert_run.sql`, `kpi_by_variant.sql` | Abfragen für Cache und Evaluation | offen |
+
+Schema anlegen bzw. auf den aktuellen Stand prüfen (bestehende Tabellen und Daten bleiben unverändert):
+
+```
+psql -d algorithmusprojekt_test -f sql/schema.sql
+```
 
 ## Tests ausführen
 
