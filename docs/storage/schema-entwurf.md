@@ -5,7 +5,7 @@ Entwurf für `sql/schema.sql`, bevor das SQL geschrieben wird. Die Begründungen
 ## Übersicht
 
 ```
-documents ──1:n──▶ chunks
+documents ──1:n──▶ chunks ──1:n──▶ chunk_embeddings
     │
     └──n:m──▶ searches (über search_documents)
 
@@ -43,6 +43,18 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 | position | integer | nein | ab 0 | Reihenfolge im Dokument, wie `Chunk.position` in Python. |
 | text | text | nein | | |
 | | | | PRIMARY KEY `(document_id, position)` | |
+
+## `chunk_embeddings`
+
+Ein Chunk kann je Einbettungsmodell einen Vektor haben (R16).
+
+| Spalte | Typ | NULL? | Regel | Begründung |
+|---|---|---|---|---|
+| document_id | integer | nein | FK `(document_id, position)` → `chunks`, `ON DELETE CASCADE` | E27 |
+| position | integer | nein | ↑ | E27 |
+| model | text | nein | | E26 |
+| embedding | real[] | nein | Länge wird nicht geprüft | E28, E29 |
+| | | | PRIMARY KEY `(document_id, position, model)` | E26 |
 
 ## Such-Cache
 
@@ -117,10 +129,13 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | 23 | Tokens exakt, Dauer in Millisekunden, alles `integer` und nicht negativ | Gerundete Werte verwischen das Delta (z. B. 4.237 gegen 4.611 Tokens); ganze Sekunden würden BM25 (0,1 s) und hybrid (1,3 s) kaum trennen. `integer` reicht bis rund 2,1 Mrd., also für Hunderttausende Tokens und Stunden in ms. Dauer = vom Senden des Prompts bis zur Antwort des Agenten. |
 | 24 | `found_source` darf `NULL` sein | Ein Lauf wird zuerst gespeichert und später bewertet; `NULL` heißt „noch nicht bewertet“. |
 | 25 | `run_at` ist der Startzeitpunkt, von Python übergeben | Gespeichert wird erst nach der Antwort; ein `DEFAULT` würde das Ende eintragen. Ohne `DEFAULT` fällt ein vergessener Startzeitpunkt sofort auf (wie E9). |
+| 26 | Vektoren in eigener Tabelle, je Chunk und Modell | Vektoren verschiedener Modelle sind nicht vergleichbar (ADR 0001); wird ein zweites Modell getestet, hat ein Chunk zwei Vektoren. |
+| 27 | Vektoren werden mit ihrem Chunk gelöscht | Neue Chunk-Parameter erzeugen neue Chunks; die alten Vektoren gehen per `CASCADE` mit. Die Parameter müssen deshalb nicht am Vektor stehen. |
+| 28 | `real[]` statt `vector` aus `pgvector` | Passt zum Vorschlag in ADR 0002 (Ähnlichkeit in Python rechnen, `pgvector` in Phase 5 messen), braucht keine Erweiterung und lässt die getestete Logik in Python. Bei rund 50 Kandidaten ist die Geschwindigkeit kein Kriterium. |
+| 29 | Vektorlänge nicht in der Datenbank prüfen | Die Länge hängt vom Modell ab; eine feste Prüfung müsste bei jedem Modellwechsel geändert werden. |
 
 ## Offene Punkte
 
 - Python liefert fehlende Werte als `""`; vor dem Speichern muss daraus `None` werden.
 - Die ID vergibt Postgres; Python braucht sie für die Chunks zurück (`RETURNING`, bei `upsert_document.sql`).
-- Vektoren: R16 in `Phase2/Pseudocode.md` will gespeicherte Vektoren je Chunk, Modell und Chunk-Parametern wiederverwenden. Wo und wie sie gespeichert werden, ist offen (ADR 0002, `pgvector`).
 - R13 legt das Höchstalter des Such-Caches auf 7 Tage fest.
