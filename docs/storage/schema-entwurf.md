@@ -73,7 +73,20 @@ Eine Zeile ist ein Aufruf der Quelle. Wiederholt sich eine Suche nach Ablauf des
 
 ## `runs`
 
-*offen*
+Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
+
+| Spalte | Typ | NULL? | Regel | Begründung |
+|---|---|---|---|---|
+| *ID* | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
+| run_at | *offen* | | | |
+| variant | text | nein | `CHECK`: `agent_websearch`, `bm25`, `hybrid` | E20 |
+| keywords | text[] | ja | `NULL` genau dann, wenn `variant = 'agent_websearch'` | E21 |
+| question | text | nein | | E22 |
+| k | integer | ja | `CHECK (k BETWEEN 1 AND 20)`, `NULL` genau dann, wenn `variant = 'agent_websearch'` | E21 |
+| input_tokens | integer | nein | `CHECK (input_tokens >= 0)` | E23 |
+| output_tokens | integer | nein | `CHECK (output_tokens >= 0)` | E23 |
+| duration_ms | integer | nein | `CHECK (duration_ms >= 0)` | E23 |
+| found_source | boolean | ja | `NULL` = noch nicht bewertet | E24 |
 
 ## Entscheidungen
 
@@ -98,6 +111,11 @@ Eine Zeile ist ein Aufruf der Quelle. Wiederholt sich eine Suche nach Ablauf des
 | 17 | Wiederholte Suche als neue Zeile, ohne Verweis auf die alte | Neue Ergebnisse sind möglich. Gleiche Suchen erkennt man an gleichen, normalisierten Parametern; die alte Zeile wird ohnehin aufgeräumt (E15). |
 | 18 | Fehlender Zeitraum als `NULL` | `None` im `SearchFilter` heißt „keine Grenze“. Beim Wiederfinden braucht der Vergleich `IS NOT DISTINCT FROM`, weil `NULL = NULL` nicht `true` ist. |
 | 19 | `searched_at` als `timestamptz`, von der Datenbank gesetzt | Ein `date` ist für das Höchstalter zu ungenau (23:59 gegen 00:01). Gesetzt und verglichen wird mit derselben Uhr, der der Datenbank. |
+| 20 | Drei Varianten: `agent_websearch`, `bm25`, `hybrid` | Verglichen wird das eigene Tool mit dem Standardweg eines Agenten, der selbst im Web recherchiert. `hybrid` statt `vector_search`, weil die Variante BM25, Vektorsuche und Rangfusion kombiniert. |
+| 21 | Schlagwörter und `k` fehlen bei `agent_websearch` | Der Agent sucht selbst; eigene Schlagwörter und ein `k` gibt es nur mit dem Tool. |
+| 22 | `question` immer gesetzt | Varianten sind nur über dieselbe Frage vergleichbar. |
+| 23 | Tokens exakt, Dauer in Millisekunden, alles `integer` und nicht negativ | Gerundete Werte verwischen das Delta (z. B. 4.237 gegen 4.611 Tokens); ganze Sekunden würden BM25 (0,1 s) und hybrid (1,3 s) kaum trennen. `integer` reicht bis rund 2,1 Mrd., also für Hunderttausende Tokens und Stunden in ms. Dauer = vom Senden des Prompts bis zur Antwort des Agenten. |
+| 24 | `found_source` darf `NULL` sein | Ein Lauf wird zuerst gespeichert und später bewertet; `NULL` heißt „noch nicht bewertet“. |
 
 ## Offene Punkte
 
