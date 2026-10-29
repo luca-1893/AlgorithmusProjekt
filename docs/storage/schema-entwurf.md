@@ -20,7 +20,7 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 
 | Spalte | Typ | NULL? | Regel | Begründung |
 |---|---|---|---|---|
-| *ID* | integer, IDENTITY | nein | PRIMARY KEY | E1 |
+| id | integer, IDENTITY | nein | PRIMARY KEY | E1 |
 | source | text | nein | `UNIQUE (source, source_id)` | E1 |
 | source_id | text | nein | ↑ | E1, E2 |
 | doi | text | ja | nicht UNIQUE | E3, E4 |
@@ -68,7 +68,7 @@ Eine Zeile ist ein Aufruf der Quelle. Wiederholt sich eine Suche nach Ablauf des
 
 | Spalte | Typ | NULL? | Regel | Begründung |
 |---|---|---|---|---|
-| *ID* | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
+| id | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
 | keywords | text[] | nein | normalisiert: kleingeschrieben, alphabetisch sortiert | E13 |
 | published_from | date | ja | `NULL` = keine Untergrenze | E18 |
 | published_to | date | ja | `NULL` = keine Obergrenze | E18 |
@@ -91,7 +91,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 
 | Spalte | Typ | NULL? | Regel | Begründung |
 |---|---|---|---|---|
-| *ID* | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
+| id | integer, IDENTITY | nein | PRIMARY KEY | wie `documents` |
 | run_at | timestamptz | nein | von Python übergeben, kein `DEFAULT` | E25 |
 | variant | text | nein | `CHECK`: `agent_websearch`, `bm25`, `hybrid` | E20 |
 | keywords | text[] | ja | `NULL` genau dann, wenn `variant = 'agent_websearch'` | E21 |
