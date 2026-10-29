@@ -155,7 +155,7 @@ Das Schema hat sechs Tabellen: `documents` (ein Eintrag je Quelle, mit Volltext)
 Schema anlegen bzw. auf den aktuellen Stand prüfen (bestehende Tabellen und Daten bleiben unverändert):
 
 ```
-psql -d algorithmusprojekt_test -f sql/schema.sql
+/opt/homebrew/opt/postgresql@18/bin/psql -d algorithmusprojekt_test -f sql/schema.sql
 ```
 
 ## Tests ausführen
