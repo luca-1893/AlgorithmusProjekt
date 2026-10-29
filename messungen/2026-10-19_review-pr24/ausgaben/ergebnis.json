@@ -1,0 +1,516 @@
+[
+ {
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "woerter_median_top20": 144.0,
+  "woerter_max_top20": 286,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 25,
+    "top_m": 24,
+    "ohne_treffer": 1,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "class": 12,
+     "diagram": 13,
+     "semantics": 12,
+     "uml": 23
+    },
+    "idf": {
+     "class": 0.73,
+     "diagram": 0.66,
+     "semantics": 0.73,
+     "uml": 0.1
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 65,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 12,
+    "df": {
+     "class": 24,
+     "diagram": 22,
+     "semantics": 37,
+     "uml": 45
+    },
+    "idf": {
+     "class": 0.99,
+     "diagram": 1.08,
+     "semantics": 0.57,
+     "uml": 0.37
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 122,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 67,
+    "df": {
+     "class": 33,
+     "diagram": 31,
+     "semantics": 60,
+     "uml": 81
+    },
+    "idf": {
+     "class": 1.3,
+     "diagram": 1.36,
+     "semantics": 0.71,
+     "uml": 0.41
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "woerter_median_top20": 155.5,
+  "woerter_max_top20": 266,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 25,
+    "top_m": 23,
+    "ohne_treffer": 2,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "bm25": 3,
+     "information": 21,
+     "retrieval": 23
+    },
+    "idf": {
+     "bm25": 2.01,
+     "information": 0.19,
+     "retrieval": 0.1
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 64,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 8,
+    "df": {
+     "bm25": 13,
+     "information": 54,
+     "retrieval": 56
+    },
+    "idf": {
+     "bm25": 1.57,
+     "information": 0.18,
+     "retrieval": 0.14
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 124,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 65,
+    "df": {
+     "bm25": 28,
+     "information": 107,
+     "retrieval": 112
+    },
+    "idf": {
+     "bm25": 1.48,
+     "information": 0.15,
+     "retrieval": 0.11
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "retrieval augmented generation",
+   "hallucination"
+  ],
+  "woerter_median_top20": 183.0,
+  "woerter_max_top20": 263,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 25,
+    "top_m": 22,
+    "ohne_treffer": 3,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "augmented": 8,
+     "generation": 18,
+     "hallucination": 11,
+     "retrieval": 11
+    },
+    "idf": {
+     "augmented": 1.12,
+     "generation": 0.34,
+     "hallucination": 0.82,
+     "retrieval": 0.82
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 61,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 5,
+    "df": {
+     "augmented": 30,
+     "generation": 49,
+     "hallucination": 23,
+     "retrieval": 35
+    },
+    "idf": {
+     "augmented": 0.71,
+     "generation": 0.23,
+     "hallucination": 0.97,
+     "retrieval": 0.56
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 128,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 66,
+    "df": {
+     "augmented": 69,
+     "generation": 103,
+     "hallucination": 44,
+     "retrieval": 82
+    },
+    "idf": {
+     "augmented": 0.62,
+     "generation": 0.22,
+     "hallucination": 1.06,
+     "retrieval": 0.45
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "transformer",
+   "attention"
+  ],
+  "woerter_median_top20": 180.5,
+  "woerter_max_top20": 271,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 27,
+    "top_m": 23,
+    "ohne_treffer": 4,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "attention": 18,
+     "transformer": 22
+    },
+    "idf": {
+     "attention": 0.41,
+     "transformer": 0.22
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 67,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 8,
+    "df": {
+     "attention": 42,
+     "transformer": 46
+    },
+    "idf": {
+     "attention": 0.47,
+     "transformer": 0.38
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 128,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 66,
+    "df": {
+     "attention": 87,
+     "transformer": 87
+    },
+    "idf": {
+     "attention": 0.39,
+     "transformer": 0.39
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "graph neural network",
+   "molecule"
+  ],
+  "woerter_median_top20": 196.5,
+  "woerter_max_top20": 275,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 29,
+    "top_m": 24,
+    "ohne_treffer": 5,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "graph": 19,
+     "molecule": 9,
+     "network": 15,
+     "neural": 17
+    },
+    "idf": {
+     "graph": 0.43,
+     "molecule": 1.15,
+     "network": 0.66,
+     "neural": 0.54
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 69,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 11,
+    "df": {
+     "graph": 55,
+     "molecule": 17,
+     "network": 47,
+     "neural": 51
+    },
+    "idf": {
+     "graph": 0.23,
+     "molecule": 1.39,
+     "network": 0.39,
+     "neural": 0.31
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 129,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 69,
+    "df": {
+     "graph": 111,
+     "molecule": 22,
+     "network": 98,
+     "neural": 105
+    },
+    "idf": {
+     "graph": 0.15,
+     "molecule": 1.75,
+     "network": 0.28,
+     "neural": 0.21
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "reinforcement learning",
+   "robotics",
+   "sim-to-real"
+  ],
+  "woerter_median_top20": 187.5,
+  "woerter_max_top20": 275,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 28,
+    "top_m": 25,
+    "ohne_treffer": 3,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "learning": 23,
+     "reinforcement": 20,
+     "robotics": 7,
+     "simtoreal": 9
+    },
+    "idf": {
+     "learning": 0.21,
+     "reinforcement": 0.35,
+     "robotics": 1.35,
+     "simtoreal": 1.12
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 64,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 10,
+    "df": {
+     "learning": 54,
+     "reinforcement": 49,
+     "robotics": 21,
+     "simtoreal": 18
+    },
+    "idf": {
+     "learning": 0.18,
+     "reinforcement": 0.27,
+     "robotics": 1.11,
+     "simtoreal": 1.26
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 124,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 59,
+    "df": {
+     "learning": 92,
+     "reinforcement": 78,
+     "robotics": 36,
+     "simtoreal": 27
+    },
+    "idf": {
+     "learning": 0.3,
+     "reinforcement": 0.47,
+     "robotics": 1.23,
+     "simtoreal": 1.51
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "quantum error correction"
+  ],
+  "woerter_median_top20": 146.5,
+  "woerter_max_top20": 236,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 26,
+    "top_m": 24,
+    "ohne_treffer": 2,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "correction": 23,
+     "error": 23,
+     "quantum": 24
+    },
+    "idf": {
+     "correction": 0.14,
+     "error": 0.14,
+     "quantum": 0.1
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 61,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 9,
+    "df": {
+     "correction": 58,
+     "error": 58,
+     "quantum": 59
+    },
+    "idf": {
+     "correction": 0.06,
+     "error": 0.06,
+     "quantum": 0.04
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 122,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 69,
+    "df": {
+     "correction": 116,
+     "error": 118,
+     "quantum": 117
+    },
+    "idf": {
+     "correction": 0.05,
+     "error": 0.04,
+     "quantum": 0.05
+    }
+   }
+  }
+ },
+ {
+  "query": [
+   "federated learning",
+   "privacy",
+   "differential privacy"
+  ],
+  "woerter_median_top20": 141.5,
+  "woerter_max_top20": 219,
+  "stufen": {
+   "20": {
+    "docs": 20,
+    "chunks": 22,
+    "top_m": 21,
+    "ohne_treffer": 1,
+    "abgeschnitten_durch_m": 0,
+    "df": {
+     "differential": 16,
+     "federated": 13,
+     "learning": 13,
+     "privacy": 20
+    },
+    "idf": {
+     "differential": 0.33,
+     "federated": 0.53,
+     "learning": 0.53,
+     "privacy": 0.12
+    }
+   },
+   "50": {
+    "docs": 50,
+    "chunks": 63,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 10,
+    "df": {
+     "differential": 44,
+     "federated": 43,
+     "learning": 47,
+     "privacy": 57
+    },
+    "idf": {
+     "differential": 0.36,
+     "federated": 0.39,
+     "learning": 0.3,
+     "privacy": 0.11
+    }
+   },
+   "100": {
+    "docs": 100,
+    "chunks": 122,
+    "top_m": 50,
+    "ohne_treffer": null,
+    "abgeschnitten_durch_m": 69,
+    "df": {
+     "differential": 90,
+     "federated": 87,
+     "learning": 92,
+     "privacy": 114
+    },
+    "idf": {
+     "differential": 0.31,
+     "federated": 0.34,
+     "learning": 0.28,
+     "privacy": 0.07
+    }
+   }
+  }
+ }
+]
