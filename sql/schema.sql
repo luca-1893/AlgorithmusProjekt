@@ -25,22 +25,21 @@ CREATE TABLE IF NOT EXISTS documents (
 
 
 CREATE TABLE IF NOT EXISTS chunks (
-    document_id integer,
-    position integer PRIMARY KEY,
-    text text,
+    document_id integer NOT NULL,
+    position integer NOT NULL ,
+    text text NOT NULL ,
 
-    CONSTRAINT chunks_foreign_key_id FOREIGN KEY (documents_id) REFERENCES documents(id) ON DELETE CASCADE,
-    CONSTRAINT chunks_missing_document_id CHECK ( document_id IS NOT NULL ),
-    CONSTRAINT chunks_missing_position CHECK ( position IS NOT NULL ),
-    CONSTRAINT chunks_missing_text CHECK ( text IS NOT NULL ),
-    CONSTRAINT chunks_postion_begins_with_0 CHECK ( ? )
+    CONSTRAINT chunks_primary_key PRIMARY KEY (document_id, position),
+    CONSTRAINT chunks_document_foreign_key FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+    CONSTRAINT chunks_invalid_position CHECK ( position >= 0),
+    CONSTRAINT chunks_invalid_text CHECK (text <> '')
 );
 
 CREATE TABLE IF NOT EXISTS chunk_embeddings (
-    document_id integer,
-    position integer,
-    model text PRIMARY KEY,
-    embedding real[],
+    document_id integer NOT NULL ,
+    position integer NOT NULL ,
+    model text PRIMARY KEY NOT NULL ,
+    embedding real[] NOT NULL ,
 
     CONSTRAINT chunk_embeddings_missing_document_id CHECK (document_id IS NOT NULL),
     CONSTRAINT chunk_embeddings_missing_position CHECK ( position IS NOT NULL ),
