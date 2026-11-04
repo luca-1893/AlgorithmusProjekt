@@ -43,7 +43,7 @@ Eine Zeile ist ein **Eintrag bei einer Quelle** (z. B. ein arXiv-Eintrag), keine
 |---|---|---|---|---|
 | document_id | integer | nein | FK → `documents`, `ON DELETE CASCADE` | E10 |
 | position | integer | nein | ab 0 | Reihenfolge im Dokument, wie `Chunk.position` in Python. |
-| text | text | nein | | |
+| text | text | nein | `CHECK (text <> '')` | E30 |
 | | | | PRIMARY KEY `(document_id, position)` | |
 
 ## `chunk_embeddings`
@@ -135,6 +135,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | 27 | Vektoren werden mit ihrem Chunk gelöscht | Neue Chunk-Parameter erzeugen neue Chunks; die alten Vektoren gehen per `CASCADE` mit. Die Parameter müssen deshalb nicht am Vektor stehen. |
 | 28 | `real[]` statt `vector` aus `pgvector` | Passt zum Vorschlag in ADR 0002 (Ähnlichkeit in Python rechnen, `pgvector` in Phase 5 messen), braucht keine Erweiterung und lässt die getestete Logik in Python. Bei rund 50 Kandidaten ist die Geschwindigkeit kein Kriterium. |
 | 29 | Vektorlänge nicht in der Datenbank prüfen | Die Länge hängt vom Modell ab; eine feste Prüfung müsste bei jedem Modellwechsel geändert werden. |
+| 30 | Leere Chunks verbieten (`chunks_invalid_text`) | `NOT NULL` lässt `''` durch. Ein leerer Chunk hat keinen Mehrwert und würde BM25 und die Einbettung nur stören; fehlender Text wäre nach E4 ohnehin `NULL`, und das ist hier ausgeschlossen. |
 
 ## Offene Punkte
 
