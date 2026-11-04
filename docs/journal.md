@@ -84,3 +84,16 @@
 - `documents` in `sql/schema.sql` umgesetzt (IDENTITY, `UNIQUE (source, source_id)`, `CHECK` für Herkunft, Chunk-Parameter und „Volltext fehlt genau bei `origin = 'abstract'`“, `DEFAULT now()` und `'{}'`) und mit acht Testfällen in `sql/uebungen/test_documents.sql` geprüft: Alle Regeln greifen wie geplant.
 - Gelernt: Eine Schemaänderung kommt wegen `IF NOT EXISTS` erst nach einem `DROP` an, das nur in der Test-Datenbank und nie in `schema.sql` steht. Gescheiterte Inserts verbrauchen IDENTITY-Nummern. DataGrip bricht beim Ausführen mehrerer Statements nach dem ersten Fehler ab.
 - Nächster Schritt: `CHECK`-Regeln benennen, weil Namen wie `documents_check1` in Fehlermeldungen nicht verraten, welche Regel verletzt wurde; danach die übrigen fünf Tabellen. Dabei einheitlich schreiben: Schlüsselwörter durchgehend groß (`NOT NULL`, `DEFAULT`, `CHECK`), kein Leerzeichen vor Kommas, jedes Statement mit `;` abschließen.
+
+## 2026-11-02
+
+- `documents` auf einheitlichen Stil gebracht (Schlüsselwörter groß, Namen klein, `;` am Ende) und alle Constraints benannt: `documents_invalid_origin`, `…_chunk_size`, `…_overlap`, `…_full_text` und `documents_source_unique`. Mit Tabellennamen als Präfix, weil Index-Namen im ganzen Schema eindeutig sein müssen. Die acht Testfälle erneut ausgeführt; die Fehlermeldungen nennen jetzt die verletzte Regel.
+- `chunks` und `chunk_embeddings` begonnen. Erkannt: Der Fremdschlüssel von `chunk_embeddings` muss über `(document_id, position)` auf `chunks` zeigen, weil `position` allein keinen Chunk identifiziert; ein zusätzlicher Verweis auf `documents` ist überflüssig, das Löschen läuft über die Kette `documents` → `chunks` → `chunk_embeddings`.
+- Session bei Müdigkeit bewusst beendet statt Leichtsinnsfehler zu machen; Stand als Parknotiz festgehalten.
+
+## 2026-11-04
+
+- `chunks` fertiggestellt: Primärschlüssel `(document_id, position)` als benannte Zeile, Fremdschlüssel auf `documents (id)` mit `CASCADE`, `chunks_invalid_position` (ab 0) und `chunks_invalid_text`. Leere Texte sind verboten (E30), weil `NOT NULL` einen leeren String durchlässt und ein leerer Chunk BM25 und die Einbettung nur stört.
+- Elf Testfälle in `sql/uebungen/test_chunks.sql`, alle wie vorhergesagt: gleiche Position in verschiedenen Dokumenten erlaubt, Duplikat, negative Position, fehlendes Dokument, fehlende Werte, leerer Text und das Mitlöschen beim Löschen eines Dokuments.
+- Gelernt: Ein `CHECK` beschreibt, was gelten soll, nicht den Fehlerfall; `<>` ist ein Operator zwischen zwei Werten; Anführungszeichen gehören zur Schreibweise, nicht zum Wert.
+- Offen: `schema.sql` läuft als Ganzes noch nicht, weil der Entwurf für `chunk_embeddings` darin steht. Nächster Schritt: `chunk_embeddings` reparieren und die Datei zweimal komplett ausführen.
