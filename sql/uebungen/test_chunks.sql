@@ -66,4 +66,4 @@ DELETE FROM documents WHERE source = 'arxiv' AND source_id = '2001.00008';
 SELECT document_id, position, text FROM chunks ORDER BY document_id, position;
 
 -- Aufräumen, wenn fertig (Fall 8 aus test_documents.sql ist durch T11 schon gelöscht):
--- DELETE FROM chunks;
+--DELETE FROM chunks;

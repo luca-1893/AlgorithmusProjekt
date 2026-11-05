@@ -31,21 +31,17 @@ CREATE TABLE IF NOT EXISTS chunks (
 
     CONSTRAINT chunks_primary_key PRIMARY KEY (document_id, position),
     CONSTRAINT chunks_document_foreign_key FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    CONSTRAINT chunks_invalid_position CHECK ( position >= 0),
-    CONSTRAINT chunks_invalid_text CHECK (text <> '')
+    CONSTRAINT chunks_invalid_position CHECK ( position >= 0)
 );
 
 CREATE TABLE IF NOT EXISTS chunk_embeddings (
     document_id integer NOT NULL ,
     position integer NOT NULL ,
-    model text PRIMARY KEY NOT NULL ,
+    model text NOT NULL ,
     embedding real[] NOT NULL ,
 
-    CONSTRAINT chunk_embeddings_missing_document_id CHECK (document_id IS NOT NULL),
-    CONSTRAINT chunk_embeddings_missing_position CHECK ( position IS NOT NULL ),
-    CONSTRAINT chunk_embeddings_missing_embedding CHECK ( embedding IS NOT NULL ),
-    CONSTRAINT chunk_embeddings_missing_model CHECK ( model IS NOT NULL ),
-    CONSTRAINT chunk_foreign_key_document_id FOREIGN KEY (document_id) REFERENCES chunks (document_id) ON DELETE CASCADE ,
-    CONSTRAINT chunk_foreign_key_position FOREIGN KEY (position) REFERENCES chunks (position) ON DELETE CASCADE
-
+    CONSTRAINT chunk_embeddings_chunks_foreign_key FOREIGN KEY (document_id, position) REFERENCES chunks (document_id, position) ON DELETE CASCADE ,
+    CONSTRAINT chunk_embeddings_primary_key PRIMARY KEY (document_id, position, model),
+    CONSTRAINT chunk_embeddings_invalid_embedding CHECK ( embedding <> '{}' ),
+    CONSTRAINT chunk_embeddings_invalid_model CHECK ( model <> '' )
 );
