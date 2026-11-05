@@ -57,12 +57,12 @@ INSERT INTO chunk_embeddings (document_id, position, model, embedding)
 VALUES ((SELECT id FROM documents WHERE source = 'arxiv' AND source_id = '1409.6928'), 1,
         'voyage-4', ARRAY[0.1, 0.2]);
 
--- E10: leerer Modellname                                erwartet: ✅ (bisher nicht verboten, siehe offene Frage)
+-- E10: leerer Modellname                                erwartet: 23514 chunk_embeddings_invalid_model
 INSERT INTO chunk_embeddings (document_id, position, model, embedding)
 VALUES ((SELECT id FROM documents WHERE source = 'arxiv' AND source_id = '1409.6928'), 1,
         '', ARRAY[0.1, 0.2, 0.3]);
 
--- Stand: erwartet 4 Zeilen (E1, E2, E9, E10)
+-- Stand: erwartet 3 Zeilen (E1, E2, E9)
 SELECT document_id, position, model, embedding FROM chunk_embeddings ORDER BY document_id, position, model;
 
 -- E11: Chunk löschen                                     erwartet: seine Vektoren verschwinden mit
