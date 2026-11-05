@@ -55,7 +55,7 @@ Ein Chunk kann je Einbettungsmodell einen Vektor haben (R16).
 | document_id | integer | nein | FK `(document_id, position)` → `chunks`, `ON DELETE CASCADE` | E27 |
 | position | integer | nein | ↑ | E27 |
 | model | text | nein | | E26 |
-| embedding | real[] | nein | Länge wird nicht geprüft | E28, E29 |
+| embedding | real[] | nein | Länge wird nicht geprüft, aber nicht leer (`<> '{}'`) | E28, E29, E31 |
 | | | | PRIMARY KEY `(document_id, position, model)` | E26 |
 
 ## Such-Cache
@@ -136,6 +136,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | 28 | `real[]` statt `vector` aus `pgvector` | Passt zum Vorschlag in ADR 0002 (Ähnlichkeit in Python rechnen, `pgvector` in Phase 5 messen), braucht keine Erweiterung und lässt die getestete Logik in Python. Bei rund 50 Kandidaten ist die Geschwindigkeit kein Kriterium. |
 | 29 | Vektorlänge nicht in der Datenbank prüfen | Die Länge hängt vom Modell ab; eine feste Prüfung müsste bei jedem Modellwechsel geändert werden. |
 | 30 | Leere Chunks verbieten (`chunks_invalid_text`) | `NOT NULL` lässt `''` durch. Ein leerer Chunk hat keinen Mehrwert und würde BM25 und die Einbettung nur stören; fehlender Text wäre nach E4 ohnehin `NULL`, und das ist hier ausgeschlossen. |
+| 31 | Leere Vektoren verbieten (`chunk_embeddings_invalid_embedding`) | Ein Vektor ohne Zahlen ist so nutzlos wie ein leerer Chunk (E30). Die Länge bleibt ungeprüft (E29), weil sie vom Modell abhängt; „nicht leer“ gilt dagegen für jedes Modell. |
 
 ## Offene Punkte
 
