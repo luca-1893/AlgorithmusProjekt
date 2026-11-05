@@ -97,3 +97,10 @@
 - Elf Testfälle in `sql/uebungen/test_chunks.sql`, alle wie vorhergesagt: gleiche Position in verschiedenen Dokumenten erlaubt, Duplikat, negative Position, fehlendes Dokument, fehlende Werte, leerer Text und das Mitlöschen beim Löschen eines Dokuments.
 - Gelernt: Ein `CHECK` beschreibt, was gelten soll, nicht den Fehlerfall; `<>` ist ein Operator zwischen zwei Werten; Anführungszeichen gehören zur Schreibweise, nicht zum Wert.
 - Offen: `schema.sql` läuft als Ganzes noch nicht, weil der Entwurf für `chunk_embeddings` darin steht. Nächster Schritt: `chunk_embeddings` reparieren und die Datei zweimal komplett ausführen.
+
+## 2026-11-05
+
+- `chunk_embeddings` fertiggestellt: Primärschlüssel `(document_id, position, model)`, ein Fremdschlüssel über `(document_id, position)` auf `chunks` mit `CASCADE`. Auf die Spalten wird verwiesen, nicht auf den Namen der Regel; Postgres braucht dort nur einen passenden Primärschlüssel oder `UNIQUE`.
+- Leere Vektoren (E31) und leere Modellnamen (E32) verboten, konsistent zu E30. Die Vektorlänge bleibt ungeprüft (E29), weil sie vom Modell abhängt. `'{}'` ist das leere Array, `''` der leere Text.
+- Zwölf Testfälle in `sql/uebungen/test_chunk_embeddings.sql`, alle wie vorhergesagt, darunter der Fall, dass Dokument und Position je für sich existieren, die Kombination aber nicht, und das Löschen über die ganze Kette `documents` → `chunks` → `chunk_embeddings`. Ein erster Fehlschlag lag an leeren Testdaten, nicht am Schema.
+- `schema.sql` läuft jetzt als ganze Datei; drei von sechs Tabellen sind fertig.
