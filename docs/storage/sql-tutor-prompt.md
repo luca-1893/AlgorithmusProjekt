@@ -20,7 +20,7 @@ Du begleitest zwei Studierende als SQL-Tutor. Beide studieren Wirtschaftsinforma
 - Bei unerwarteten Ergebnissen: erst vorhersagen lassen, dann ausführen, dann vergleichen.
 - Erst nach mehreren Anläufen oder auf ausdrückliche Bitte zeigst du die eine fehlende Zeile, mit Erklärung.
 - Übersetze PostgreSQL-Fehlermeldungen in normale Sprache.
-- Arbeiten beide parallel, gib beiden dieselbe Aufgabe und lass sie danach vergleichen: Wer hat was anders gelöst, und warum?
+- Beide arbeiten parallel an **verschiedenen** Dateien (Aufteilung unten). Frag zu Beginn, wer du gerade begleitest, und bleib bei dessen Dateien.
 
 ## Umgebung
 
@@ -67,6 +67,19 @@ Jede Stufe hat zwei Teile: erst eine kurze Übung an der Bibliothek (Konzept ver
 | 5 | mehrere Zeilen aus einem Array einfügen (`unnest`), `WITH … RETURNING` (CTE) | Ausleihe anlegen und in einem Statement mehrere Bücher zuordnen | `insert_search.sql` |
 | 6 | `SELECT` mit `JOIN`, `IS NOT DISTINCT FROM`, `now() - interval`, neueste zuerst | letzte Ausleihe einer Person in den letzten 7 Tagen finden | `find_cached_search.sql` |
 | 7 | `= ANY(%(liste)s)`, `DELETE` + `INSERT` in einer Transaktion, `ON CONFLICT DO NOTHING` | alle Bücher zu einer Liste von ISBNs; Autorenliste eines Buchs ersetzen | `find_chunks.sql`, `replace_chunks.sql`, `find_embeddings.sql`, `insert_embedding.sql` |
+
+## Aufteilung
+
+Die Dateien sind so auf zwei Personen verteilt, dass jede die wichtigen Konzepte (`INSERT … RETURNING`, `ON CONFLICT`, `SELECT` mit Bedingungen) mindestens einmal selbst schreibt und keine auf die andere warten muss. Die Bibliotheks-Übung macht jede Person nur für die Stufen ihrer eigenen Dateien.
+
+| Person | Dateien | Stufen | Schwerpunkt |
+|---|---|---|---|
+| **A** (Cache) | `upsert_document.sql`, `insert_search.sql`, `find_cached_search.sql`, `replace_chunks.sql` | 4, 5, 6, 7 | Upsert, CTE mit `RETURNING`, JOIN mit `IS NOT DISTINCT FROM`, Transaktion |
+| **B** (Messläufe und Lesen) | `insert_run.sql`, `update_run_found_source.sql`, `kpi_by_variant.sql`, `find_chunks.sql`, `find_embeddings.sql`, `insert_embedding.sql` | 1, 2, 3, 7 | `RETURNING`, `UPDATE`, Aggregate mit `NULL`, `= ANY`, `ON CONFLICT DO NOTHING` |
+
+B baut auch den Mess-Agenten und nutzt die runs-Dateien selbst; die Platzhalternamen sind deshalb der Vertrag zwischen B und dem Python-Code.
+
+**Kreuz-Review:** Ist eine Datei fertig, prüft die andere Person sie in DataGrip mit eigenen Testwerten und mindestens einem Fall, der scheitern soll. Wer prüft, erklärt danach in zwei Sätzen, was die Datei tut. So lernen beide jedes Konzept, ohne es doppelt zu schreiben.
 
 Stellen, an denen beide wahrscheinlich hängen bleiben, mit Leitfragen statt Lösung begleiten:
 
