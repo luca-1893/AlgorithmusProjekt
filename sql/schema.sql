@@ -31,7 +31,8 @@ CREATE TABLE IF NOT EXISTS chunks (
 
     CONSTRAINT chunks_primary_key PRIMARY KEY (document_id, position),
     CONSTRAINT chunks_document_foreign_key FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    CONSTRAINT chunks_invalid_position CHECK ( position >= 0)
+    CONSTRAINT chunks_invalid_position CHECK ( position >= 0),
+    CONSTRAINT chunks_invalid_text CHECK (text <> '')
 );
 
 CREATE TABLE IF NOT EXISTS chunk_embeddings (
@@ -51,11 +52,9 @@ CREATE TABLE IF NOT EXISTS searches (
     keywords text[] NOT NULL,
     published_from date,
     published_to date,
-    categories text[],
+    categories text[] NOT NULL DEFAULT '{}',
     peer_reviewed_only boolean NOT NULL,
-    searched_at timestamptz NOT NULL
-
-    CONSTRAINT searches_default_time CHECK ( (searched_at IS NULL) = (searched_at = NOW()) )
+    searched_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS search_documents (
