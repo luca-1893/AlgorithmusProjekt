@@ -55,9 +55,22 @@ Eine neue Suche speichern: eine Zeile in `searches` und je geliefertem Dokument 
 
 Einen Messlauf speichern.
 
+### 4a. `update_run_found_source.sql`
+
+Einen gespeicherten Messlauf nachträglich bewerten: setzt `found_source` für eine Lauf-ID. Parameter: `%(id)s`, `%(found_source)s`.
+
 ### 5. `kpi_by_variant.sql`
 
 Pro Variante: Anzahl Läufe, durchschnittliche Input-Tokens, durchschnittliche Dauer, Trefferquote. Daraus wird das Delta „mit gegen ohne Tool“.
+
+### 5a. Chunks und Vektoren
+
+Python muss Chunks und Vektoren speichern und laden; ohne diese Dateien bleibt der Cache unvollständig.
+
+- `replace_chunks.sql`: die Chunks eines Dokuments ersetzen, z. B. nach neuem Volltext oder geänderten Chunk-Parametern (E9). Überleg, was mit den alten Chunks und ihren Vektoren passiert und warum das in eine Transaktion gehört.
+- `find_chunks.sql`: alle Chunks zu einer Liste von Dokument-IDs, in der richtigen Reihenfolge. Überleg, wie man eine Liste als einen Parameter übergibt.
+- `find_embeddings.sql`: vorhandene Vektoren zu Chunks und einem Modell (R16), damit nur fehlende eingebettet werden.
+- `insert_embedding.sql`: einen Vektor speichern; überleg, was passieren soll, wenn er schon existiert.
 
 ### 6. Optimierung
 
