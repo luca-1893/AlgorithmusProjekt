@@ -17,3 +17,8 @@ venv/
 
 # Lokale Konfiguration und Secrets
 .env
+
+# Messungen: heruntergeladene Texte und eigene Umgebung
+messung-venv/
+cache/
+messung_extraktion/
