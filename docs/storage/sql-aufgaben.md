@@ -51,7 +51,7 @@ Liefert die Dokument-IDs einer früheren Suche mit denselben Schlagwörtern und 
 
 Eine neue Suche speichern: eine Zeile in `searches` und je geliefertem Dokument eine Zeile in `search_documents` mit der Reihenfolge von arXiv (`position`). Gebraucht, wenn der Cache nichts Frisches hatte und die Quelle gefragt wurde (R14). Überleg, woher die Zuordnungen die ID der gerade angelegten Suche bekommen, und ob das eine Datei mit zwei Statements oder zwei Dateien werden.
 
-### 4. `insert_run.sql`
+### 4. `upsert_document.sql`
 
 Einen Messlauf speichern.
 
@@ -78,4 +78,4 @@ Eine Abfrage aus 3 oder 5 mit `EXPLAIN ANALYZE` messen, einen passenden Index an
 
 ## Was danach in Python passiert (Claude)
 
-Sobald `schema.sql`, `upsert_document.sql` und `find_cached_search.sql` stehen, kommt eine Quelle mit Cache: Erst fragt sie die Datenbank, nur wenn nichts Frisches da ist, arXiv. Mit `insert_run.sql` speichert die Evaluation ihre Messläufe.
+Sobald `schema.sql`, `upsert_document.sql` und `find_cached_search.sql` stehen, kommt eine Quelle mit Cache: Erst fragt sie die Datenbank, nur wenn nichts Frisches da ist, arXiv. Mit `upsert_document.sql` speichert die Evaluation ihre Messläufe.

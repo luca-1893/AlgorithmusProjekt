@@ -22,7 +22,7 @@ Grundlage für die KPI-Messung (Karte #6 und #7): Jede Frage wird mit allen drei
 
 ## Was der Mess-Agent pro Lauf liefern muss
 
-Damit ein Lauf in `runs` gespeichert werden kann (`insert_run.sql`):
+Damit ein Lauf in `runs` gespeichert werden kann (`upsert_document.sql`):
 
 | Spalte | Woher |
 |---|---|

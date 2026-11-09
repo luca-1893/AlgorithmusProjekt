@@ -150,7 +150,7 @@ Das Schema hat sechs Tabellen: `documents` (ein Eintrag je Quelle, mit Volltext)
 | `docs/storage/sql-cheatsheet.md` | Syntax und Beispiele aus den SQL-Übungen | fertig |
 | `sql/schema.sql` | alle Tabellen, mehrfach ausführbar | `documents` umgesetzt |
 | `sql/uebungen/test_documents.sql` | Testfälle für die Regeln in `documents` | fertig |
-| `upsert_document.sql`, `find_cached_search.sql`, `insert_run.sql`, `kpi_by_variant.sql` | Abfragen für Cache und Evaluation | offen |
+| `upsert_document.sql`, `find_cached_search.sql`, `upsert_document.sql`, `kpi_by_variant.sql` | Abfragen für Cache und Evaluation | offen |
 
 Schema anlegen bzw. auf den aktuellen Stand prüfen (bestehende Tabellen und Daten bleiben unverändert):
 
