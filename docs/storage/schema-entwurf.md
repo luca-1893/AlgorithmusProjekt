@@ -1,6 +1,6 @@
 # Schema-Entwurf
 
-Entwurf für `sql/schema.sql`, bevor das SQL geschrieben wird. Die Begründungen stammen von Luca.
+Entwurf für `sql/schema.sql`, bevor das SQL geschrieben wird.
 
 ## Übersicht
 
