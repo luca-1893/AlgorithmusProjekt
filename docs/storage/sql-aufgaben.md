@@ -47,6 +47,10 @@ Ein Dokument speichern; gibt es die ID schon, werden die Felder aktualisiert. Pa
 
 Liefert die Dokument-IDs einer früheren Suche mit denselben Schlagwörtern und demselben Filter, aber nur, wenn sie jünger als `%(max_age)s` ist. Entschieden: 7 Tage (R13 in `Phase2/Pseudocode.md`). Dokumente und Embeddings selbst veralten nicht. Überleg, wie du die Schlagwörter vergleichbar machst (Reihenfolge, Groß-/Kleinschreibung).
 
+### 3a. `insert_search.sql`
+
+Eine neue Suche speichern: eine Zeile in `searches` und je geliefertem Dokument eine Zeile in `search_documents` mit der Reihenfolge von arXiv (`position`). Gebraucht, wenn der Cache nichts Frisches hatte und die Quelle gefragt wurde (R14). Überleg, woher die Zuordnungen die ID der gerade angelegten Suche bekommen, und ob das eine Datei mit zwei Statements oder zwei Dateien werden.
+
 ### 4. `insert_run.sql`
 
 Einen Messlauf speichern.
