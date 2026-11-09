@@ -67,7 +67,7 @@ Pro Variante: Anzahl Läufe, durchschnittliche Input-Tokens, durchschnittliche D
 
 Python muss Chunks und Vektoren speichern und laden; ohne diese Dateien bleibt der Cache unvollständig.
 
-- `replace_chunks.sql`: die Chunks eines Dokuments ersetzen, z. B. nach neuem Volltext oder geänderten Chunk-Parametern (E9). Überleg, was mit den alten Chunks und ihren Vektoren passiert und warum das in eine Transaktion gehört.
+- `delete_chunks.sql` + `insert_chunks.sql`: die Chunks eines Dokuments ersetzen, z. B. nach neuem Volltext oder geänderten Chunk-Parametern (E9). Zwei Dateien, weil ein einzelnes Statement die alten Chunks beim Einfügen noch sieht (Primärschlüssel-Konflikt); Python ruft beide in einer Transaktion auf. Die Vektoren der alten Chunks löscht `CASCADE` mit.
 - `find_chunks.sql`: alle Chunks zu einer Liste von Dokument-IDs, in der richtigen Reihenfolge. Überleg, wie man eine Liste als einen Parameter übergibt.
 - `find_embeddings.sql`: vorhandene Vektoren zu Chunks und einem Modell (R16), damit nur fehlende eingebettet werden.
 - `insert_embedding.sql`: einen Vektor speichern; überleg, was passieren soll, wenn er schon existiert.
