@@ -138,6 +138,7 @@ Eine Zeile ist ein Messlauf: eine Testfrage, mit einer Variante beantwortet.
 | 30 | Leere Chunks verbieten (`chunks_invalid_text`) | `NOT NULL` lässt `''` durch. Ein leerer Chunk hat keinen Mehrwert und würde BM25 und die Einbettung nur stören; fehlender Text wäre nach E4 ohnehin `NULL`, und das ist hier ausgeschlossen. |
 | 31 | Leere Vektoren verbieten (`chunk_embeddings_invalid_embedding`) | Ein Vektor ohne Zahlen ist so nutzlos wie ein leerer Chunk (E30). Die Länge bleibt ungeprüft (E29), weil sie vom Modell abhängt; „nicht leer“ gilt dagegen für jedes Modell. |
 | 32 | Leere Modellnamen verbieten (`chunk_embeddings_invalid_model`) | Konsistent mit E30: `NOT NULL` lässt `''` durch, ein Vektor ohne Modellname ist aber nicht wiederverwendbar (R16). |
+| 33 | `runs` ohne Spalten für Antwortqualität und Cache | `found_source` gilt als Näherung für belegte Antworten, Halluzinationen sind kaum zuverlässig messbar. Messläufe laufen ohne Cache (`docs/evaluation/leitfragen.md`). |
 
 ## Offene Punkte
 

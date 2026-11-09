@@ -13,10 +13,13 @@ Die Erfolgskriterien sind **Vorschläge** und müssen vor der Messung festgelegt
 | L5 | Ändert sich das Bild zwischen deutschen und englischen Fragen? | L1 und L2 getrennt nach Sprache der Frage | je Variante | kein Einbruch bei deutschen Fragen |
 | L6 | Hilft der Volltext gegenüber Titel und Abstract? | Trefferquote bei Fragen mit Fundstelle im Volltext | Volltext-Version gegen Abstract-Version des Tools | bei Volltext-Fragen deutlich höhere Trefferquote |
 
+## Entscheidungen
+
+- **Halluzinationen** werden nicht direkt gemessen; sie lassen sich kaum zuverlässig bewerten. Als Näherung gilt `found_source`: Steht die erwartete Quelle unter den Belegen, ist die Antwort belegt. `runs` bekommt keine weitere Bewertungsspalte.
+- **Cache** ist für Messläufe abgeschaltet, damit die Dauer die echte Recherche misst. `runs` braucht deshalb keine Cache-Spalte.
+
 ## Offene Punkte
 
-- **Halluzinationen** misst `runs` nur indirekt über `found_source`. Ob die Antwort selbst stimmt, wird nicht gespeichert. Entscheiden: reicht die richtige Quelle als Näherung, oder braucht `runs` eine zweite Bewertung wie „Antwort korrekt“?
 - **L5** braucht die Sprache je Lauf; sie steht in `testfragen.md` und lässt sich über `question` zuordnen, eine eigene Spalte gibt es nicht.
 - **L6** braucht zwei Tool-Versionen; geht nur, wenn die Abstract-Version vor dem Umbau auf Volltext gemessen wird.
-- **Cache:** Ob ein Lauf aus dem Cache bedient wurde, beeinflusst die Dauer stark, steht aber nicht in `runs`. Entscheiden: Cache für Messläufe abschalten oder als Spalte erfassen.
 - Gleiches Modell, gleicher System-Prompt und gleiches `k` für alle Varianten, sonst sind die Zahlen nicht vergleichbar.
