@@ -22,3 +22,6 @@ venv/
 messung-venv/
 cache/
 messung_extraktion/
+
+# draw.io-Sicherungskopien
+*.drawio.bkp

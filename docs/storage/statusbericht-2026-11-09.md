@@ -31,3 +31,10 @@ Stand: 09.11.2026, Branch `luca-dev`
 - `hit_rate` eventuell mit `ROUND(…, 2)` runden, falls die Ausgabe zu lang ist.
 - Aufgabe 6 (Optimierung): eine Abfrage mit `EXPLAIN ANALYZE` messen, einen Index anlegen, erneut messen und das Ergebnis als ADR festhalten.
 - Test-DB aufräumen: Die Übungstabellen `ausleihe` und `buch` sowie die Beispielzeilen in `runs` werden nicht mehr gebraucht.
+
+## Nachtrag 14.11.2026 (Mac)
+
+- Rauchtest aller 11 Dateien gegen `algorithmusprojekt_test` über `load_sql` und psycopg: 10 laufen wie erwartet.
+- **`insert_chunks.sql` scheitert aus Python:** `function unnest(unknown) is not unique`. psycopg schickt eine Liste von Strings ohne Datentyp, Postgres kann dann nicht wählen, welches `unnest` gemeint ist. In DataGrip fällt das nicht auf, weil dort ein Array-Literal mit Typ steht. Mit einem Cast des Parameters auf `text[]` läuft die Datei.
+- `insert_search.sql` mit `unnest(%(document_ids)s)` läuft, weil psycopg Zahlenlisten mit Typ schickt.
+- `kpi_by_variant`: `hit_rate` kommt als `Decimal('1.00000000000000000000')`, das Runden aus der Später-Liste lohnt sich.

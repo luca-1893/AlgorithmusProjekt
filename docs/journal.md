@@ -104,3 +104,9 @@
 - Leere Vektoren (E31) und leere Modellnamen (E32) verboten, konsistent zu E30. Die Vektorlänge bleibt ungeprüft (E29), weil sie vom Modell abhängt. `'{}'` ist das leere Array, `''` der leere Text.
 - Zwölf Testfälle in `sql/uebungen/test_chunk_embeddings.sql`, alle wie vorhergesagt, darunter der Fall, dass Dokument und Position je für sich existieren, die Kombination aber nicht, und das Löschen über die ganze Kette `documents` → `chunks` → `chunk_embeddings`. Ein erster Fehlschlag lag an leeren Testdaten, nicht am Schema.
 - `schema.sql` läuft jetzt als ganze Datei; drei von sechs Tabellen sind fertig.
+
+## 2026-11-14
+
+- Bestandsaufnahme vor Phase 5 (16.11.) und Pitch (30.11.): Issues, Board, Review-Kommentare an PR #24 und lokaler Stand abgeglichen. 240 Unittests grün.
+- Lokale Datenbank auf dem Mac nachgezogen: `schema.sql` in `algorithmusprojekt` (war leer) und `algorithmusprojekt_test` (hatte nur 3 von 6 Tabellen) eingespielt, je zweimal hintereinander ohne Fehler; beide Schemas sind jetzt identisch.
+- Rauchtest aller 11 SQL-Dateien über `load_sql` und psycopg (Transaktion zurückgerollt): 10 laufen, `insert_chunks.sql` scheitert mit `function unnest(unknown) is not unique`, weil psycopg eine Liste von Strings ohne Typ schickt. Lösung liegt bei Luca (SQL), z. B. ein Cast auf `text[]`.
