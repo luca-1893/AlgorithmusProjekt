@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 OUTPUT = ROOT / "Phase4" / "Testkatalog.md"
-MODULES = ["sources", "chunking", "bm25", "vector_search", "ranking", "pipeline", "mcp_server", "storage", "cache"]
+MODULES = ["sources", "chunking", "bm25", "vector_search", "ranking", "pipeline", "mcp_server", "storage", "cache", "evaluation"]
 
 ERROR_WORDS = ("error", "fails", "invalid", "unreachable", "missing", "timeout", "rejects",
                "mismatch", "wrong", "bad_", "is_abstract", "immutable", "unequal", "different_lengths",
@@ -27,6 +27,9 @@ OVERRIDES = {
     "test_normalize_min_zero_max_one": "normal",
     "test_tool_k_too_large": "error",
     "test_parse_url_falls_back_to_id": "edge",
+    "test_websearch_uses_server_tool_and_no_keywords": "normal",
+    "test_found_source_prefix_is_not_enough": "edge",
+    "test_failed_run_is_not_stored": "error",
 }
 
 CATEGORY_NAMES = {"normal": "Normalfall", "edge": "Randfall", "error": "Fehlerfall"}

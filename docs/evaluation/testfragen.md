@@ -33,9 +33,9 @@ Damit ein Lauf in `runs` gespeichert werden kann (`insert_run.sql`):
 | `k` | das `k` des Tool-Aufrufs; bei `agent_websearch` leer (`NULL`) |
 | `input_tokens`, `output_tokens` | exakte Werte aus der API-Antwort, über alle Schritte des Agenten summiert |
 | `duration_ms` | vom Senden des Prompts bis zur fertigen Antwort |
-| `found_source` | erst leer; wird danach bewertet, ob die erwartete arXiv-ID unter den Quellen steht |
+| `found_source` | automatisch nach jedem Lauf: wahr, wenn die erwartete arXiv-ID in der Antwort steht (`evaluation.messlauf.found_source`); Stichprobe von Hand über das Log |
 
-Gleiches Modell und gleicher System-Prompt für alle drei Varianten, sonst sind die Zahlen nicht vergleichbar.
+Gleiches Modell und gleicher System-Prompt für alle drei Varianten, sonst sind die Zahlen nicht vergleichbar. Umgesetzt in `src/evaluation/messlauf.py` (Aufruf siehe README, Abschnitt „Messläufe“; Prüfung von Hand: `Phase4/Klicktest-runs.md`).
 
 ## Fragen
 

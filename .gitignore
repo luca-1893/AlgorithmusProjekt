@@ -29,3 +29,4 @@ messung_extraktion/
 # Coverage
 .coverage
 htmlcov/
+messungen/*_messlauf_probe/

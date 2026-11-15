@@ -17,7 +17,8 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | `mcp_server` | 11 | 1 | 7 | 19 | 19 |
 | `storage` | 13 | 16 | 9 | 38 | 38 |
 | `cache` | 14 | 5 | 5 | 24 | 24 |
-| **gesamt** | **121** | **120** | **62** | **303** | **303** |
+| `evaluation` | 14 | 5 | 3 | 22 | 22 |
+| **gesamt** | **135** | **125** | **65** | **325** | **325** |
 
 ## `sources`
 
@@ -366,3 +367,30 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 22 | `TestCachedEmbedderWithDatabase.test_other_model_is_a_miss` | Randfall | `len(self.inner.calls) → 2` | ✓ wie erwartet |
 | 23 | `TestCachedSourceStoresChunks.test_chunks_are_stored` | Normalfall | `texts → ['Titel 1', 'Abstract 1']` | ✓ wie erwartet |
 | 24 | `TestCachedSourceStoresChunks.test_storing_again_keeps_embeddings` | Normalfall | `count → 1` | ✓ wie erwartet |
+
+## `evaluation`
+
+| Nr. | Test | Kategorie | Input → erwartet | Tatsächlich |
+|---|---|---|---|---|
+| 1 | `TestQuestions.test_load_all_25_questions` | Normalfall | `[q.number for q in questions] → [f'F{n:02d}' for n in range(1, 26)]` | ✓ wie erwartet |
+| 2 | `TestQuestions.test_language_mix` | Normalfall | `sum((q.language == 'de' for q in load_questions())) → 13` | ✓ wie erwartet |
+| 3 | `TestQuestions.test_ignores_rows_without_arxiv_id` | Randfall | `load_questions(path) → [Question('F02', 'Frage?', 'en', '2601.00001')]` | ✓ wie erwartet |
+| 4 | `TestQuestions.test_found_source_with_version` | Normalfall | `found_source('Quellen: https://arxiv.org/abs/2608.07036v2', '2608.07036') → wahr` | ✓ wie erwartet |
+| 5 | `TestQuestions.test_found_source_other_paper` | Normalfall | `found_source('Quellen: https://arxiv.org/abs/2608.07037', '2608.07036') → falsch` | ✓ wie erwartet |
+| 6 | `TestQuestions.test_found_source_prefix_is_not_enough` | Randfall | `found_source('arXiv 2608.070361', '2608.07036') → falsch` | ✓ wie erwartet |
+| 7 | `TestMeasure.test_websearch_uses_server_tool_and_no_keywords` | Normalfall | `client.requests[0]['tools'] → [messlauf.WEB_SEARCH] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 8 | `TestMeasure.test_tokens_summed_over_steps_including_cache` | Normalfall | `(run.input_tokens, run.output_tokens) → (33, 12)` | ✓ wie erwartet |
+| 9 | `TestMeasure.test_answer_is_text_of_last_message` | Normalfall | `measure(client, question(), 'agent_websearch', FakeSource(), None).answer → 'Ende'` | ✓ wie erwartet |
+| 10 | `TestMeasure.test_duration_from_clock` | Normalfall | `run.duration_ms → 2500` | ✓ wie erwartet |
+| 11 | `TestMeasure.test_bm25_records_first_tool_call` | Normalfall | `(result.run.keywords, result.run.k) → (['class', 'diagrams'], 3) (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 12 | `TestMeasure.test_bm25_without_embedder_hybrid_with` | Randfall | `[call.args[1] for call in tool.call_args_list] → [None, embedder]` | ✓ wie erwartet |
+| 13 | `TestMeasure.test_no_tool_call_stores_empty_keywords` | Randfall | `(run.keywords, run.k) → ([], DEFAULT_K)` | ✓ wie erwartet |
+| 14 | `TestMeasure.test_same_model_and_system_for_all_variants` | Normalfall | `{(r['model'], r['system']) for r in client.requests} → {('m', messlauf.SYSTEM)}` | ✓ wie erwartet |
+| 15 | `TestMeasure.test_unknown_variant` | Fehlerfall | `measure(FakeClient([message()]), question(), 'agent', FakeSource(), None) → ValueError` | ✓ wie erwartet |
+| 16 | `TestMeasure.test_tool_rejects_k_out_of_range` | Fehlerfall | `assertIn('error', json.loads(tool.call({'keywords': ['uml'], 'k': 0})))` | ✓ wie erwartet |
+| 17 | `TestStoreRuns.test_store_saves_run_and_rating` | Normalfall | `self.rows() → [('agent_websearch', None, None, 10, True)]` | ✓ wie erwartet |
+| 18 | `TestStoreRuns.test_store_run_without_tool_call` | Randfall | `self.rows() → [('bm25', [], DEFAULT_K, 10, False)]` | ✓ wie erwartet |
+| 19 | `TestStoreRuns.test_probe_run_writes_all_variants` | Normalfall | `self.rows() → [('agent_websearch', None, None, 100, True), ('bm25', ['probe'], 3, 100, True), ('hybrid', ['probe'], 3, 100, True)] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 20 | `TestStoreRuns.test_failed_run_is_not_stored` | Fehlerfall | `self.rows() → []` | ✓ wie erwartet |
+| 21 | `TestProbe.test_probe_source_is_offline` | Normalfall | `ProbeSource().search(['x'], 5) → []` | ✓ wie erwartet |
+| 22 | `TestProbe.test_probe_client_cites_expected_paper` | Normalfall | `found_source(answer, '2601.11143') → wahr` | ✓ wie erwartet |

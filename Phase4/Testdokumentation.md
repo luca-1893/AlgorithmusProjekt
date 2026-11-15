@@ -6,7 +6,8 @@ Phase 4 des Hackathons (Karte #15). Stand: 15.11.2026 (abends), Branch `luca-dev
 
 **Wo was steht**
 - Diese Datei: Vorgehen, Übersicht, Coverage, ausgewählte Fälle im Detail, Abweichungsanalyse
-- `Phase4/Testkatalog.md`: **alle** 303 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
+- `Phase4/Testkatalog.md`: **alle** 325 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
+- `Phase4/Klicktest-runs.md`: Anleitung, um das Schreiben der Messläufe in `runs` von Hand zu prüfen (Probelauf ohne API)
 - Testcode: `src/<modul>/test_<modul>.py`
 
 ## 1. Vorgehen
@@ -49,7 +50,8 @@ Die Zuordnung im Katalog macht `testkatalog.py`: Fehlerfall, wenn der Test einen
 | `mcp_server` | 11 | 1 | 7 | 19 | 19 |
 | `storage` | 13 | 16 | 9 | 38 | 38 |
 | `cache` | 14 | 5 | 5 | 24 | 24 |
-| **gesamt** | **121** | **120** | **62** | **303** | **303** |
+| `evaluation` | 14 | 5 | 3 | 22 | 22 |
+| **gesamt** | **135** | **125** | **65** | **325** | **325** |
 
 Alle Tests laufen wie erwartet. Die 5 Abweichungen in `storage` vom 14./15.11. sind behoben (Abschnitt 6.1).
 
@@ -67,8 +69,9 @@ Gemessen mit `coverage 7.17.3`, Zeilen und Verzweigungen, ohne Testdateien.
 | `sources` | 110 | 3 | 26 | 97 % | `http_get`: der echte Netzwerkaufruf |
 | `vector_search` | 90 | 3 | 30 | 98 % | `http_post_json`: der echte Netzwerkaufruf |
 | `storage` | 107 | 5 | 16 | 95 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
+| `evaluation` | 130 | 2 | 26 | 97 % | Pause zwischen echten arXiv-Anfragen und `if __name__ == "__main__"` |
 | `mcp_server` | 53 | 9 | 8 | 82 % | `main()`: Start des Servers über die Kommandozeile |
-| **gesamt** | **607** | **20** | **148** | **97 %** | |
+| **gesamt** | **737** | **22** | **174** | **97 %** | |
 
 **Bewertung:** Die Algorithmus-Module (`bm25`, `chunking`, `ranking`, `pipeline`) und der Cache sind vollständig abgedeckt. Offen sind nur Zeilen, die echte Netzwerkaufrufe machen oder den Server starten. Sie sind absichtlich durch Attrappen ersetzt und wurden stattdessen im Notebook und in den Messungen live ausgeführt.
 
@@ -177,7 +180,7 @@ Kein Programmierfehler, aber eine Abweichung zwischen erwartetem und tatsächlic
 ## 7. Optional: Laufzeit und Vergleich mit Alternativen
 
 **Laufzeit**
-- Die gesamte Testsuite (303 Tests) läuft in etwa 1,0 s.
+- Die gesamte Testsuite (325 Tests) läuft in etwa 1,2 s.
 - Ein Tool-Aufruf mit Titel und Abstract dauert eine arXiv-Anfrage plus zwei Voyage-Aufrufe; die Rechenschritte selbst fallen daneben nicht ins Gewicht. Mit Volltext und ohne Cache wären es etwa 3,5 Minuten pro Aufruf (ADR 0004).
 
 **Vergleich mit Alternativen**
