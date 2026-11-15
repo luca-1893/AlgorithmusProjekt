@@ -150,7 +150,7 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 
 **Heute:** Beide Ausfälle führen zu verständlichen Fehlern oder einem geregelten Ausweichweg, nicht zum Absturz.
 
-**Lösung:** Der Cache (R13–R15, umgesetzt) spart die arXiv-Abfrage bei Wiederholungen innerhalb von 7 Tagen, gemessen 3,5 s → 1,7 s; R16 soll auch die Voyage-Aufrufe sparen; Wiederholen mit wachsender Wartezeit bei 429; gespeicherte Vektoren werden nicht neu berechnet (R16).
+**Lösung:** Der Cache (R13–R15, umgesetzt) spart die arXiv-Abfrage bei Wiederholungen innerhalb von 7 Tagen, gemessen 3,5 s → 1,7 s; R16 spart zusätzlich das Einbetten bekannter Chunks, gemessen 2,3 s → 0,3 s bei einer wiederholten Anfrage; Wiederholen mit wachsender Wartezeit bei 429; gespeicherte Vektoren werden nicht neu berechnet (R16).
 
 ### L8: Wörter statt Tokens, zerrissene Sätze und Redundanz
 
@@ -189,14 +189,14 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 - **Seitenzahl ist kein Filter**, obwohl Lucas ursprüngliche Tool-Idee sie vorsah. arXiv nennt sie nur unregelmäßig im Kommentarfeld.
 - **Keine Anmeldung:** Der MCP-Server läuft über HTTP ohne Anmeldung und darf nur hinter einem abgesicherten Zugang betrieben werden (VPN oder Reverse-Proxy mit Token).
 - **Index pro Aufruf:** Chunking und invertierter Index werden bei jedem Aufruf neu gebaut, weil es keinen festen Korpus gibt. Bei 20 Abstracts unkritisch, mit Volltext spürbar.
-- **Testabdeckung:** 96 % insgesamt, die Algorithmus-Module 100 %. Nicht durch Unittests abgedeckt sind echte Netzwerkaufrufe und der Serverstart; die Qualität des Rankings prüfen die Unittests nur an kleinen, ausgedachten Beispielen (`Phase4/Testdokumentation.md`, Abschnitt 6.6).
+- **Testabdeckung:** 97 % insgesamt, die Algorithmus-Module 100 %. Nicht durch Unittests abgedeckt sind echte Netzwerkaufrufe und der Serverstart; die Qualität des Rankings prüfen die Unittests nur an kleinen, ausgedachten Beispielen (`Phase4/Testdokumentation.md`, Abschnitt 6.6).
 - **Nur eine Quelle:** arXiv deckt vor allem Informatik, Physik und Mathematik ab; Verlagsartikel und andere Fächer fehlen.
 
 ## 3. Leitfragen
 
 ### Wo ist der Algorithmus ineffizient?
 
-- **Netzwerk dominiert:** Ein arXiv-Request und zwei Voyage-Aufrufe kosten mehr als alle Rechenschritte zusammen. Der Cache spart bei einer wiederholten Suche den arXiv-Request (gemessen 3,5 s → 1,7 s); die Voyage-Aufrufe bleiben, bis R16 umgesetzt ist.
+- **Netzwerk dominiert:** Ein arXiv-Request und zwei Voyage-Aufrufe kosten mehr als alle Rechenschritte zusammen. Der Cache spart bei einer wiederholten Suche den arXiv-Request (gemessen 3,5 s → 1,7 s); seit R16 entfällt bei bekannten Chunks auch das Einbetten, übrig bleibt ein Voyage-Aufruf für die Frage (gemessen 2,3 s → 0,3 s).
 - **Index pro Aufruf:** Chunking und invertierter Index werden jedes Mal neu gebaut, O(T) über alle Wörter. Bei 20 Abstracts unkritisch, mit Volltext (25 → 997 Chunks bei der UML-Anfrage) deutlich spürbar.
 - **Einbetten fast aller Chunks:** Weil die Vorauswahl auf Abstracts kaum filtert (L1), gehen fast alle Chunks an Voyage. Das widerspricht der Annahme aus ADR 0001, dass BM25 die Kosten klein hält.
 - **MMR:** O(k · m · d) mit d = 1024; bei m = 50 und kleinem k unkritisch.

@@ -121,6 +121,16 @@ class TestDefaultEmbedder(unittest.TestCase):
         with mock.patch.dict("os.environ", {"VOYAGE_API_KEY": "key"}):
             self.assertIsNotNone(default_embedder())
 
+    def test_default_embedder_is_cached_voyage(self):
+        from cache.cache import CachedEmbedder
+        from vector_search import VoyageEmbedder
+
+        with mock.patch.dict("os.environ", {"VOYAGE_API_KEY": "key"}):
+            embedder = default_embedder()
+        self.assertIsInstance(embedder, CachedEmbedder)
+        self.assertIsInstance(embedder.inner, VoyageEmbedder)
+        self.assertEqual(embedder.model, embedder.inner.model)
+
     def test_default_embedder_without_key(self):
         with mock.patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(default_embedder())

@@ -6,7 +6,7 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
-from cache.cache import CachedSource
+from cache.cache import CachedEmbedder, CachedSource
 from pipeline import PipelineConfig, research
 from sources import ArxivSource, SearchFilter, Source, SourceError
 from vector_search import Embedder, EmbeddingError, VoyageEmbedder
@@ -30,11 +30,12 @@ def parse_date(text: str) -> Optional[date]:
 
 
 def default_embedder() -> Optional[Embedder]:
-    """Voyage if VOYAGE_API_KEY is set, otherwise None (BM25 only)."""
+    """Voyage with stored vectors in front (R16) if VOYAGE_API_KEY is set, otherwise None (BM25 only)."""
     try:
-        return VoyageEmbedder()
+        voyage = VoyageEmbedder()
     except EmbeddingError:
         return None
+    return CachedEmbedder(voyage, voyage.model)
 
 
 def default_source(config: PipelineConfig) -> Source:

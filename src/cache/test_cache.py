@@ -4,11 +4,12 @@ import unittest
 from datetime import date
 
 from sources import Document, SearchFilter, Source, SourceError
+from vector_search import Embedder
 
 HAS_PSYCOPG = importlib.util.find_spec("psycopg") is not None
 if HAS_PSYCOPG:
-    from cache.cache import CACHE_HIT, CACHE_UNAVAILABLE, CachedSource
-    from storage.storage import StorageError, connect
+    from cache.cache import CACHE_HIT, CACHE_UNAVAILABLE, CachedEmbedder, CachedSource
+    from storage.storage import StorageError, connect, find_chunks, save_chunks, save_document
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "postgresql:///algorithmusprojekt_test")
 TEST_SOURCE = "testcache"
@@ -33,6 +34,15 @@ class FakeSource(Source):
         if self.error:
             raise self.error
         return self.documents[:max_results]
+
+
+class CountingEmbedder(Embedder):
+    def __init__(self):
+        self.calls = []
+
+    def _request(self, texts, input_type):
+        self.calls.append((list(texts), input_type))
+        return [[float(len(text)), 1.0] for text in texts]
 
 
 def unreachable():
@@ -146,3 +156,122 @@ class TestCachedSourceWithDatabase(unittest.TestCase):
         cached = CachedSource(FakeSource([]), connect=lambda: connect(TEST_DATABASE_URL))
         self.assertEqual(cached.search([KEYWORD], 2), [])
         self.assertEqual(cached.notes, ())
+
+
+@unittest.skipUnless(HAS_PSYCOPG, "psycopg missing, use .venv")
+class TestCachedEmbedderWithoutDatabase(unittest.TestCase):
+    def test_is_an_embedder(self):
+        self.assertIsInstance(CachedEmbedder(CountingEmbedder(), "m", connect=unreachable), Embedder)
+
+    def test_query_is_never_cached(self):
+        inner = CountingEmbedder()
+        cached = CachedEmbedder(inner, "m", connect=unreachable)
+        self.assertEqual(cached.embed(["frage"], "query"), [[5.0, 1.0]])
+        self.assertEqual(inner.calls, [(["frage"], "query")])
+        self.assertEqual(cached.notes, ())
+
+    def test_database_unreachable_falls_back(self):
+        inner = CountingEmbedder()
+        cached = CachedEmbedder(inner, "m", connect=unreachable)
+        self.assertEqual(cached.embed(["ab", "abc"]), [[2.0, 1.0], [3.0, 1.0]])
+        self.assertEqual(cached.notes, (CACHE_UNAVAILABLE,))
+
+
+@unittest.skipUnless(database_available(), "test database not reachable")
+class TestCachedEmbedderWithDatabase(unittest.TestCase):
+    MODEL = "testmodell"
+
+    def setUp(self):
+        self.cleanup()
+        with connect(TEST_DATABASE_URL) as connection:
+            self.document_id = save_document(connection, make_document(1), 200, 40)
+            save_chunks(connection, self.document_id, ["eins zwei", "drei vier", "fünf"])
+        self.inner = CountingEmbedder()
+        self.cached = CachedEmbedder(self.inner, self.MODEL, connect=lambda: connect(TEST_DATABASE_URL))
+
+    def tearDown(self):
+        self.cleanup()
+
+    def cleanup(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("DELETE FROM documents WHERE source = %s", (TEST_SOURCE,))
+
+    def stored_count(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            return connection.execute("SELECT count(*) FROM chunk_embeddings WHERE model = %s",
+                                      (self.MODEL,)).fetchone()[0]
+
+    def test_miss_embeds_and_stores(self):
+        vectors = self.cached.embed(["eins zwei", "drei vier"])
+        self.assertEqual(vectors, [[9.0, 1.0], [9.0, 1.0]])
+        self.assertEqual(self.inner.calls, [(["eins zwei", "drei vier"], "document")])
+        self.assertEqual(self.stored_count(), 2)
+        self.assertEqual(self.cached.notes, ())
+
+    def test_hit_skips_inner_embedder(self):
+        first = self.cached.embed(["eins zwei", "drei vier"])
+        second = self.cached.embed(["drei vier", "eins zwei"])
+        self.assertEqual(len(self.inner.calls), 1)
+        self.assertEqual(second, [first[1], first[0]])
+
+    def test_only_missing_texts_are_embedded(self):
+        self.cached.embed(["eins zwei"])
+        self.cached.embed(["eins zwei", "fünf"])
+        self.assertEqual(self.inner.calls[1], (["fünf"], "document"))
+
+    def test_duplicate_texts_embedded_once(self):
+        vectors = self.cached.embed(["fünf", "fünf"])
+        self.assertEqual(self.inner.calls, [(["fünf"], "document")])
+        self.assertEqual(vectors, [[4.0, 1.0], [4.0, 1.0]])
+
+    def test_text_without_chunk_is_returned_not_stored(self):
+        self.assertEqual(self.cached.embed(["gibt es nicht"]), [[13.0, 1.0]])
+        self.assertEqual(self.stored_count(), 0)
+
+    def test_save_failure_still_returns_vectors(self):
+        connections = iter([connect(TEST_DATABASE_URL)])
+        cached = CachedEmbedder(self.inner, self.MODEL, connect=lambda: next(connections, None) or unreachable())
+        self.assertEqual(cached.embed(["fünf"]), [[4.0, 1.0]])
+        self.assertEqual(cached.notes, (CACHE_UNAVAILABLE,))
+        self.assertEqual(self.stored_count(), 0)
+
+    def test_other_model_is_a_miss(self):
+        self.cached.embed(["eins zwei"])
+        other = CachedEmbedder(self.inner, "anderes", connect=lambda: connect(TEST_DATABASE_URL))
+        other.embed(["eins zwei"])
+        self.assertEqual(len(self.inner.calls), 2)
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("DELETE FROM chunk_embeddings WHERE model = 'anderes'")
+
+
+@unittest.skipUnless(database_available(), "test database not reachable")
+class TestCachedSourceStoresChunks(unittest.TestCase):
+    def setUp(self):
+        self.cleanup()
+        self.cached = CachedSource(FakeSource([make_document(1)]), connect=lambda: connect(TEST_DATABASE_URL),
+                                   chunk_size=2, overlap=0)
+
+    def tearDown(self):
+        self.cleanup()
+
+    def cleanup(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("DELETE FROM searches WHERE %s = ANY(keywords)", (KEYWORD,))
+            connection.execute("DELETE FROM documents WHERE source = %s", (TEST_SOURCE,))
+
+    def document_id(self, connection):
+        return connection.execute("SELECT id FROM documents WHERE source = %s", (TEST_SOURCE,)).fetchone()[0]
+
+    def test_chunks_are_stored(self):
+        self.cached.search([KEYWORD], 1)
+        with connect(TEST_DATABASE_URL) as connection:
+            texts = [text for _, _, text in find_chunks(connection, [self.document_id(connection)])]
+        self.assertEqual(texts, ["Titel 1", "Abstract 1"])
+
+    def test_storing_again_keeps_embeddings(self):
+        self.cached.search([KEYWORD], 1)
+        CachedEmbedder(CountingEmbedder(), "testmodell", connect=lambda: connect(TEST_DATABASE_URL)).embed(["Titel 1"])
+        self.cached.search([KEYWORD, "andere suche"], 1)
+        with connect(TEST_DATABASE_URL) as connection:
+            count = connection.execute("SELECT count(*) FROM chunk_embeddings WHERE model = 'testmodell'").fetchone()[0]
+        self.assertEqual(count, 1)

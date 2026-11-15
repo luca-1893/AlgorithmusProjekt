@@ -75,7 +75,20 @@ FUNKTION finde_vektoren(verbindung, dokument_ids, modell)
     WENN dokument_ids leer: GIB leeres Wörterbuch ZURÜCK
     GIB Ergebnis von find_embeddings.sql als Wörterbuch ZURÜCK
 ENDE
-// R16: Der Aufrufer bettet nur Chunks ein, die hier fehlen
+// Wird vom Cache nicht genutzt, er sucht über den Text (C12 in docs/cache/cache-pseudocode.md)
+
+
+FUNKTION finde_vektoren_nach_text(verbindung, texte, modell)
+    AUSGABE:  Wörterbuch Chunk-Text → Vektor
+    WENN texte leer: GIB leeres Wörterbuch ZURÜCK
+    GIB Ergebnis von find_embeddings_by_text.sql als Wörterbuch ZURÜCK
+ENDE
+
+
+FUNKTION speichere_vektor_nach_text(verbindung, text, modell, vektor)
+    WENN vektor leer: FEHLER "Vektor ist leer"
+    führe insert_embedding_by_text.sql aus          // für jeden Chunk mit diesem Text (C13)
+ENDE
 
 
 FUNKTION speichere_suche(verbindung, schlagwörter, filter, dokument_ids)

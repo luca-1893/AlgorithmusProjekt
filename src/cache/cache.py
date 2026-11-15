@@ -3,9 +3,12 @@ from typing import Callable, Optional
 
 import psycopg
 
+from chunking import create_chunks
 from sources import Document, SearchFilter, Source
-from storage.storage import (CACHE_MAX_AGE, StorageError, connect, find_cached_search, find_documents,
-                             save_document, save_search)
+from storage.storage import (CACHE_MAX_AGE, StorageError, connect, find_cached_search, find_chunks,
+                             find_documents, find_embeddings_by_text, save_chunks, save_document,
+                             save_embedding_by_text, save_search)
+from vector_search import Embedder
 
 CACHE_HIT = "Dokumente aus dem Cache"
 CACHE_UNAVAILABLE = "Cache nicht verfügbar"
@@ -59,5 +62,48 @@ class CachedSource(Source):
     def _store(self, keywords: list[str], search_filter: SearchFilter, documents: list[Document]) -> None:
         """Saves the documents and the search in the order of the inner source (R14)."""
         with self.connect() as connection:
-            ids = [save_document(connection, document, self.chunk_size, self.overlap) for document in documents]
+            ids = []
+            for document in documents:
+                document_id = save_document(connection, document, self.chunk_size, self.overlap)
+                self._store_chunks(connection, document_id, document)
+                ids.append(document_id)
             save_search(connection, keywords, search_filter, ids)
+
+    def _store_chunks(self, connection: psycopg.Connection, document_id: int, document: Document) -> None:
+        """Saves the chunks only if their texts changed, so stored vectors survive (C10)."""
+        texts = [chunk.text for chunk in create_chunks(document.id, document.text, self.chunk_size, self.overlap)]
+        stored = [text for _, _, text in find_chunks(connection, [document_id])]
+        if texts and texts != stored:
+            save_chunks(connection, document_id, texts)
+
+
+class CachedEmbedder(Embedder):
+    """Reuses stored chunk vectors and asks the inner embedder only for missing ones (R16)."""
+
+    def __init__(self, inner: Embedder, model: str, connect: Callable[[], psycopg.Connection] = connect):
+        self.inner = inner
+        self.model = model
+        self.connect = connect
+        self.notes = ()
+
+    def _request(self, texts: list[str], input_type: str) -> list[list[float]]:
+        self.notes = ()
+        if input_type == "query":
+            return self.inner.embed(texts, "query")
+        try:
+            with self.connect() as connection:
+                vectors = find_embeddings_by_text(connection, texts, self.model)
+        except StorageError:
+            self.notes = (CACHE_UNAVAILABLE,)
+            return self.inner.embed(texts, "document")
+
+        missing = list(dict.fromkeys(text for text in texts if text not in vectors))
+        new_vectors = self.inner.embed(missing, "document")
+        vectors.update(zip(missing, new_vectors))
+        try:
+            with self.connect() as connection:
+                for text, vector in zip(missing, new_vectors):
+                    save_embedding_by_text(connection, text, self.model, vector)
+        except StorageError:
+            self.notes = (CACHE_UNAVAILABLE,)
+        return [vectors[text] for text in texts]

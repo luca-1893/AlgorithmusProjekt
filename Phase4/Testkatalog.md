@@ -13,11 +13,11 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | `bm25` | 13 | 38 | 0 | 51 | 51 |
 | `vector_search` | 19 | 17 | 17 | 53 | 53 |
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
-| `pipeline` | 13 | 8 | 4 | 25 | 25 |
-| `mcp_server` | 10 | 1 | 7 | 18 | 18 |
-| `storage` | 13 | 14 | 8 | 35 | 35 |
-| `cache` | 7 | 2 | 3 | 12 | 12 |
-| **gesamt** | **112** | **114** | **59** | **285** | **285** |
+| `pipeline` | 14 | 9 | 4 | 27 | 27 |
+| `mcp_server` | 11 | 1 | 7 | 19 | 19 |
+| `storage` | 13 | 16 | 9 | 38 | 38 |
+| `cache` | 14 | 5 | 5 | 24 | 24 |
+| **gesamt** | **121** | **120** | **62** | **303** | **303** |
 
 ## `sources`
 
@@ -268,6 +268,8 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 23 | `TestSourceNotes.test_source_notes_reach_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache',)` | ✓ wie erwartet |
 | 24 | `TestSourceNotes.test_source_notes_before_pipeline_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache', 'Keine Treffer')` | ✓ wie erwartet |
 | 25 | `TestSourceNotes.test_plain_source_has_no_notes` | Randfall | `FakeSource([UML]).notes → ()` | ✓ wie erwartet |
+| 26 | `TestEmbedderNotes.test_embedder_notes_reach_warnings` | Normalfall | `result.warnings → ('Cache nicht verfügbar',)` | ✓ wie erwartet |
+| 27 | `TestEmbedderNotes.test_plain_embedder_has_no_notes` | Randfall | `TopicEmbedder().notes → ()` | ✓ wie erwartet |
 
 ## `mcp_server`
 
@@ -289,8 +291,9 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 14 | `TestParseDate.test_parse_date_invalid` | Fehlerfall | `parse_date('17.05.2023') → ValueError` | ✓ wie erwartet |
 | 15 | `TestParseDate.test_parse_date_year` | Normalfall | `parse_date('2023') → date(2023, 1, 1)` | ✓ wie erwartet |
 | 16 | `TestDefaultEmbedder.test_default_embedder_with_key` | Normalfall | `default_embedder() → nicht None` | ✓ wie erwartet |
-| 17 | `TestDefaultEmbedder.test_default_embedder_without_key` | Fehlerfall | `default_embedder() → None` | ✓ wie erwartet |
-| 18 | `TestDefaultSource.test_default_source_is_cached_arxiv` | Normalfall | `assertIsInstance(source, CachedSource) (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 17 | `TestDefaultEmbedder.test_default_embedder_is_cached_voyage` | Normalfall | `assertIsInstance(embedder, CachedEmbedder) (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 18 | `TestDefaultEmbedder.test_default_embedder_without_key` | Fehlerfall | `default_embedder() → None` | ✓ wie erwartet |
+| 19 | `TestDefaultSource.test_default_source_is_cached_arxiv` | Normalfall | `assertIsInstance(source, CachedSource) (+2 weitere Prüfungen)` | ✓ wie erwartet |
 
 ## `storage`
 
@@ -318,19 +321,22 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 20 | `TestStorageRepository.test_find_chunks_empty_ids` | Randfall | `find_chunks(self.connection, []) → []` | ✓ wie erwartet |
 | 21 | `TestStorageRepository.test_embeddings_round_trip_and_duplicate_ignored` | Randfall | `find_embeddings(self.connection, [document_id], 'voyage-4') → {(document_id, 0): [0.5, 0.25]}` | ✓ wie erwartet |
 | 22 | `TestStorageRepository.test_find_embeddings_other_model_empty` | Randfall | `find_embeddings(self.connection, [document_id], 'anderes-modell') → {}` | ✓ wie erwartet |
-| 23 | `TestStorageRepository.test_save_embedding_unknown_chunk_fails` | Fehlerfall | `save_embedding(self.connection, document_id, 7, 'voyage-4', [0.5]) → StorageError` | ✓ wie erwartet |
-| 24 | `TestStorageRepository.test_cached_search_found_with_other_order_and_case` | Randfall | `find_cached_search(self.connection, ['bm25', 'uml'], SearchFilter()) → [second, first]` | ✓ wie erwartet |
-| 25 | `TestStorageRepository.test_cached_search_other_filter_not_found` | Randfall | `find_cached_search(self.connection, ['uml'], SearchFilter(peer_reviewed_only=True)) → []` | ✓ wie erwartet |
-| 26 | `TestStorageRepository.test_cached_search_too_old_not_found` | Randfall | `find_cached_search(self.connection, ['uml'], SearchFilter()) → []` | ✓ wie erwartet |
-| 27 | `TestStorageRepository.test_save_run_and_rate` | Normalfall | `found → wahr` | ✓ wie erwartet |
-| 28 | `TestStorageRepository.test_rate_unknown_run_fails` | Fehlerfall | `rate_run(self.connection, -1, True) → StorageError` | ✓ wie erwartet |
-| 29 | `TestStorageRepository.test_save_run_invalid_variant_fails` | Fehlerfall | `'runs_invalid_variant'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 30 | `TestStorageRepository.test_kpi_by_variant_floats_and_unrated_none` | Randfall | `kpi['bm25']['runs'] → 2 (+4 weitere Prüfungen)` | ✓ wie erwartet |
-| 31 | `TestFindDocuments.test_find_documents_round_trip` | Normalfall | `stored → [StoredDocument(document_id, original, 'abstract', None, 200, 40)]` | ✓ wie erwartet |
-| 32 | `TestFindDocuments.test_find_documents_null_becomes_empty_string` | Randfall | `(document.doi, document.journal_ref) → ('', '')` | ✓ wie erwartet |
-| 33 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
-| 34 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
-| 35 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |
+| 23 | `TestStorageRepository.test_find_embeddings_by_text_empty_texts` | Randfall | `find_embeddings_by_text(self.connection, [], 'voyage-4') → {}` | ✓ wie erwartet |
+| 24 | `TestStorageRepository.test_save_embedding_by_text_for_every_equal_chunk` | Randfall | `find_embeddings(self.connection, [first, second], 'voyage-4') → {(first, 0): [0.5], (second, 0): [0.5]} (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 25 | `TestStorageRepository.test_save_embedding_by_text_empty_vector` | Fehlerfall | `save_embedding_by_text(self.connection, 'gleich', 'voyage-4', []) → ValueError` | ✓ wie erwartet |
+| 26 | `TestStorageRepository.test_save_embedding_unknown_chunk_fails` | Fehlerfall | `save_embedding(self.connection, document_id, 7, 'voyage-4', [0.5]) → StorageError` | ✓ wie erwartet |
+| 27 | `TestStorageRepository.test_cached_search_found_with_other_order_and_case` | Randfall | `find_cached_search(self.connection, ['bm25', 'uml'], SearchFilter()) → [second, first]` | ✓ wie erwartet |
+| 28 | `TestStorageRepository.test_cached_search_other_filter_not_found` | Randfall | `find_cached_search(self.connection, ['uml'], SearchFilter(peer_reviewed_only=True)) → []` | ✓ wie erwartet |
+| 29 | `TestStorageRepository.test_cached_search_too_old_not_found` | Randfall | `find_cached_search(self.connection, ['uml'], SearchFilter()) → []` | ✓ wie erwartet |
+| 30 | `TestStorageRepository.test_save_run_and_rate` | Normalfall | `found → wahr` | ✓ wie erwartet |
+| 31 | `TestStorageRepository.test_rate_unknown_run_fails` | Fehlerfall | `rate_run(self.connection, -1, True) → StorageError` | ✓ wie erwartet |
+| 32 | `TestStorageRepository.test_save_run_invalid_variant_fails` | Fehlerfall | `'runs_invalid_variant'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 33 | `TestStorageRepository.test_kpi_by_variant_floats_and_unrated_none` | Randfall | `kpi['bm25']['runs'] → 2 (+4 weitere Prüfungen)` | ✓ wie erwartet |
+| 34 | `TestFindDocuments.test_find_documents_round_trip` | Normalfall | `stored → [StoredDocument(document_id, original, 'abstract', None, 200, 40)]` | ✓ wie erwartet |
+| 35 | `TestFindDocuments.test_find_documents_null_becomes_empty_string` | Randfall | `(document.doi, document.journal_ref) → ('', '')` | ✓ wie erwartet |
+| 36 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
+| 37 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
+| 38 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |
 
 ## `cache`
 
@@ -348,3 +354,15 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 10 | `TestCachedSourceWithDatabase.test_save_failure_still_returns_documents` | Normalfall | `len(documents) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
 | 11 | `TestCachedSourceWithDatabase.test_notes_reset_between_calls` | Normalfall | `self.cached.notes → ()` | ✓ wie erwartet |
 | 12 | `TestCachedSourceWithDatabase.test_source_without_documents_is_no_cache_error` | Fehlerfall | `cached.search([KEYWORD], 2) → [] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 13 | `TestCachedEmbedderWithoutDatabase.test_is_an_embedder` | Normalfall | `assertIsInstance(CachedEmbedder(CountingEmbedder(), 'm', connect=unreachable), Embedder)` | ✓ wie erwartet |
+| 14 | `TestCachedEmbedderWithoutDatabase.test_query_is_never_cached` | Normalfall | `cached.embed(['frage'], 'query') → [[5.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 15 | `TestCachedEmbedderWithoutDatabase.test_database_unreachable_falls_back` | Fehlerfall | `cached.embed(['ab', 'abc']) → [[2.0, 1.0], [3.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 16 | `TestCachedEmbedderWithDatabase.test_miss_embeds_and_stores` | Normalfall | `vectors → [[9.0, 1.0], [9.0, 1.0]] (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 17 | `TestCachedEmbedderWithDatabase.test_hit_skips_inner_embedder` | Normalfall | `len(self.inner.calls) → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 18 | `TestCachedEmbedderWithDatabase.test_only_missing_texts_are_embedded` | Fehlerfall | `self.inner.calls[1] → (['fünf'], 'document')` | ✓ wie erwartet |
+| 19 | `TestCachedEmbedderWithDatabase.test_duplicate_texts_embedded_once` | Randfall | `self.inner.calls → [(['fünf'], 'document')] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 20 | `TestCachedEmbedderWithDatabase.test_text_without_chunk_is_returned_not_stored` | Randfall | `self.cached.embed(['gibt es nicht']) → [[13.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 21 | `TestCachedEmbedderWithDatabase.test_save_failure_still_returns_vectors` | Normalfall | `cached.embed(['fünf']) → [[4.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 22 | `TestCachedEmbedderWithDatabase.test_other_model_is_a_miss` | Randfall | `len(self.inner.calls) → 2` | ✓ wie erwartet |
+| 23 | `TestCachedSourceStoresChunks.test_chunks_are_stored` | Normalfall | `texts → ['Titel 1', 'Abstract 1']` | ✓ wie erwartet |
+| 24 | `TestCachedSourceStoresChunks.test_storing_again_keeps_embeddings` | Normalfall | `count → 1` | ✓ wie erwartet |

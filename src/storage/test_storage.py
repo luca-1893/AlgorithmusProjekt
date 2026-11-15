@@ -10,9 +10,9 @@ HAS_PSYCOPG = importlib.util.find_spec("psycopg") is not None
 if HAS_PSYCOPG:
     from storage.storage import (DEFAULT_DATABASE_URL, Run, StorageError, apply_schema, connect, database_url,
                                  StoredDocument, document_params, find_cached_search, find_chunks, find_documents,
-                                 find_embeddings, kpi_by_variant,
+                                 find_embeddings, find_embeddings_by_text, kpi_by_variant,
                                  load_sql, normalize_key, rate_run, save_chunks, save_document, save_embedding,
-                                 save_run, save_search)
+                                 save_embedding_by_text, save_run, save_search)
 from sources import Document, SearchFilter
 
 TEST_DATABASE_URL = os.environ.get("TEST_DATABASE_URL", "postgresql:///algorithmusprojekt_test")
@@ -168,6 +168,23 @@ class TestStorageRepository(unittest.TestCase):
         save_chunks(self.connection, document_id, ["eins"])
         save_embedding(self.connection, document_id, 0, "voyage-4", [0.5])
         self.assertEqual(find_embeddings(self.connection, [document_id], "anderes-modell"), {})
+
+    def test_find_embeddings_by_text_empty_texts(self):
+        self.assertEqual(find_embeddings_by_text(self.connection, [], "voyage-4"), {})
+
+    def test_save_embedding_by_text_for_every_equal_chunk(self):
+        first = save_document(self.connection, make_document("a"), 200, 40)
+        second = save_document(self.connection, make_document("b"), 200, 40)
+        save_chunks(self.connection, first, ["gleich"])
+        save_chunks(self.connection, second, ["gleich"])
+        save_embedding_by_text(self.connection, "gleich", "voyage-4", [0.5])
+        self.assertEqual(find_embeddings(self.connection, [first, second], "voyage-4"),
+                         {(first, 0): [0.5], (second, 0): [0.5]})
+        self.assertEqual(find_embeddings_by_text(self.connection, ["gleich"], "voyage-4"), {"gleich": [0.5]})
+
+    def test_save_embedding_by_text_empty_vector(self):
+        with self.assertRaises(ValueError):
+            save_embedding_by_text(self.connection, "gleich", "voyage-4", [])
 
     def test_save_embedding_unknown_chunk_fails(self):
         document_id = save_document(self.connection, make_document(), 200, 40)

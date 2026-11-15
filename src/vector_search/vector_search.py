@@ -55,6 +55,8 @@ class EmbeddingError(Exception):
 class Embedder(ABC):
     """Turns texts into vectors; subclasses implement the provider request."""
 
+    notes: tuple[str, ...] = ()
+
     def embed(self, texts: list[str], input_type: str = "document") -> list[list[float]]:
         """Returns one vector per text in the same order; input_type is "query" or "document"."""
         if input_type not in ("query", "document"):

@@ -35,6 +35,8 @@ CREATE TABLE IF NOT EXISTS chunks (
     CONSTRAINT chunks_invalid_text CHECK (text <> '')
 );
 
+CREATE INDEX IF NOT EXISTS chunks_text ON chunks USING hash (text);
+
 CREATE TABLE IF NOT EXISTS chunk_embeddings (
     document_id integer NOT NULL ,
     position integer NOT NULL ,

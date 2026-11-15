@@ -68,7 +68,8 @@ def research(keywords: list[str], k: int, source: Source, embedder: Optional[Emb
 
     documents = source.search(keywords, config.max_documents, search_filter)
     result = _select(documents, keywords, k, embedder, question, config)
-    return ResearchResult(result.hits, tuple(source.notes) + result.warnings)
+    embedder_notes = tuple(embedder.notes) if embedder is not None else ()
+    return ResearchResult(result.hits, tuple(source.notes) + embedder_notes + result.warnings)
 
 
 def _select(documents: list[Document], keywords: list[str], k: int, embedder: Optional[Embedder],

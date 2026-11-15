@@ -168,6 +168,21 @@ def find_embeddings(connection: psycopg.Connection, document_ids: list[int],
     return {(document_id, position): embedding for document_id, position, embedding in rows}
 
 
+def find_embeddings_by_text(connection: psycopg.Connection, texts: list[str], model: str) -> dict[str, list[float]]:
+    """Stored vectors of one model, keyed by chunk text (R16, C12)."""
+    if not texts:
+        return {}
+    rows = execute(connection, "find_embeddings_by_text", {"texts": texts, "model": model}).fetchall()
+    return {text: embedding for text, embedding in rows}
+
+
+def save_embedding_by_text(connection: psycopg.Connection, text: str, model: str, embedding: list[float]) -> None:
+    """Stores the vector for every chunk with this text; existing vectors are kept (C13)."""
+    if not embedding:
+        raise ValueError("embedding must not be empty")
+    execute(connection, "insert_embedding_by_text", {"text": text, "model": model, "embedding": embedding})
+
+
 def search_params(keywords: list[str], search_filter: SearchFilter) -> dict:
     """Normalized parameters shared by insert_search.sql and find_cached_search.sql."""
     return {

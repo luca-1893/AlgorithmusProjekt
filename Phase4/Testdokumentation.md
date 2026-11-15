@@ -6,7 +6,7 @@ Phase 4 des Hackathons (Karte #15). Stand: 15.11.2026 (abends), Branch `luca-dev
 
 **Wo was steht**
 - Diese Datei: Vorgehen, Übersicht, Coverage, ausgewählte Fälle im Detail, Abweichungsanalyse
-- `Phase4/Testkatalog.md`: **alle** 285 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
+- `Phase4/Testkatalog.md`: **alle** 303 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
 - Testcode: `src/<modul>/test_<modul>.py`
 
 ## 1. Vorgehen
@@ -45,11 +45,11 @@ Die Zuordnung im Katalog macht `testkatalog.py`: Fehlerfall, wenn der Test einen
 | `bm25` | 13 | 38 | 0 | 51 | 51 |
 | `vector_search` | 19 | 17 | 17 | 53 | 53 |
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
-| `pipeline` | 13 | 8 | 4 | 25 | 25 |
-| `mcp_server` | 10 | 1 | 7 | 18 | 18 |
-| `storage` | 13 | 14 | 8 | 35 | 35 |
-| `cache` | 7 | 2 | 3 | 12 | 12 |
-| **gesamt** | **112** | **114** | **59** | **285** | **285** |
+| `pipeline` | 14 | 9 | 4 | 27 | 27 |
+| `mcp_server` | 11 | 1 | 7 | 19 | 19 |
+| `storage` | 13 | 16 | 9 | 38 | 38 |
+| `cache` | 14 | 5 | 5 | 24 | 24 |
+| **gesamt** | **121** | **120** | **62** | **303** | **303** |
 
 Alle Tests laufen wie erwartet. Die 5 Abweichungen in `storage` vom 14./15.11. sind behoben (Abschnitt 6.1).
 
@@ -62,13 +62,13 @@ Gemessen mit `coverage 7.17.3`, Zeilen und Verzweigungen, ohne Testdateien.
 | `bm25` | 55 | 0 | 20 | **100 %** | – |
 | `chunking` | 22 | 0 | 8 | **100 %** | – |
 | `ranking` | 15 | 0 | 10 | **100 %** | – |
-| `pipeline` | 72 | 0 | 16 | **100 %** | – |
-| `cache` | 45 | 0 | 6 | **100 %** | – |
+| `pipeline` | 73 | 0 | 16 | **100 %** | – |
+| `cache` | 82 | 0 | 14 | **100 %** | – |
 | `sources` | 110 | 3 | 26 | 97 % | `http_get`: der echte Netzwerkaufruf |
-| `vector_search` | 89 | 3 | 30 | 97 % | `http_post_json`: der echte Netzwerkaufruf |
-| `storage` | 98 | 5 | 12 | 95 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
-| `mcp_server` | 54 | 11 | 8 | 82 % | `main()` und `__main__.py`: Start des Servers über die Kommandozeile |
-| **gesamt** | **560** | **22** | **136** | **96 %** | |
+| `vector_search` | 90 | 3 | 30 | 98 % | `http_post_json`: der echte Netzwerkaufruf |
+| `storage` | 107 | 5 | 16 | 95 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
+| `mcp_server` | 53 | 9 | 8 | 82 % | `main()`: Start des Servers über die Kommandozeile |
+| **gesamt** | **607** | **20** | **148** | **97 %** | |
 
 **Bewertung:** Die Algorithmus-Module (`bm25`, `chunking`, `ranking`, `pipeline`) und der Cache sind vollständig abgedeckt. Offen sind nur Zeilen, die echte Netzwerkaufrufe machen oder den Server starten. Sie sind absichtlich durch Attrappen ersetzt und wurden stattdessen im Notebook und in den Messungen live ausgeführt.
 
@@ -177,7 +177,7 @@ Kein Programmierfehler, aber eine Abweichung zwischen erwartetem und tatsächlic
 ## 7. Optional: Laufzeit und Vergleich mit Alternativen
 
 **Laufzeit**
-- Die gesamte Testsuite (285 Tests) läuft in etwa 0,9 s.
+- Die gesamte Testsuite (303 Tests) läuft in etwa 1,0 s.
 - Ein Tool-Aufruf mit Titel und Abstract dauert eine arXiv-Anfrage plus zwei Voyage-Aufrufe; die Rechenschritte selbst fallen daneben nicht ins Gewicht. Mit Volltext und ohne Cache wären es etwa 3,5 Minuten pro Aufruf (ADR 0004).
 
 **Vergleich mit Alternativen**

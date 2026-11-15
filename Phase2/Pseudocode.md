@@ -22,7 +22,7 @@ Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`.
 
 Ein MCP-Client (z. B. Claude Code) ruft das Tool `research_papers` mit mindestens einem Schlagwort auf. Die Vektorsuche ist nur aktiv, wenn `VOYAGE_API_KEY` gesetzt ist; sonst arbeitet der Algorithmus nur mit BM25. Die Datenbank ist ebenfalls optional; ohne sie läuft jede Suche direkt gegen arXiv.
 
-Die Cache-Regeln R13 bis R15 sind seit dem 15.11.2026 umgesetzt (`CachedSource`, `docs/cache/cache-pseudocode.md`); R16 (Vektoren wiederverwenden) folgt.
+Die Cache-Regeln R13 bis R16 sind seit dem 15.11.2026 umgesetzt (`CachedSource`, `CachedEmbedder`, `docs/cache/cache-pseudocode.md`).
 
 ## Endbedingungen
 
@@ -145,7 +145,7 @@ ENDE
 | R15 | Datenbank nicht erreichbar | ohne Cache weiter, Hinweis „Cache nicht verfügbar“; die Recherche scheitert nicht daran |
 | R16 | Vektor zu Chunk, Modell und Chunk-Parametern schon gespeichert | wiederverwenden statt neu einbetten |
 
-R13 bis R15 sind umgesetzt (`src/cache/`), R16 noch nicht.
+R13 bis R16 sind umgesetzt (`src/cache/`). R16 findet Vektoren über den Chunk-Text statt über die Chunk-Parameter (C12); gleicher Text ergibt denselben Vektor.
 
 ## Schleifen
 

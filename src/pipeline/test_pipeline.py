@@ -188,3 +188,16 @@ class TestSourceNotes(unittest.TestCase):
 
     def test_plain_source_has_no_notes(self):
         self.assertEqual(FakeSource([UML]).notes, ())
+
+
+class NotingEmbedder(TopicEmbedder):
+    notes = ("Cache nicht verfügbar",)
+
+
+class TestEmbedderNotes(unittest.TestCase):
+    def test_embedder_notes_reach_warnings(self):
+        result = pipeline.research(["uml"], 2, FakeSource([UML, SEQUENCE]), NotingEmbedder())
+        self.assertEqual(result.warnings, ("Cache nicht verfügbar",))
+
+    def test_plain_embedder_has_no_notes(self):
+        self.assertEqual(TopicEmbedder().notes, ())
