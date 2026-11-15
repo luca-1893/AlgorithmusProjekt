@@ -18,7 +18,7 @@ Grundlage für die KPI-Messung (Karte #6 und #7): Jede Frage wird mit allen drei
    - etwa die Hälfte mit Antwort nur im **Volltext**, nicht im Abstract (das prüft den Volltext-Weg)
    - deutsche und englische Fragen (Abstracts sind englisch)
    - verschiedene Fachgebiete, z. B. die acht Anfragen aus `messungen/2026-10-19_review-pr24/`
-6. **Umfang:** 20 bis 30 Fragen. Weniger ergibt keine belastbare Trefferquote, mehr kostet zu viele Tokens.
+6. **Umfang:** 25 Fragen (Luca, 15.11.2026). Weniger ergibt keine belastbare Trefferquote, mehr kostet zu viele Tokens.
 
 ## Was der Mess-Agent pro Lauf liefern muss
 

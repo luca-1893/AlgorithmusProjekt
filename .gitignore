@@ -25,3 +25,7 @@ messung_extraktion/
 
 # draw.io-Sicherungskopien
 *.drawio.bkp
+
+# Coverage
+.coverage
+htmlcov/
