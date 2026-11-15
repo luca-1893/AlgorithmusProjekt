@@ -75,6 +75,11 @@ class TestResearchBm25Only(unittest.TestCase):
         result = pipeline.research(["uml"], 3, FakeSource([]))
         self.assertEqual((result.hits, result.warnings), ((), ("Keine Treffer",)))
 
+    def test_research_documents_without_text(self):
+        blank = Document("4", "   ", "", ("Dee",), date(2023, 4, 4), "https://arxiv.org/abs/4", "arxiv")
+        result = pipeline.research(["uml"], 3, FakeSource([blank]))
+        self.assertEqual((result.hits, result.warnings), ((), ("Keine verwertbaren Quellen",)))
+
     def test_research_no_keyword_in_chunks(self):
         result = pipeline.research(["quantum"], 3, FakeSource([UML, NETS]))
         self.assertEqual((result.hits, result.warnings), ((), ("Kein Chunk enthält ein Schlagwort",)))
