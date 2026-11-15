@@ -110,3 +110,9 @@
 - Bestandsaufnahme vor Phase 5 (16.11.) und Pitch (30.11.): Issues, Board, Review-Kommentare an PR #24 und lokaler Stand abgeglichen. 240 Unittests grün.
 - Lokale Datenbank auf dem Mac nachgezogen: `schema.sql` in `algorithmusprojekt` (war leer) und `algorithmusprojekt_test` (hatte nur 3 von 6 Tabellen) eingespielt, je zweimal hintereinander ohne Fehler; beide Schemas sind jetzt identisch.
 - Rauchtest aller 11 SQL-Dateien über `load_sql` und psycopg (Transaktion zurückgerollt): 10 laufen, `insert_chunks.sql` scheitert mit `function unnest(unknown) is not unique`, weil psycopg eine Liste von Strings ohne Typ schickt. Lösung liegt bei Luca (SQL), z. B. ein Cast auf `text[]`.
+
+## 2026-11-15
+
+- `storage.py` fertiggestellt: je SQL-Datei eine Funktion (Dokumente, Chunks, Vektoren, Such-Cache, Messläufe, KPI), Pseudocode in `docs/storage/storage-pseudocode.md`, 23 neue Tests gegen die Test-Datenbank, jeder in einer zurückgerollten Transaktion. 5 davon sind rot, bis `insert_chunks.sql` den Parameter in `text[]` umwandelt; mit dem Cast laufen alle 30.
+- Phase 4: `Phase4/Testdokumentation.md` mit Kategorien, Coverage (95 %, Algorithmus-Module 100 %), je 7–8 ausgewählten Normal-, Rand- und Fehlerfällen mit live berechnetem Output und Abweichungsanalyse; `Phase4/Testkatalog.md` listet alle 264 Tests und wird von `Phase4/testkatalog.py` erzeugt.
+- Phase 5: Limitationen in `Phase5/Reflexion.md` ausführlich ausgeschrieben (Was, Beleg, Warum, Bedeutung, Stand, Lösung). Für Luca: `docs/storage/aufgaben-2026-11-15.md` mit dem `insert_chunks`-Bug, `EXPLAIN ANALYZE` und der fehlenden `find_documents.sql`.
