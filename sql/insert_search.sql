@@ -11,4 +11,4 @@ WITH new AS (
 )
 INSERT INTO search_documents (search_id, document_id, position)
 SELECT new.id, d.document_id, d.position - 1
-FROM new, unnest(%(document_ids)s) WITH ORDINALITY AS d(document_id, position);
+FROM new, unnest(%(document_ids)s::integer[]) WITH ORDINALITY AS d(document_id, position);

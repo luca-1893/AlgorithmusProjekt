@@ -20,7 +20,7 @@ venv/
 
 # Messungen: heruntergeladene Texte und eigene Umgebung
 messung-venv/
-cache/
+messungen/**/cache/
 messung_extraktion/
 
 # draw.io-Sicherungskopien

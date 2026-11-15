@@ -155,6 +155,7 @@ def http_get(url: str, timeout: float = 20.0) -> str:
 class Source(ABC):
     """A research source that finds documents for a list of keywords."""
     name: str
+    notes: tuple[str, ...] = ()
 
     @abstractmethod
     def search(self, keywords: list[str], max_results: int,

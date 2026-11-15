@@ -10,7 +10,7 @@ HAS_FASTMCP = importlib.util.find_spec("fastmcp") is not None
 if HAS_FASTMCP:
     from fastmcp import Client
 
-    from mcp_server.mcp_server import MAX_K, build_server, default_embedder, parse_date
+    from mcp_server.mcp_server import MAX_K, build_server, default_embedder, default_source, parse_date
 
 UML = Document("1", "UML class diagrams", "Class diagrams describe classes in UML.",
                ("Ada",), date(2020, 1, 1), "https://arxiv.org/abs/1", "arxiv")
@@ -124,3 +124,16 @@ class TestDefaultEmbedder(unittest.TestCase):
     def test_default_embedder_without_key(self):
         with mock.patch.dict("os.environ", {}, clear=True):
             self.assertIsNone(default_embedder())
+
+
+@unittest.skipUnless(HAS_FASTMCP, "fastmcp missing, use .venv")
+class TestDefaultSource(unittest.TestCase):
+    def test_default_source_is_cached_arxiv(self):
+        from cache.cache import CachedSource
+        from sources import ArxivSource
+        from pipeline import PipelineConfig
+
+        source = default_source(PipelineConfig(chunk_size=150, overlap=30))
+        self.assertIsInstance(source, CachedSource)
+        self.assertIsInstance(source.inner, ArxivSource)
+        self.assertEqual((source.chunk_size, source.overlap), (150, 30))

@@ -67,6 +67,13 @@ def research(keywords: list[str], k: int, source: Source, embedder: Optional[Emb
         raise ValueError("keywords must not be empty")
 
     documents = source.search(keywords, config.max_documents, search_filter)
+    result = _select(documents, keywords, k, embedder, question, config)
+    return ResearchResult(result.hits, tuple(source.notes) + result.warnings)
+
+
+def _select(documents: list[Document], keywords: list[str], k: int, embedder: Optional[Embedder],
+            question: str, config: PipelineConfig) -> ResearchResult:
+    """Chunks the documents, ranks the chunks and returns the k best."""
     if not documents:
         return ResearchResult((), ("Keine Treffer",))
 

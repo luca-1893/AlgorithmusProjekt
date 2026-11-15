@@ -13,10 +13,11 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | `bm25` | 13 | 38 | 0 | 51 | 51 |
 | `vector_search` | 19 | 17 | 17 | 53 | 53 |
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
-| `pipeline` | 11 | 7 | 4 | 22 | 22 |
-| `mcp_server` | 9 | 1 | 7 | 17 | 17 |
+| `pipeline` | 13 | 8 | 4 | 25 | 25 |
+| `mcp_server` | 10 | 1 | 7 | 18 | 18 |
 | `storage` | 13 | 14 | 8 | 35 | 35 |
-| **gesamt** | **102** | **111** | **56** | **269** | **269** |
+| `cache` | 7 | 2 | 3 | 12 | 12 |
+| **gesamt** | **112** | **114** | **59** | **285** | **285** |
 
 ## `sources`
 
@@ -264,6 +265,9 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 20 | `TestResearchHybrid.test_hybrid_question_is_embedded_instead_of_keywords` | Normalfall | `embedder.calls[0][0] → ['How do class diagrams work?']` | ✓ wie erwartet |
 | 21 | `TestResearchHybrid.test_hybrid_respects_k` | Normalfall | `len(result.hits) → 1` | ✓ wie erwartet |
 | 22 | `TestResearchHybrid.test_hybrid_selects_distinct_chunks` | Normalfall | `len(keys) → len(set(keys))` | ✓ wie erwartet |
+| 23 | `TestSourceNotes.test_source_notes_reach_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache',)` | ✓ wie erwartet |
+| 24 | `TestSourceNotes.test_source_notes_before_pipeline_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache', 'Keine Treffer')` | ✓ wie erwartet |
+| 25 | `TestSourceNotes.test_plain_source_has_no_notes` | Randfall | `FakeSource([UML]).notes → ()` | ✓ wie erwartet |
 
 ## `mcp_server`
 
@@ -286,6 +290,7 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 15 | `TestParseDate.test_parse_date_year` | Normalfall | `parse_date('2023') → date(2023, 1, 1)` | ✓ wie erwartet |
 | 16 | `TestDefaultEmbedder.test_default_embedder_with_key` | Normalfall | `default_embedder() → nicht None` | ✓ wie erwartet |
 | 17 | `TestDefaultEmbedder.test_default_embedder_without_key` | Fehlerfall | `default_embedder() → None` | ✓ wie erwartet |
+| 18 | `TestDefaultSource.test_default_source_is_cached_arxiv` | Normalfall | `assertIsInstance(source, CachedSource) (+2 weitere Prüfungen)` | ✓ wie erwartet |
 
 ## `storage`
 
@@ -326,3 +331,20 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 33 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
 | 34 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
 | 35 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |
+
+## `cache`
+
+| Nr. | Test | Kategorie | Input → erwartet | Tatsächlich |
+|---|---|---|---|---|
+| 1 | `TestCachedSourceWithoutDatabase.test_is_a_source` | Normalfall | `assertIsInstance(CachedSource(FakeSource(), connect=unreachable), Source)` | ✓ wie erwartet |
+| 2 | `TestCachedSourceWithoutDatabase.test_database_unreachable_falls_back_to_source` | Fehlerfall | `[document.id for document in documents] → ['9999.00001', '9999.00002'] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 3 | `TestCachedSourceWithoutDatabase.test_source_error_propagates` | Fehlerfall | `cached.search([KEYWORD], 2) → SourceError` | ✓ wie erwartet |
+| 4 | `TestCachedSourceWithoutDatabase.test_default_notes_empty` | Randfall | `CachedSource(FakeSource(), connect=unreachable).notes → ()` | ✓ wie erwartet |
+| 5 | `TestCachedSourceWithDatabase.test_miss_asks_source_and_saves` | Normalfall | `self.inner.calls → 1 (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 6 | `TestCachedSourceWithDatabase.test_hit_skips_source_and_keeps_order` | Normalfall | `self.inner.calls → 1 (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 7 | `TestCachedSourceWithDatabase.test_more_results_than_cached_asks_source_again` | Normalfall | `self.inner.calls → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 8 | `TestCachedSourceWithDatabase.test_fewer_results_than_cached_uses_cache` | Normalfall | `self.inner.calls → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 9 | `TestCachedSourceWithDatabase.test_other_filter_asks_source_again` | Randfall | `self.inner.calls → 2` | ✓ wie erwartet |
+| 10 | `TestCachedSourceWithDatabase.test_save_failure_still_returns_documents` | Normalfall | `len(documents) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 11 | `TestCachedSourceWithDatabase.test_notes_reset_between_calls` | Normalfall | `self.cached.notes → ()` | ✓ wie erwartet |
+| 12 | `TestCachedSourceWithDatabase.test_source_without_documents_is_no_cache_error` | Fehlerfall | `cached.search([KEYWORD], 2) → [] (+1 weitere Prüfungen)` | ✓ wie erwartet |

@@ -171,3 +171,20 @@ class TestResearchHybrid(unittest.TestCase):
         result = pipeline.research(["uml", "diagrams"], 5, FakeSource([UML, SEQUENCE]), TopicEmbedder())
         keys = [(hit.document.id, hit.chunk.position) for hit in result.hits]
         self.assertEqual(len(keys), len(set(keys)))
+
+
+class NotingSource(FakeSource):
+    notes = ("Dokumente aus dem Cache",)
+
+
+class TestSourceNotes(unittest.TestCase):
+    def test_source_notes_reach_warnings(self):
+        result = pipeline.research(["uml"], 2, NotingSource([UML, SEQUENCE]))
+        self.assertEqual(result.warnings, ("Dokumente aus dem Cache",))
+
+    def test_source_notes_before_pipeline_warnings(self):
+        result = pipeline.research(["uml"], 2, NotingSource([]))
+        self.assertEqual(result.warnings, ("Dokumente aus dem Cache", "Keine Treffer"))
+
+    def test_plain_source_has_no_notes(self):
+        self.assertEqual(FakeSource([UML]).notes, ())

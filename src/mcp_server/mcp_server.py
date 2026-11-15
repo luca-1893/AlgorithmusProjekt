@@ -6,6 +6,7 @@ from fastmcp import FastMCP
 from fastmcp.exceptions import ToolError
 from pydantic import Field
 
+from cache.cache import CachedSource
 from pipeline import PipelineConfig, research
 from sources import ArxivSource, SearchFilter, Source, SourceError
 from vector_search import Embedder, EmbeddingError, VoyageEmbedder
@@ -36,10 +37,15 @@ def default_embedder() -> Optional[Embedder]:
         return None
 
 
+def default_source(config: PipelineConfig) -> Source:
+    """arXiv with the database cache in front (R13 to R15)."""
+    return CachedSource(ArxivSource(), chunk_size=config.chunk_size, overlap=config.overlap)
+
+
 def build_server(source: Optional[Source] = None, embedder: Optional[Embedder] = None,
                  config: PipelineConfig = PipelineConfig()) -> FastMCP:
     """Creates the MCP server with the research_papers tool."""
-    source = source or ArxivSource()
+    source = source or default_source(config)
     server = FastMCP(SERVER_NAME, instructions=INSTRUCTIONS)
 
     @server.tool(annotations={"readOnlyHint": True, "openWorldHint": True})

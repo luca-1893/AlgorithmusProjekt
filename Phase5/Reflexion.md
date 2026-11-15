@@ -143,14 +143,14 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 **Warum:** Das ist der Preis für zwei Entscheidungen. Live-Recherche statt festem Korpus (aktuelle Paper, kein eigenes Archiv) und Embeddings über eine API statt lokal (ADR 0001: kein Modell und keine Rechenlast auf dem Server).
 
 **Bedeutung:**
-- Fällt **arXiv** aus, liefert das Tool nichts. Ohne Cache kostet jeder Aufruf einen Request.
+- Fällt **arXiv** aus, liefert das Tool nichts, außer die Suche liegt schon im Cache (seit 15.11. umgesetzt, R13–R15).
 - Fällt **Voyage** aus (Schlüssel ungültig, Limit, Netz), fällt die Pipeline still auf reines BM25 zurück (R10). Das ist gewollt, weil die Recherche nicht scheitern soll, aber der Hinweis „Vektorsuche nicht verfügbar, nur BM25“ im Ergebnis ist das einzige Signal. Liest das Sprachmodell ihn nicht, merkt der Nutzer nicht, dass er schlechtere Treffer bekommt.
 - Bei HTTP 429 wird weder bei arXiv noch bei Voyage automatisch wiederholt.
 - Jeder Aufruf verursacht Voyage-Kosten, und wegen L1 für fast alle Chunks.
 
 **Heute:** Beide Ausfälle führen zu verständlichen Fehlern oder einem geregelten Ausweichweg, nicht zum Absturz.
 
-**Lösung:** Cache (R13–R16) senkt die Zahl der Aufrufe; Wiederholen mit wachsender Wartezeit bei 429; gespeicherte Vektoren werden nicht neu berechnet (R16).
+**Lösung:** Der Cache (R13–R15, umgesetzt) spart die arXiv-Abfrage bei Wiederholungen innerhalb von 7 Tagen, gemessen 3,5 s → 1,7 s; R16 soll auch die Voyage-Aufrufe sparen; Wiederholen mit wachsender Wartezeit bei 429; gespeicherte Vektoren werden nicht neu berechnet (R16).
 
 ### L8: Wörter statt Tokens, zerrissene Sätze und Redundanz
 
@@ -196,7 +196,7 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 
 ### Wo ist der Algorithmus ineffizient?
 
-- **Netzwerk dominiert:** Ein arXiv-Request und zwei Voyage-Aufrufe kosten mehr als alle Rechenschritte zusammen. Der Cache ist im SQL vorbereitet, in Python aber noch nicht angebunden.
+- **Netzwerk dominiert:** Ein arXiv-Request und zwei Voyage-Aufrufe kosten mehr als alle Rechenschritte zusammen. Der Cache spart bei einer wiederholten Suche den arXiv-Request (gemessen 3,5 s → 1,7 s); die Voyage-Aufrufe bleiben, bis R16 umgesetzt ist.
 - **Index pro Aufruf:** Chunking und invertierter Index werden jedes Mal neu gebaut, O(T) über alle Wörter. Bei 20 Abstracts unkritisch, mit Volltext (25 → 997 Chunks bei der UML-Anfrage) deutlich spürbar.
 - **Einbetten fast aller Chunks:** Weil die Vorauswahl auf Abstracts kaum filtert (L1), gehen fast alle Chunks an Voyage. Das widerspricht der Annahme aus ADR 0001, dass BM25 die Kosten klein hält.
 - **MMR:** O(k · m · d) mit d = 1024; bei m = 50 und kleinem k unkritisch.

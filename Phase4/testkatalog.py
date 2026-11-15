@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 OUTPUT = ROOT / "Phase4" / "Testkatalog.md"
-MODULES = ["sources", "chunking", "bm25", "vector_search", "ranking", "pipeline", "mcp_server", "storage"]
+MODULES = ["sources", "chunking", "bm25", "vector_search", "ranking", "pipeline", "mcp_server", "storage", "cache"]
 
 ERROR_WORDS = ("error", "fails", "invalid", "unreachable", "missing", "timeout", "rejects",
                "mismatch", "wrong", "bad_", "is_abstract", "immutable", "unequal", "different_lengths",
