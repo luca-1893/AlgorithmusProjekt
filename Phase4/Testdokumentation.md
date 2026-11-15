@@ -1,12 +1,12 @@
 # Testdokumentation
 
-Phase 4 des Hackathons (Karte #15). Stand: 15.11.2026, Branch `luca-dev`.
+Phase 4 des Hackathons (Karte #15). Stand: 15.11.2026 (abends), Branch `luca-dev`.
 
 **Pflicht laut Vorgabe:** mindestens drei Testkategorien (Normalfall, Randfall, Fehlerfall), jeweils Input → erwartetes Output → tatsächliches Output, dazu eine Abweichungsanalyse. Optional: Laufzeitmessung und Vergleich mit Alternativen.
 
 **Wo was steht**
 - Diese Datei: Vorgehen, Übersicht, Coverage, ausgewählte Fälle im Detail, Abweichungsanalyse
-- `Phase4/Testkatalog.md`: **alle** 264 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
+- `Phase4/Testkatalog.md`: **alle** 269 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
 - Testcode: `src/<modul>/test_<modul>.py`
 
 ## 1. Vorgehen
@@ -47,10 +47,10 @@ Die Zuordnung im Katalog macht `testkatalog.py`: Fehlerfall, wenn der Test einen
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
 | `pipeline` | 11 | 7 | 4 | 22 | 22 |
 | `mcp_server` | 9 | 1 | 7 | 17 | 17 |
-| `storage` | 11 | 11 | 8 | 30 | 25 |
-| **gesamt** | **100** | **108** | **56** | **264** | **259** |
+| `storage` | 13 | 14 | 8 | 35 | 35 |
+| **gesamt** | **102** | **111** | **56** | **269** | **269** |
 
-Die 5 Abweichungen in `storage` sind in Abschnitt 6.1 erklärt.
+Alle Tests laufen wie erwartet. Die 5 Abweichungen in `storage` vom 14./15.11. sind behoben (Abschnitt 6.1).
 
 ## 4. Coverage
 
@@ -64,11 +64,11 @@ Gemessen mit `coverage 7.17.3`, Zeilen und Verzweigungen, ohne Testdateien.
 | `pipeline` | 69 | 0 | 16 | **100 %** | – |
 | `sources` | 109 | 3 | 26 | 97 % | `http_get`: der echte Netzwerkaufruf |
 | `vector_search` | 89 | 3 | 30 | 97 % | `http_post_json`: der echte Netzwerkaufruf |
-| `storage` | 83 | 7 | 10 | 89 % | `save_chunks`, `find_chunks` (wegen 6.1 nicht erreicht), Fehlerzweig von `kpi_by_variant` |
+| `storage` | 98 | 5 | 12 | 95 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
 | `mcp_server` | 51 | 11 | 8 | 81 % | `main()` und `__main__.py`: Start des Servers über die Kommandozeile |
-| **gesamt** | **493** | **24** | **128** | **95 %** | |
+| **gesamt** | **508** | **22** | **130** | **96 %** | |
 
-**Bewertung:** Die Algorithmus-Module (`bm25`, `chunking`, `ranking`, `pipeline`) sind vollständig abgedeckt. Offen sind nur Zeilen, die echte Netzwerkaufrufe machen oder den Server starten. Sie sind absichtlich durch Attrappen ersetzt und wurden stattdessen im Notebook und in den Messungen live ausgeführt. Mit behobenem Bug aus 6.1 steigt die Gesamtabdeckung auf 96 %.
+**Bewertung:** Die Algorithmus-Module (`bm25`, `chunking`, `ranking`, `pipeline`) sind vollständig abgedeckt. Offen sind nur Zeilen, die echte Netzwerkaufrufe machen oder den Server starten. Sie sind absichtlich durch Attrappen ersetzt und wurden stattdessen im Notebook und in den Messungen live ausgeführt.
 
 ## 5. Ausgewählte Fälle
 
@@ -114,7 +114,7 @@ Das tatsächliche Output wurde am 15.11.2026 live berechnet, nicht aus dem Test 
 
 ## 6. Abweichungsanalyse
 
-### 6.1 Aktuell offen: `insert_chunks.sql` aus Python
+### 6.1 Behoben: `insert_chunks.sql` aus Python
 
 | | |
 |---|---|
@@ -124,7 +124,7 @@ Das tatsächliche Output wurde am 15.11.2026 live berechnet, nicht aus dem Test 
 | **betroffene Tests** | `test_save_chunks_and_find_in_order`, `test_save_chunks_replaces_old_chunks`, `test_save_chunks_empty_text_fails`, `test_embeddings_round_trip_and_duplicate_ignored`, `test_find_embeddings_other_model_empty` |
 | **Ursache** | psycopg schickt eine Liste von Strings ohne Datentyp; Postgres kennt mehrere `unnest`-Varianten und kann nicht wählen. In DataGrip fiel es nicht auf, weil dort ein typisiertes Array-Literal steht. |
 | **Gefunden** | Rauchtest aller SQL-Dateien über Python am 14.11.2026 |
-| **Behebung** | Typumwandlung des Parameters in `insert_chunks.sql` (Lucas Aufgabe, `docs/storage/aufgaben-2026-11-15.md`). Mit dem Cast laufen alle 30 Storage-Tests. |
+| **Behebung** | `unnest(%(texts)s::text[])` in `insert_chunks.sql` (15.11.2026); danach alle Storage-Tests grün |
 | **Lehre** | SQL-Dateien nicht nur in der IDE testen, sondern auch über den Weg, den das Programm nimmt. |
 
 ### 6.2 Behoben: Division durch null in BM25 bei `k1 = 0`
@@ -175,7 +175,7 @@ Kein Programmierfehler, aber eine Abweichung zwischen erwartetem und tatsächlic
 ## 7. Optional: Laufzeit und Vergleich mit Alternativen
 
 **Laufzeit**
-- Die gesamte Testsuite (264 Tests) läuft in etwa 0,7 s.
+- Die gesamte Testsuite (269 Tests) läuft in etwa 0,75 s.
 - Ein Tool-Aufruf mit Titel und Abstract dauert eine arXiv-Anfrage plus zwei Voyage-Aufrufe; die Rechenschritte selbst fallen daneben nicht ins Gewicht. Mit Volltext und ohne Cache wären es etwa 3,5 Minuten pro Aufruf (ADR 0004).
 
 **Vergleich mit Alternativen**

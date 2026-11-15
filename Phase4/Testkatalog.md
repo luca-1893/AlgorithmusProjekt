@@ -15,8 +15,8 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
 | `pipeline` | 11 | 7 | 4 | 22 | 22 |
 | `mcp_server` | 9 | 1 | 7 | 17 | 17 |
-| `storage` | 11 | 11 | 8 | 30 | 25 |
-| **gesamt** | **100** | **108** | **56** | **264** | **259** |
+| `storage` | 13 | 14 | 8 | 35 | 35 |
+| **gesamt** | **102** | **111** | **56** | **269** | **269** |
 
 ## `sources`
 
@@ -307,12 +307,12 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 14 | `TestStorageRepository.test_save_document_returns_id` | Normalfall | `assertIsInstance(save_document(self.connection, make_document(), 200, 40), int)` | ✓ wie erwartet |
 | 15 | `TestStorageRepository.test_save_document_twice_keeps_id_and_updates` | Randfall | `first → second (+1 weitere Prüfungen)` | ✓ wie erwartet |
 | 16 | `TestStorageRepository.test_save_document_full_text_without_text_fails` | Fehlerfall | `'documents_invalid_full_text'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 17 | `TestStorageRepository.test_save_chunks_and_find_in_order` | Normalfall | `find_chunks(self.connection, [document_id]) → [(document_id, 0, 'eins'), (document_id, 1, 'zwei'), (document_id, 2, 'drei')]` | ✗ Fehler: insert_chunks.sql failed: function unnest(unknown) is not unique |
-| 18 | `TestStorageRepository.test_save_chunks_replaces_old_chunks` | Randfall | `find_chunks(self.connection, [document_id]) → [(document_id, 0, 'neu')]` | ✗ Fehler: insert_chunks.sql failed: function unnest(unknown) is not unique |
-| 19 | `TestStorageRepository.test_save_chunks_empty_text_fails` | Fehlerfall | `'chunks_invalid_text'(…) → StorageError (+1 weitere Prüfungen)` | ✗ "chunks_invalid_text" does not match "insert_chunks.sql failed: function unnest… |
+| 17 | `TestStorageRepository.test_save_chunks_and_find_in_order` | Normalfall | `find_chunks(self.connection, [document_id]) → [(document_id, 0, 'eins'), (document_id, 1, 'zwei'), (document_id, 2, 'drei')]` | ✓ wie erwartet |
+| 18 | `TestStorageRepository.test_save_chunks_replaces_old_chunks` | Randfall | `find_chunks(self.connection, [document_id]) → [(document_id, 0, 'neu')]` | ✓ wie erwartet |
+| 19 | `TestStorageRepository.test_save_chunks_empty_text_fails` | Fehlerfall | `'chunks_invalid_text'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
 | 20 | `TestStorageRepository.test_find_chunks_empty_ids` | Randfall | `find_chunks(self.connection, []) → []` | ✓ wie erwartet |
-| 21 | `TestStorageRepository.test_embeddings_round_trip_and_duplicate_ignored` | Randfall | `find_embeddings(self.connection, [document_id], 'voyage-4') → {(document_id, 0): [0.5, 0.25]}` | ✗ Fehler: insert_chunks.sql failed: function unnest(unknown) is not unique |
-| 22 | `TestStorageRepository.test_find_embeddings_other_model_empty` | Randfall | `find_embeddings(self.connection, [document_id], 'anderes-modell') → {}` | ✗ Fehler: insert_chunks.sql failed: function unnest(unknown) is not unique |
+| 21 | `TestStorageRepository.test_embeddings_round_trip_and_duplicate_ignored` | Randfall | `find_embeddings(self.connection, [document_id], 'voyage-4') → {(document_id, 0): [0.5, 0.25]}` | ✓ wie erwartet |
+| 22 | `TestStorageRepository.test_find_embeddings_other_model_empty` | Randfall | `find_embeddings(self.connection, [document_id], 'anderes-modell') → {}` | ✓ wie erwartet |
 | 23 | `TestStorageRepository.test_save_embedding_unknown_chunk_fails` | Fehlerfall | `save_embedding(self.connection, document_id, 7, 'voyage-4', [0.5]) → StorageError` | ✓ wie erwartet |
 | 24 | `TestStorageRepository.test_cached_search_found_with_other_order_and_case` | Randfall | `find_cached_search(self.connection, ['bm25', 'uml'], SearchFilter()) → [second, first]` | ✓ wie erwartet |
 | 25 | `TestStorageRepository.test_cached_search_other_filter_not_found` | Randfall | `find_cached_search(self.connection, ['uml'], SearchFilter(peer_reviewed_only=True)) → []` | ✓ wie erwartet |
@@ -321,3 +321,8 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 28 | `TestStorageRepository.test_rate_unknown_run_fails` | Fehlerfall | `rate_run(self.connection, -1, True) → StorageError` | ✓ wie erwartet |
 | 29 | `TestStorageRepository.test_save_run_invalid_variant_fails` | Fehlerfall | `'runs_invalid_variant'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
 | 30 | `TestStorageRepository.test_kpi_by_variant_floats_and_unrated_none` | Randfall | `kpi['bm25']['runs'] → 2 (+4 weitere Prüfungen)` | ✓ wie erwartet |
+| 31 | `TestFindDocuments.test_find_documents_round_trip` | Normalfall | `stored → [StoredDocument(document_id, original, 'abstract', None, 200, 40)]` | ✓ wie erwartet |
+| 32 | `TestFindDocuments.test_find_documents_null_becomes_empty_string` | Randfall | `(document.doi, document.journal_ref) → ('', '')` | ✓ wie erwartet |
+| 33 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
+| 34 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
+| 35 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |

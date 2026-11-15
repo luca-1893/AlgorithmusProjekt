@@ -72,9 +72,11 @@ Python muss Chunks und Vektoren speichern und laden; ohne diese Dateien bleibt d
 - `find_embeddings.sql`: vorhandene Vektoren zu Chunks und einem Modell (R16), damit nur fehlende eingebettet werden.
 - `insert_embedding.sql`: einen Vektor speichern; überleg, was passieren soll, wenn er schon existiert.
 
+- `find_documents.sql`: Dokumente zu einer Liste von IDs, damit der Cache ganze Dokumente statt nur IDs liefert. Die Reihenfolge übernimmt Python aus `find_cached_search`.
+
 ### 6. Optimierung
 
-Eine Abfrage aus 3 oder 5 mit `EXPLAIN ANALYZE` messen, einen passenden Index anlegen, erneut messen und das Vorher-Nachher in einem kurzen ADR festhalten.
+Eine Abfrage aus 3 oder 5 mit `EXPLAIN ANALYZE` messen, einen passenden Index anlegen, erneut messen und das Vorher-Nachher in einem kurzen ADR festhalten. Erledigt am 15.11.2026: ADR 0005, Index `searches_keywords_searched_at`.
 
 ## Was danach in Python passiert (Claude)
 

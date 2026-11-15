@@ -33,6 +33,21 @@ ENDE
 // Zeitschriftenverweis kommen oft später dazu); die ID bleibt gleich
 
 
+FUNKTION finde_dokumente(verbindung, dokument_ids)
+    AUSGABE:  Liste von gespeicherten Dokumenten (Document + Herkunft, Volltext, Chunk-Parameter)
+              in der Reihenfolge von dokument_ids
+    WENN dokument_ids leer: GIB leere Liste ZURÜCK
+    zeilen ← Ergebnis von find_documents.sql als Wörterbuch id → zeile
+    ergebnis ← leere Liste
+    FÜR JEDE id IN dokument_ids:
+        WENN id IN zeilen:
+            ergebnis.anhängen(Dokument aus zeile, NULL bei doi, journal_ref, abstract → "")
+    GIB ergebnis ZURÜCK
+ENDE
+// Die Reihenfolge kommt aus Python, nicht aus SQL: find_cached_search liefert die IDs in der
+// Reihenfolge von arXiv, ein ORDER BY id würde sie zerstören. Unbekannte IDs fallen weg.
+
+
 FUNKTION speichere_chunks(verbindung, dokument_id, texte)
     IN EINER TRANSAKTION:
         führe delete_chunks.sql aus      // alte Chunks und per CASCADE ihre Vektoren weg
@@ -110,5 +125,4 @@ ENDE
 
 ## Bekannte Grenzen
 
-- Ein Dokument lässt sich noch nicht aus seiner Datenbank-ID zurückholen; dafür fehlt `find_documents.sql`. Ohne sie liefert der Cache nur IDs, keine `Document`-Objekte.
 - Die Chunk-Parameter stehen am Dokument; ob gespeicherte Chunks zu den aktuellen Parametern passen, prüft der Aufrufer.

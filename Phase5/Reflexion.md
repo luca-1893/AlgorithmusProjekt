@@ -189,7 +189,7 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 - **Seitenzahl ist kein Filter**, obwohl Lucas ursprüngliche Tool-Idee sie vorsah. arXiv nennt sie nur unregelmäßig im Kommentarfeld.
 - **Keine Anmeldung:** Der MCP-Server läuft über HTTP ohne Anmeldung und darf nur hinter einem abgesicherten Zugang betrieben werden (VPN oder Reverse-Proxy mit Token).
 - **Index pro Aufruf:** Chunking und invertierter Index werden bei jedem Aufruf neu gebaut, weil es keinen festen Korpus gibt. Bei 20 Abstracts unkritisch, mit Volltext spürbar.
-- **Testabdeckung:** 95 % insgesamt, die Algorithmus-Module 100 %. Nicht durch Unittests abgedeckt sind echte Netzwerkaufrufe und der Serverstart; die Qualität des Rankings prüfen die Unittests nur an kleinen, ausgedachten Beispielen (`Phase4/Testdokumentation.md`, Abschnitt 6.6).
+- **Testabdeckung:** 96 % insgesamt, die Algorithmus-Module 100 %. Nicht durch Unittests abgedeckt sind echte Netzwerkaufrufe und der Serverstart; die Qualität des Rankings prüfen die Unittests nur an kleinen, ausgedachten Beispielen (`Phase4/Testdokumentation.md`, Abschnitt 6.6).
 - **Nur eine Quelle:** arXiv deckt vor allem Informatik, Physik und Mathematik ab; Verlagsartikel und andere Fächer fehlen.
 
 ## 3. Leitfragen

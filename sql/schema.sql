@@ -57,6 +57,8 @@ CREATE TABLE IF NOT EXISTS searches (
     searched_at timestamptz NOT NULL DEFAULT now()
 );
 
+CREATE INDEX IF NOT EXISTS searches_keywords_searched_at ON searches (keywords, searched_at DESC);
+
 CREATE TABLE IF NOT EXISTS search_documents (
     search_id   integer NOT NULL,
     document_id integer NOT NULL,

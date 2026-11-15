@@ -33,6 +33,17 @@ class Run:
     k: Optional[int] = None
 
 
+@dataclass(frozen=True)
+class StoredDocument:
+    """A document loaded from the database together with its storage fields."""
+    id: int
+    document: Document
+    origin: str
+    full_text: Optional[str]
+    chunk_size: int
+    overlap: int
+
+
 def database_url() -> str:
     """Connection URL from DATABASE_URL, otherwise the local default database."""
     return os.environ.get("DATABASE_URL", DEFAULT_DATABASE_URL)
@@ -101,6 +112,28 @@ def save_document(connection: psycopg.Connection, document: Document, chunk_size
     """Inserts or updates a document and returns its database id."""
     params = document_params(document, chunk_size, overlap, origin, full_text)
     return execute(connection, "upsert_document", params).fetchone()[0]
+
+
+def find_documents(connection: psycopg.Connection, document_ids: list[int]) -> list[StoredDocument]:
+    """Documents in the order of document_ids; unknown ids are skipped, NULL becomes an empty string."""
+    if not document_ids:
+        return []
+    with connection.cursor(row_factory=dict_row) as cursor:
+        try:
+            rows = cursor.execute(load_sql("find_documents"), {"document_ids": document_ids}).fetchall()
+        except psycopg.Error as error:
+            raise StorageError(f"find_documents.sql failed: {error}") from error
+    by_id = {row["id"]: row for row in rows}
+    return [stored_document(by_id[document_id]) for document_id in document_ids if document_id in by_id]
+
+
+def stored_document(row: dict) -> StoredDocument:
+    """Turns one row of find_documents.sql into a StoredDocument."""
+    document = Document(id=row["source_id"], title=row["title"], abstract=row["abstract"] or "",
+                        authors=tuple(row["authors"]), published=row["published"], url=row["url"],
+                        source=row["source"], categories=tuple(row["categories"]),
+                        journal_ref=row["journal_ref"] or "", doi=row["doi"] or "")
+    return StoredDocument(row["id"], document, row["origin"], row["full_text"], row["chunk_size"], row["overlap"])
 
 
 def save_chunks(connection: psycopg.Connection, document_id: int, texts: list[str]) -> None:

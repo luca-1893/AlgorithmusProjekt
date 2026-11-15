@@ -9,7 +9,8 @@ from unittest import mock
 HAS_PSYCOPG = importlib.util.find_spec("psycopg") is not None
 if HAS_PSYCOPG:
     from storage.storage import (DEFAULT_DATABASE_URL, Run, StorageError, apply_schema, connect, database_url,
-                                 document_params, find_cached_search, find_chunks, find_embeddings, kpi_by_variant,
+                                 StoredDocument, document_params, find_cached_search, find_chunks, find_documents,
+                                 find_embeddings, kpi_by_variant,
                                  load_sql, normalize_key, rate_run, save_chunks, save_document, save_embedding,
                                  save_run, save_search)
 from sources import Document, SearchFilter
@@ -216,3 +217,39 @@ class TestStorageRepository(unittest.TestCase):
         self.assertIsInstance(kpi["bm25"]["avg_input_tokens"], float)
         self.assertEqual(kpi["bm25"]["hit_rate"], 1.0)
         self.assertIsNone(kpi["agent_websearch"]["hit_rate"])
+
+
+@unittest.skipUnless(database_available(), "test database not reachable")
+class TestFindDocuments(unittest.TestCase):
+    def setUp(self):
+        self.connection = connect(TEST_DATABASE_URL)
+        self.outer = self.connection.transaction(force_rollback=True)
+        self.outer.__enter__()
+
+    def tearDown(self):
+        self.outer.__exit__(None, None, None)
+        self.connection.close()
+
+    def test_find_documents_round_trip(self):
+        original = make_document(doi="10.1/x", journal_ref="J")
+        document_id = save_document(self.connection, original, 200, 40)
+        stored = find_documents(self.connection, [document_id])
+        self.assertEqual(stored, [StoredDocument(document_id, original, "abstract", None, 200, 40)])
+
+    def test_find_documents_null_becomes_empty_string(self):
+        document_id = save_document(self.connection, make_document(), 200, 40)
+        document = find_documents(self.connection, [document_id])[0].document
+        self.assertEqual((document.doi, document.journal_ref), ("", ""))
+
+    def test_find_documents_keeps_given_order(self):
+        first = save_document(self.connection, make_document("2401.00001"), 200, 40)
+        second = save_document(self.connection, make_document("2401.00002"), 200, 40)
+        ids = [stored.id for stored in find_documents(self.connection, [second, first])]
+        self.assertEqual(ids, [second, first])
+
+    def test_find_documents_unknown_id_skipped(self):
+        document_id = save_document(self.connection, make_document(), 200, 40)
+        self.assertEqual([stored.id for stored in find_documents(self.connection, [-1, document_id])], [document_id])
+
+    def test_find_documents_empty_ids(self):
+        self.assertEqual(find_documents(self.connection, []), [])
