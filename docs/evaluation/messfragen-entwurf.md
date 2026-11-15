@@ -3,7 +3,7 @@
 Vorschlag für die 25 Messfragen aus `testfragen.md` (Kriterien „Wann eine Frage taugt“, Feldformat wie dort). Die Fragen sollen die Leitfragen L1–L6 aus `leitfragen.md` auswertbar machen, insbesondere L5 (deutsch gegen englisch) und L6 (Volltext gegen Abstract).
 
 **Stand:** 15.11.2026
-**Status:** Entwurf, Auswahl durch Luca. Noch nicht in `testfragen.md` übernommen.
+**Status:** Alle 25 von Luca übernommen (15.11.2026), Tabelle jetzt in `testfragen.md`. Die Ersatzfragen R1–R4 bleiben in Reserve.
 
 ## Vorgehen bei der Prüfung
 
