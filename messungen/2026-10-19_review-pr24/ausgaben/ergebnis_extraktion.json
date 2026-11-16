@@ -1,0 +1,608 @@
+[
+ {
+  "id": "2210.14441",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 5246,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.981,
+    "precision": 0.849,
+    "unbekannt": 0.06,
+    "suchterme": 1.0,
+    "sekunden": 0.2
+   },
+   "pymupdf4llm": {
+    "recall": 0.985,
+    "precision": 0.822,
+    "unbekannt": 0.074,
+    "suchterme": 1.0,
+    "sekunden": 2.1
+   }
+  }
+ },
+ {
+  "id": "2511.22409",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 6295,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.975,
+    "precision": 0.937,
+    "unbekannt": 0.027,
+    "suchterme": 1.0,
+    "sekunden": 0.16
+   },
+   "pymupdf4llm": {
+    "recall": 0.985,
+    "precision": 0.929,
+    "unbekannt": 0.022,
+    "suchterme": 1.0,
+    "sekunden": 1.48
+   }
+  }
+ },
+ {
+  "id": "1604.02386",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 10549,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.621,
+    "precision": 0.824,
+    "unbekannt": 0.113,
+    "suchterme": 0.989,
+    "sekunden": 0.28
+   },
+   "pymupdf4llm": {
+    "recall": 0.67,
+    "precision": 0.827,
+    "unbekannt": 0.094,
+    "suchterme": 1.0,
+    "sekunden": 2.02
+   }
+  }
+ },
+ {
+  "id": "1606.02311",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 3647,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.951,
+    "precision": 0.89,
+    "unbekannt": 0.059,
+    "suchterme": 1.0,
+    "sekunden": 0.17
+   },
+   "pymupdf4llm": {
+    "recall": 0.963,
+    "precision": 0.897,
+    "unbekannt": 0.044,
+    "suchterme": 1.0,
+    "sekunden": 0.8
+   }
+  }
+ },
+ {
+  "id": "2506.00788",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 10547,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.846,
+    "precision": 0.956,
+    "unbekannt": 0.017,
+    "suchterme": 0.973,
+    "sekunden": 0.29
+   },
+   "pymupdf4llm": {
+    "recall": 0.849,
+    "precision": 0.946,
+    "unbekannt": 0.014,
+    "suchterme": 0.984,
+    "sekunden": 2.34
+   }
+  }
+ },
+ {
+  "id": "2309.14884",
+  "query": [
+   "UML",
+   "class diagram",
+   "semantics"
+  ],
+  "referenz_woerter": 11806,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.983,
+    "precision": 0.83,
+    "unbekannt": 0.032,
+    "suchterme": 1.0,
+    "sekunden": 0.34
+   },
+   "pymupdf4llm": {
+    "recall": 0.983,
+    "precision": 0.739,
+    "unbekannt": 0.091,
+    "suchterme": 1.0,
+    "sekunden": 5.41
+   }
+  }
+ },
+ {
+  "id": "2104.08653",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 3433,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.962,
+    "precision": 0.81,
+    "unbekannt": 0.115,
+    "suchterme": 1.0,
+    "sekunden": 0.17
+   },
+   "pymupdf4llm": {
+    "recall": 0.986,
+    "precision": 0.871,
+    "unbekannt": 0.053,
+    "suchterme": 1.0,
+    "sekunden": 0.72
+   }
+  }
+ },
+ {
+  "id": "2504.05181",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 3165,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.408,
+    "precision": 0.173,
+    "unbekannt": 0.66,
+    "suchterme": 1.0,
+    "sekunden": 0.29
+   },
+   "pymupdf4llm": {
+    "recall": 0.411,
+    "precision": 0.171,
+    "unbekannt": 0.659,
+    "suchterme": 1.0,
+    "sekunden": 3.15
+   }
+  }
+ },
+ {
+  "id": "1601.04605",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 8732,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.889,
+    "precision": 0.894,
+    "unbekannt": 0.041,
+    "suchterme": 1.0,
+    "sekunden": 0.31
+   },
+   "pymupdf4llm": {
+    "recall": 0.916,
+    "precision": 0.804,
+    "unbekannt": 0.081,
+    "suchterme": 1.0,
+    "sekunden": 3.69
+   }
+  }
+ },
+ {
+  "id": "2210.09877",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 4543,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.963,
+    "precision": 0.912,
+    "unbekannt": 0.031,
+    "suchterme": 0.949,
+    "sekunden": 0.17
+   },
+   "pymupdf4llm": {
+    "recall": 0.967,
+    "precision": 0.903,
+    "unbekannt": 0.04,
+    "suchterme": 0.949,
+    "sekunden": 0.83
+   }
+  }
+ },
+ {
+  "id": "2112.05662",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1951,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.961,
+    "precision": 0.78,
+    "unbekannt": 0.049,
+    "suchterme": 1.0,
+    "sekunden": 0.15
+   },
+   "pymupdf4llm": {
+    "recall": 0.964,
+    "precision": 0.766,
+    "unbekannt": 0.051,
+    "suchterme": 1.0,
+    "sekunden": 0.62
+   }
+  }
+ },
+ {
+  "id": "2507.03479",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1391,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 1.0,
+    "precision": 0.301,
+    "unbekannt": 0.528,
+    "suchterme": 1.0,
+    "sekunden": 0.11
+   },
+   "pymupdf4llm": {
+    "recall": 1.0,
+    "precision": 0.272,
+    "unbekannt": 0.573,
+    "suchterme": 1.0,
+    "sekunden": 0.98
+   }
+  }
+ },
+ {
+  "id": "2005.12992",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1099,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.9,
+    "precision": 0.77,
+    "unbekannt": 0.156,
+    "suchterme": 1.0,
+    "sekunden": 0.12
+   },
+   "pymupdf4llm": {
+    "recall": 0.935,
+    "precision": 0.844,
+    "unbekannt": 0.075,
+    "suchterme": 1.0,
+    "sekunden": 0.38
+   }
+  }
+ },
+ {
+  "id": "2403.13468",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 5327,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.983,
+    "precision": 0.914,
+    "unbekannt": 0.027,
+    "suchterme": 1.0,
+    "sekunden": 0.18
+   },
+   "pymupdf4llm": {
+    "recall": 0.986,
+    "precision": 0.911,
+    "unbekannt": 0.026,
+    "suchterme": 1.0,
+    "sekunden": 0.94
+   }
+  }
+ },
+ {
+  "id": "1606.06137",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 3525,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.876,
+    "precision": 0.87,
+    "unbekannt": 0.057,
+    "suchterme": 1.0,
+    "sekunden": 0.24
+   },
+   "pymupdf4llm": {
+    "recall": 0.964,
+    "precision": 0.684,
+    "unbekannt": 0.128,
+    "suchterme": 1.0,
+    "sekunden": 1.44
+   }
+  }
+ },
+ {
+  "id": "0911.5046",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1568,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.912,
+    "precision": 0.829,
+    "unbekannt": 0.129,
+    "suchterme": 0.87,
+    "sekunden": 0.1
+   },
+   "pymupdf4llm": {
+    "recall": 0.959,
+    "precision": 0.893,
+    "unbekannt": 0.051,
+    "suchterme": 1.0,
+    "sekunden": 0.25
+   }
+  }
+ },
+ {
+  "id": "2503.17876",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 4129,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.988,
+    "precision": 0.853,
+    "unbekannt": 0.056,
+    "suchterme": 1.0,
+    "sekunden": 0.22
+   },
+   "pymupdf4llm": {
+    "recall": 0.992,
+    "precision": 0.859,
+    "unbekannt": 0.051,
+    "suchterme": 1.0,
+    "sekunden": 1.13
+   }
+  }
+ },
+ {
+  "id": "2210.13202",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 2689,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.995,
+    "precision": 0.95,
+    "unbekannt": 0.029,
+    "suchterme": 1.0,
+    "sekunden": 0.1
+   },
+   "pymupdf4llm": {
+    "recall": 1.0,
+    "precision": 0.95,
+    "unbekannt": 0.021,
+    "suchterme": 1.0,
+    "sekunden": 0.39
+   }
+  }
+ },
+ {
+  "id": "2407.11605",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 7212,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.999,
+    "precision": 0.953,
+    "unbekannt": 0.025,
+    "suchterme": 1.0,
+    "sekunden": 0.23
+   },
+   "pymupdf4llm": {
+    "recall": 0.999,
+    "precision": 0.956,
+    "unbekannt": 0.025,
+    "suchterme": 1.0,
+    "sekunden": 1.6
+   }
+  }
+ },
+ {
+  "id": "2304.11095",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1982,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.9,
+    "precision": 0.708,
+    "unbekannt": 0.13,
+    "suchterme": 1.0,
+    "sekunden": 0.09
+   },
+   "pymupdf4llm": {
+    "recall": 0.92,
+    "precision": 0.675,
+    "unbekannt": 0.15,
+    "suchterme": 1.0,
+    "sekunden": 1.21
+   }
+  }
+ },
+ {
+  "id": "1806.04815",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 1268,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.94,
+    "precision": 0.692,
+    "unbekannt": 0.179,
+    "suchterme": 1.0,
+    "sekunden": 0.11
+   },
+   "pymupdf4llm": {
+    "recall": 0.969,
+    "precision": 0.75,
+    "unbekannt": 0.103,
+    "suchterme": 1.0,
+    "sekunden": 0.37
+   }
+  }
+ },
+ {
+  "id": "2503.19092",
+  "query": [
+   "BM25",
+   "information retrieval"
+  ],
+  "referenz_woerter": 7666,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.992,
+    "precision": 0.889,
+    "unbekannt": 0.042,
+    "suchterme": 1.0,
+    "sekunden": 0.24
+   },
+   "pymupdf4llm": {
+    "recall": 0.993,
+    "precision": 0.889,
+    "unbekannt": 0.045,
+    "suchterme": 1.0,
+    "sekunden": 2.16
+   }
+  }
+ },
+ {
+  "id": "2502.00306",
+  "query": [
+   "retrieval augmented generation",
+   "hallucination"
+  ],
+  "referenz_woerter": 13531,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.721,
+    "precision": 0.9,
+    "unbekannt": 0.042,
+    "suchterme": 0.882,
+    "sekunden": 0.94
+   },
+   "pymupdf4llm": {
+    "recall": 0.703,
+    "precision": 0.819,
+    "unbekannt": 0.107,
+    "suchterme": 0.882,
+    "sekunden": 9.39
+   }
+  }
+ },
+ {
+  "id": "2508.03553",
+  "query": [
+   "retrieval augmented generation",
+   "hallucination"
+  ],
+  "referenz_woerter": 7427,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.953,
+    "precision": 0.839,
+    "unbekannt": 0.049,
+    "suchterme": 1.0,
+    "sekunden": 0.24
+   },
+   "pymupdf4llm": {
+    "recall": 0.962,
+    "precision": 0.814,
+    "unbekannt": 0.077,
+    "suchterme": 1.0,
+    "sekunden": 3.13
+   }
+  }
+ },
+ {
+  "id": "2510.22344",
+  "query": [
+   "retrieval augmented generation",
+   "hallucination"
+  ],
+  "referenz_woerter": 15974,
+  "extraktoren": {
+   "pypdf": {
+    "recall": 0.663,
+    "precision": 0.929,
+    "unbekannt": 0.047,
+    "suchterme": 0.86,
+    "sekunden": 0.35
+   },
+   "pymupdf4llm": {
+    "recall": 0.684,
+    "precision": 0.937,
+    "unbekannt": 0.036,
+    "suchterme": 0.849,
+    "sekunden": 3.24
+   }
+  }
+ }
+]

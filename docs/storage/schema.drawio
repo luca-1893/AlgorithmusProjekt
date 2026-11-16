@@ -1,0 +1,172 @@
+<mxfile host="Electron">
+  <diagram name="Datenbankschema" id="schema">
+    <mxGraphModel dx="1927" dy="1060" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="900" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="t_documents" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" value="documents" vertex="1">
+          <mxGeometry height="412" width="340" x="40" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_0" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK  id : integer (IDENTITY)" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_1" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="UK  source : text" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_2" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="UK  source_id : text" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_3" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="doi : text  (NULL)" vertex="1">
+          <mxGeometry height="24" width="340" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_4" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="title : text" vertex="1">
+          <mxGeometry height="24" width="340" y="124" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_5" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="abstract : text  (NULL)" vertex="1">
+          <mxGeometry height="24" width="340" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_6" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="authors : text[]" vertex="1">
+          <mxGeometry height="24" width="340" y="172" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_7" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="published : date" vertex="1">
+          <mxGeometry height="24" width="340" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_8" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="url : text" vertex="1">
+          <mxGeometry height="24" width="340" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_9" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="categories : text[]" vertex="1">
+          <mxGeometry height="24" width="340" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_10" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="journal_ref : text  (NULL)" vertex="1">
+          <mxGeometry height="24" width="340" y="268" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_11" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="origin : text  CHECK html | pdf | abstract" vertex="1">
+          <mxGeometry height="24" width="340" y="292" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_12" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="full_text : text  (NULL ⇔ origin = abstract)" vertex="1">
+          <mxGeometry height="24" width="340" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_13" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="chunk_size : integer  CHECK &gt; 0" vertex="1">
+          <mxGeometry height="24" width="340" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_14" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="overlap : integer  CHECK 0 ≤ overlap &lt; chunk_size" vertex="1">
+          <mxGeometry height="24" width="340" y="364" as="geometry" />
+        </mxCell>
+        <mxCell id="r_documents_15" parent="t_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="fetched_at : timestamptz  DEFAULT jetzt" vertex="1">
+          <mxGeometry height="24" width="340" y="388" as="geometry" />
+        </mxCell>
+        <mxCell id="t_chunks" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="chunks" vertex="1">
+          <mxGeometry height="100" width="340" x="480" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunks_0" parent="t_chunks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK FK  document_id : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunks_1" parent="t_chunks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK  position : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunks_2" parent="t_chunks" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="text : text" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="t_chunk_embeddings" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" value="chunk_embeddings" vertex="1">
+          <mxGeometry height="124" width="340" x="880" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunk_embeddings_0" parent="t_chunk_embeddings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK FK  document_id : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunk_embeddings_1" parent="t_chunk_embeddings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK FK  position : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunk_embeddings_2" parent="t_chunk_embeddings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK  model : text" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="r_chunk_embeddings_3" parent="t_chunk_embeddings" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="embedding : real[]" vertex="1">
+          <mxGeometry height="24" width="340" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="t_search_documents" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="search_documents" vertex="1">
+          <mxGeometry height="100" width="340" x="480" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="r_search_documents_0" parent="t_search_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK FK  search_id : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_search_documents_1" parent="t_search_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK FK  document_id : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_search_documents_2" parent="t_search_documents" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="position : integer" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="t_searches" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" value="searches" vertex="1">
+          <mxGeometry height="196" width="340" x="880" y="340" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_0" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK  id : integer (IDENTITY)" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_1" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="keywords : text[]  (normalisiert, sortiert)" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_2" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="published_from : date  (NULL)" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_3" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="published_to : date  (NULL)" vertex="1">
+          <mxGeometry height="24" width="340" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_4" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="categories : text[]  (sortiert)" vertex="1">
+          <mxGeometry height="24" width="340" y="124" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_5" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="peer_reviewed_only : boolean" vertex="1">
+          <mxGeometry height="24" width="340" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="r_searches_6" parent="t_searches" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="searched_at : timestamptz  DEFAULT jetzt" vertex="1">
+          <mxGeometry height="24" width="340" y="172" as="geometry" />
+        </mxCell>
+        <mxCell id="t_runs" parent="1" style="swimlane;fontStyle=1;childLayout=stackLayout;horizontal=1;startSize=28;horizontalStack=0;resizeParent=1;resizeParentMax=0;resizeLast=0;collapsible=0;marginBottom=0;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" value="runs" vertex="1">
+          <mxGeometry height="268" width="340" x="40" y="560" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_0" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;fontStyle=1;" value="PK  id : integer (IDENTITY)" vertex="1">
+          <mxGeometry height="24" width="340" y="28" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_1" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="run_at : timestamptz  (von Python)" vertex="1">
+          <mxGeometry height="24" width="340" y="52" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_2" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="variant : text  CHECK agent_websearch | bm25 | hybrid" vertex="1">
+          <mxGeometry height="24" width="340" y="76" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_3" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="keywords : text[]  (NULL ⇔ agent_websearch)" vertex="1">
+          <mxGeometry height="24" width="340" y="100" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_4" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="question : text" vertex="1">
+          <mxGeometry height="24" width="340" y="124" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_5" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="k : integer  CHECK 1–20  (NULL ⇔ agent_websearch)" vertex="1">
+          <mxGeometry height="24" width="340" y="148" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_6" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="input_tokens : integer  CHECK ≥ 0" vertex="1">
+          <mxGeometry height="24" width="340" y="172" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_7" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="output_tokens : integer  CHECK ≥ 0" vertex="1">
+          <mxGeometry height="24" width="340" y="196" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_8" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="duration_ms : integer  CHECK ≥ 0" vertex="1">
+          <mxGeometry height="24" width="340" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="r_runs_9" parent="t_runs" style="text;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;spacingLeft=6;html=1;" value="found_source : boolean  (NULL = nicht bewertet)" vertex="1">
+          <mxGeometry height="24" width="340" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="e0" edge="1" parent="1" source="t_documents" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmany;endFill=0;fontSize=10;" target="t_chunks" value="1 : n, CASCADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1" edge="1" parent="1" source="t_chunks" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmany;endFill=0;fontSize=10;" target="t_chunk_embeddings" value="1 : n, CASCADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2" edge="1" parent="1" source="t_documents" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmany;endFill=0;fontSize=10;" target="t_search_documents" value="1 : n, CASCADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3" edge="1" parent="1" source="t_searches" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmany;endFill=0;fontSize=10;" target="t_search_documents" value="1 : n, CASCADE">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="legend" parent="1" style="text;html=1;align=left;verticalAlign=top;strokeColor=#999999;fillColor=#f5f5f5;spacing=8;" value="PK = Primärschlüssel, FK = Fremdschlüssel, UK = UNIQUE (source, source_id)&lt;br&gt;(NULL) = darf fehlen, sonst NOT NULL; ⇔ = genau dann, wenn&lt;br&gt;runs ist unabhängig von den übrigen Tabellen" vertex="1">
+          <mxGeometry height="70" width="440" x="850" y="820" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

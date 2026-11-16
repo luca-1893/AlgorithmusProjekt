@@ -17,3 +17,19 @@ venv/
 
 # Lokale Konfiguration und Secrets
 .env
+
+# Messungen: heruntergeladene Texte und eigene Umgebung
+messung-venv/
+messungen/**/cache/
+messung_extraktion/
+
+# draw.io-Sicherungskopien
+*.drawio.bkp
+
+# Coverage
+.coverage
+htmlcov/
+messungen/*_messlauf_probe/
+
+# Lokale Agent-Hinweise
+AGENTS.local.md
