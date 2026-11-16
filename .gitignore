@@ -30,3 +30,6 @@ messung_extraktion/
 .coverage
 htmlcov/
 messungen/*_messlauf_probe/
+
+# Lokale Agent-Hinweise
+AGENTS.local.md
