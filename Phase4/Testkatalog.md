@@ -1,6 +1,6 @@
 # Testkatalog
 
-Automatisch erzeugt mit `Phase4/testkatalog.py` am 15.11.2026. Erklärung und ausgewählte Fälle im Detail: `Phase4/Testdokumentation.md`.
+Automatisch erzeugt mit `Phase4/testkatalog.py` am 28.11.2026. Erklärung und ausgewählte Fälle im Detail: `Phase4/Testdokumentation.md`.
 
 Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerklasse“ heißt, der Aufruf muss genau diesen Fehler werfen. **Tatsächlich** ist das Ergebnis des letzten Laufs: „wie erwartet“ heißt, das tatsächliche Output stimmt mit dem erwarteten überein.
 
@@ -8,17 +8,17 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 
 | Modul | Normalfall | Randfall | Fehlerfall | gesamt | wie erwartet |
 |---|---|---|---|---|---|
-| `sources` | 24 | 15 | 11 | 50 | 50 |
+| `sources` | 49 | 30 | 18 | 97 | 97 |
 | `chunking` | 6 | 10 | 8 | 24 | 24 |
 | `bm25` | 13 | 38 | 0 | 51 | 51 |
 | `vector_search` | 19 | 17 | 17 | 53 | 53 |
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
-| `pipeline` | 14 | 9 | 4 | 27 | 27 |
-| `mcp_server` | 11 | 1 | 7 | 19 | 19 |
-| `storage` | 13 | 16 | 9 | 38 | 38 |
-| `cache` | 14 | 5 | 5 | 24 | 24 |
-| `evaluation` | 14 | 5 | 3 | 22 | 22 |
-| **gesamt** | **135** | **125** | **65** | **325** | **325** |
+| `pipeline` | 16 | 9 | 4 | 29 | 29 |
+| `mcp_server` | 13 | 1 | 7 | 21 | 21 |
+| `storage` | 15 | 16 | 9 | 40 | 40 |
+| `cache` | 20 | 6 | 6 | 32 | 32 |
+| `evaluation` | 16 | 7 | 3 | 26 | 26 |
+| **gesamt** | **174** | **143** | **73** | **390** | **390** |
 
 ## `sources`
 
@@ -74,6 +74,53 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 48 | `TestArxivSource.test_search_timeout` | Fehlerfall | `source.search(['uml'], 5) → sources.SourceError` | ✓ wie erwartet |
 | 49 | `TestArxivSource.test_search_uses_categories` | Normalfall | `query_params(fetch.urls[0])['search_query'] → '(all:"uml") AND (cat:cs.SE)'` | ✓ wie erwartet |
 | 50 | `TestArxivSource.test_source_is_abstract` | Fehlerfall | `sources.Source() → TypeError` | ✓ wie erwartet |
+| 51 | `TestHtmlText.test_html_keeps_article_text` | Normalfall | `text.startswith('A Paper Intro text with BM25. Second line.') → wahr (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 52 | `TestHtmlText.test_html_skips_math_figures_tables_and_bibliography` | Normalfall | `assertNotIn(f' {unwanted} ', f' {text} ')` | ✓ wie erwartet |
+| 53 | `TestHtmlText.test_html_outside_article_is_ignored` | Normalfall | `assertNotIn(unwanted, text)` | ✓ wie erwartet |
+| 54 | `TestHtmlText.test_html_skip_class_must_match_whole_class_name` | Normalfall | `html_text(page) → 'kept'` | ✓ wie erwartet |
+| 55 | `TestHtmlText.test_html_without_article_is_empty` | Randfall | `html_text('<html><body><p>No article.</p></body></html>') → ''` | ✓ wie erwartet |
+| 56 | `TestHtmlText.test_html_void_tag_inside_skipped_element_keeps_skipping` | Normalfall | `text → 'shown too'` | ✓ wie erwartet |
+| 57 | `TestCollapseText.test_collapse_removes_nul_characters` | Normalfall | `collapse_text('classi\x00fication of\n\tterms') → 'classification of terms'` | ✓ wie erwartet |
+| 58 | `TestCollapseText.test_collapse_empty_text` | Randfall | `collapse_text(' \n ') → ''` | ✓ wie erwartet |
+| 59 | `TestCutReferences.test_cut_references_in_second_half` | Normalfall | `assertNotIn('A. Author', cut_references(text))` | ✓ wie erwartet |
+| 60 | `TestCutReferences.test_cut_references_heading_in_first_half_is_kept` | Normalfall | `cut_references(text) → text` | ✓ wie erwartet |
+| 61 | `TestCutReferences.test_cut_references_without_heading_unchanged` | Randfall | `cut_references('just text') → 'just text'` | ✓ wie erwartet |
+| 62 | `TestCutReferences.test_cut_references_uses_last_heading` | Normalfall | `cut_references(text).count('body') → 50` | ✓ wie erwartet |
+| 63 | `TestPdfText.test_pdf_text_extracts_words` | Normalfall | `pdf_text(make_pdf(['Hello BM25 world'])) → 'Hello BM25 world'` | ✓ wie erwartet |
+| 64 | `TestPdfText.test_pdf_text_joins_hyphenated_words` | Randfall | `pdf_text(make_pdf(['Algo-', 'rithmus'])) → 'Algorithmus'` | ✓ wie erwartet |
+| 65 | `TestPdfText.test_pdf_text_invalid_bytes_raise_pdf_error` | Fehlerfall | `pdf_text(b'%PDF-1.4 broken') → PdfError` | ✓ wie erwartet |
+| 66 | `TestFullTextFetcher.test_html_is_preferred` | Normalfall | `origin → 'html' (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 67 | `TestFullTextFetcher.test_pdf_fallback_when_html_missing` | Fehlerfall | `source.full_text('2401.00001') → ('pdf', LONG_BODY) (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 68 | `TestFullTextFetcher.test_pdf_fallback_when_html_too_short` | Randfall | `source.full_text('2401.00001')[0] → 'pdf'` | ✓ wie erwartet |
+| 69 | `TestFullTextFetcher.test_pdf_fallback_when_html_is_not_html` | Normalfall | `source.full_text('2401.00001')[0] → 'pdf'` | ✓ wie erwartet |
+| 70 | `TestFullTextFetcher.test_none_when_html_and_pdf_fail` | Randfall | `fetcher({'html': [not_found('u')], 'pdf': [not_found('u')]}).full_text('2401.00001') → None` | ✓ wie erwartet |
+| 71 | `TestFullTextFetcher.test_none_when_pdf_too_short` | Randfall | `fetcher({'pdf': [pdf('few words')]}).full_text('2401.00001') → None` | ✓ wie erwartet |
+| 72 | `TestFullTextFetcher.test_none_when_pdf_is_not_a_pdf` | Randfall | `fetcher({'pdf': [(b'<html>', 'text/html')]}).full_text('2401.00001') → None` | ✓ wie erwartet |
+| 73 | `TestFullTextFetcher.test_none_when_pdf_unreadable` | Randfall | `fetcher({'pdf': [pdf()]}, extract_pdf=broken).full_text('2401.00001') → None` | ✓ wie erwartet |
+| 74 | `TestFullTextFetcher.test_network_error_is_not_retried` | Fehlerfall | `source.full_text('2401.00001') → None (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 75 | `TestFullTextFetcher.test_retry_after_429_with_growing_wait` | Normalfall | `source.full_text('2401.00001')[0] → 'html' (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 76 | `TestFullTextFetcher.test_503_is_retried_like_429` | Normalfall | `source.full_text('2401.00001')[0] → 'html'` | ✓ wie erwartet |
+| 77 | `TestFullTextFetcher.test_gives_up_after_max_attempts_and_skips_pdf` | Normalfall | `source.full_text('2401.00001') → None (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 78 | `TestFullTextFetcher.test_pause_between_requests` | Normalfall | `clock.sleeps → [source.pause_s]` | ✓ wie erwartet |
+| 79 | `TestFullTextFetcher.test_no_pause_after_enough_time` | Randfall | `clock.sleeps → []` | ✓ wie erwartet |
+| 80 | `TestAddFullTexts.test_add_full_texts_sets_origin_and_text` | Normalfall | `documents[0].origin → 'html' (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 81 | `TestAddFullTexts.test_add_full_texts_falls_back_to_abstract_with_warning` | Randfall | `[d.origin for d in documents] → ['html', 'abstract'] (+4 weitere Prüfungen)` | ✓ wie erwartet |
+| 82 | `TestAddFullTexts.test_add_full_texts_keeps_order` | Normalfall | `[d.id for d in documents] → ['2401.00003', '2401.00001', '2401.00002']` | ✓ wie erwartet |
+| 83 | `TestAddFullTexts.test_add_full_texts_stops_after_persistent_429` | Normalfall | `[d.origin for d in documents] → ['abstract', 'abstract'] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 84 | `TestAddFullTexts.test_add_full_texts_resets_throttle_per_call` | Normalfall | `documents[0].origin → 'html' (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 85 | `TestAddFullTexts.test_add_full_texts_empty_list` | Randfall | `fetcher({}).add_full_texts([]) → ([], ())` | ✓ wie erwartet |
+| 86 | `TestArxivSourceFullText.test_full_text_is_off_by_default` | Normalfall | `source.full_text → falsch (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 87 | `TestArxivSourceFullText.test_full_text_on_downloads_and_replaces_text` | Randfall | `found[0].origin → 'html' (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 88 | `TestArxivSourceFullText.test_full_text_fallback_note_reaches_source_notes` | Normalfall | `source.search(['bm25'], 5)[0].text → 'Title 1\n\nAbstract 1' (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 89 | `TestArxivSourceFullText.test_full_text_search_request_keeps_pause` | Normalfall | `clock.sleeps → [full_texts.pause_s]` | ✓ wie erwartet |
+| 90 | `TestArxivSourceFullText.test_add_full_texts_without_full_text_mode_still_works` | Randfall | `source.add_full_texts([make_doc(1)])[0].origin → 'html'` | ✓ wie erwartet |
+| 91 | `TestArxivSourceFullText.test_default_source_adds_nothing` | Normalfall | `Plain().add_full_texts([make_doc(1)]) → [make_doc(1)] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 92 | `TestDocumentFullText.test_document_text_prefers_full_text` | Normalfall | `full.text → 'Title\n\nBody'` | ✓ wie erwartet |
+| 93 | `TestDocumentFullText.test_document_default_origin_is_abstract` | Fehlerfall | `(make_doc().origin, make_doc().full_text) → ('abstract', '')` | ✓ wie erwartet |
+| 94 | `TestDocumentFullText.test_document_full_text_without_origin_fails` | Fehlerfall | `sources.Document('x', 'T', '', (), date(2024, 1, 1), 'u', 'arxiv', full_text='Body') → ValueError` | ✓ wie erwartet |
+| 95 | `TestDocumentFullText.test_document_origin_without_full_text_fails` | Fehlerfall | `sources.Document('x', 'T', '', (), date(2024, 1, 1), 'u', 'arxiv', origin='html') → ValueError` | ✓ wie erwartet |
+| 96 | `TestDocumentFullText.test_document_unknown_origin_fails` | Fehlerfall | `sources.Document('x', 'T', '', (), date(2024, 1, 1), 'u', 'arxiv', origin='latex', full_text='B') → ValueError` | ✓ wie erwartet |
+| 97 | `TestDocumentFullText.test_document_abstract_only_drops_full_text` | Randfall | `full.abstract_only().text → 'Title\n\nAbstract' (+1 weitere Prüfungen)` | ✓ wie erwartet |
 
 ## `chunking`
 
@@ -257,20 +304,22 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 11 | `TestResearchBm25Only.test_research_respects_k` | Normalfall | `len(result.hits) → 1` | ✓ wie erwartet |
 | 12 | `TestResearchBm25Only.test_research_scores_descending` | Normalfall | `scores → sorted(scores, reverse=True)` | ✓ wie erwartet |
 | 13 | `TestResearchBm25Only.test_research_source_error_propagates` | Fehlerfall | `pipeline.research(['uml'], 3, FakeSource(error=SourceError('down'))) → SourceError` | ✓ wie erwartet |
-| 14 | `TestResultToDict.test_hit_to_dict` | Normalfall | `{key: value for key, value in hit.to_dict().items() if key != 'score'} → {'document_id': '1', 'title': 'UML class diagrams', 'authors': ['A…` | ✓ wie erwartet |
-| 15 | `TestResultToDict.test_result_to_dict_empty` | Randfall | `pipeline.research(['uml'], 3, FakeSource([])).to_dict() → {'hits': [], 'warnings': ['Keine Treffer']}` | ✓ wie erwartet |
-| 16 | `TestResearchHybrid.test_hybrid_embedding_error_falls_back_to_bm25` | Fehlerfall | `sorted((hit.document.id for hit in result.hits)) → ['1', '3'] (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 17 | `TestResearchHybrid.test_hybrid_embeds_query_and_bm25_candidates` | Normalfall | `(query_texts, query_type) → (['uml'], 'query') (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 18 | `TestResearchHybrid.test_hybrid_matching_document_first` | Normalfall | `result.hits[0].document.id → '1'` | ✓ wie erwartet |
-| 19 | `TestResearchHybrid.test_hybrid_no_keyword_hit_uses_all_chunks` | Randfall | `len(embedder.calls[1][0]) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 20 | `TestResearchHybrid.test_hybrid_question_is_embedded_instead_of_keywords` | Normalfall | `embedder.calls[0][0] → ['How do class diagrams work?']` | ✓ wie erwartet |
-| 21 | `TestResearchHybrid.test_hybrid_respects_k` | Normalfall | `len(result.hits) → 1` | ✓ wie erwartet |
-| 22 | `TestResearchHybrid.test_hybrid_selects_distinct_chunks` | Normalfall | `len(keys) → len(set(keys))` | ✓ wie erwartet |
-| 23 | `TestSourceNotes.test_source_notes_reach_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache',)` | ✓ wie erwartet |
-| 24 | `TestSourceNotes.test_source_notes_before_pipeline_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache', 'Keine Treffer')` | ✓ wie erwartet |
-| 25 | `TestSourceNotes.test_plain_source_has_no_notes` | Randfall | `FakeSource([UML]).notes → ()` | ✓ wie erwartet |
-| 26 | `TestEmbedderNotes.test_embedder_notes_reach_warnings` | Normalfall | `result.warnings → ('Cache nicht verfügbar',)` | ✓ wie erwartet |
-| 27 | `TestEmbedderNotes.test_plain_embedder_has_no_notes` | Randfall | `TopicEmbedder().notes → ()` | ✓ wie erwartet |
+| 14 | `TestResearchFullText.test_research_chunks_the_full_text` | Normalfall | `len(result.hits) → 1 (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 15 | `TestResearchFullText.test_research_abstract_document_unchanged` | Normalfall | `result.hits[0].chunk.text → ' '.join(UML.text.split())` | ✓ wie erwartet |
+| 16 | `TestResultToDict.test_hit_to_dict` | Normalfall | `{key: value for key, value in hit.to_dict().items() if key != 'score'} → {'document_id': '1', 'title': 'UML class diagrams', 'authors': ['A…` | ✓ wie erwartet |
+| 17 | `TestResultToDict.test_result_to_dict_empty` | Randfall | `pipeline.research(['uml'], 3, FakeSource([])).to_dict() → {'hits': [], 'warnings': ['Keine Treffer']}` | ✓ wie erwartet |
+| 18 | `TestResearchHybrid.test_hybrid_embedding_error_falls_back_to_bm25` | Fehlerfall | `sorted((hit.document.id for hit in result.hits)) → ['1', '3'] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 19 | `TestResearchHybrid.test_hybrid_embeds_query_and_bm25_candidates` | Normalfall | `(query_texts, query_type) → (['uml'], 'query') (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 20 | `TestResearchHybrid.test_hybrid_matching_document_first` | Normalfall | `result.hits[0].document.id → '1'` | ✓ wie erwartet |
+| 21 | `TestResearchHybrid.test_hybrid_no_keyword_hit_uses_all_chunks` | Randfall | `len(embedder.calls[1][0]) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 22 | `TestResearchHybrid.test_hybrid_question_is_embedded_instead_of_keywords` | Normalfall | `embedder.calls[0][0] → ['How do class diagrams work?']` | ✓ wie erwartet |
+| 23 | `TestResearchHybrid.test_hybrid_respects_k` | Normalfall | `len(result.hits) → 1` | ✓ wie erwartet |
+| 24 | `TestResearchHybrid.test_hybrid_selects_distinct_chunks` | Normalfall | `len(keys) → len(set(keys))` | ✓ wie erwartet |
+| 25 | `TestSourceNotes.test_source_notes_reach_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache',)` | ✓ wie erwartet |
+| 26 | `TestSourceNotes.test_source_notes_before_pipeline_warnings` | Normalfall | `result.warnings → ('Dokumente aus dem Cache', 'Keine Treffer')` | ✓ wie erwartet |
+| 27 | `TestSourceNotes.test_plain_source_has_no_notes` | Randfall | `FakeSource([UML]).notes → ()` | ✓ wie erwartet |
+| 28 | `TestEmbedderNotes.test_embedder_notes_reach_warnings` | Normalfall | `result.warnings → ('Cache nicht verfügbar',)` | ✓ wie erwartet |
+| 29 | `TestEmbedderNotes.test_plain_embedder_has_no_notes` | Randfall | `TopicEmbedder().notes → ()` | ✓ wie erwartet |
 
 ## `mcp_server`
 
@@ -295,6 +344,8 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 17 | `TestDefaultEmbedder.test_default_embedder_is_cached_voyage` | Normalfall | `assertIsInstance(embedder, CachedEmbedder) (+2 weitere Prüfungen)` | ✓ wie erwartet |
 | 18 | `TestDefaultEmbedder.test_default_embedder_without_key` | Fehlerfall | `default_embedder() → None` | ✓ wie erwartet |
 | 19 | `TestDefaultSource.test_default_source_is_cached_arxiv` | Normalfall | `assertIsInstance(source, CachedSource) (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 20 | `TestDefaultSource.test_default_source_uses_full_text` | Normalfall | `default_source(PipelineConfig()).inner.full_text → wahr` | ✓ wie erwartet |
+| 21 | `TestDefaultSource.test_default_source_abstract_only` | Normalfall | `default_source(PipelineConfig(), full_text=False).inner.full_text → falsch` | ✓ wie erwartet |
 
 ## `storage`
 
@@ -334,10 +385,12 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 32 | `TestStorageRepository.test_save_run_invalid_variant_fails` | Fehlerfall | `'runs_invalid_variant'(…) → StorageError (+1 weitere Prüfungen)` | ✓ wie erwartet |
 | 33 | `TestStorageRepository.test_kpi_by_variant_floats_and_unrated_none` | Randfall | `kpi['bm25']['runs'] → 2 (+4 weitere Prüfungen)` | ✓ wie erwartet |
 | 34 | `TestFindDocuments.test_find_documents_round_trip` | Normalfall | `stored → [StoredDocument(document_id, original, 'abstract', None, 200, 40)]` | ✓ wie erwartet |
-| 35 | `TestFindDocuments.test_find_documents_null_becomes_empty_string` | Randfall | `(document.doi, document.journal_ref) → ('', '')` | ✓ wie erwartet |
-| 36 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
-| 37 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
-| 38 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |
+| 35 | `TestFindDocuments.test_find_documents_full_text_round_trip` | Normalfall | `(stored.origin, stored.full_text) → ('html', 'Volltext des Papers') (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 36 | `TestFindDocuments.test_save_document_takes_origin_from_document` | Normalfall | `origin → 'pdf'` | ✓ wie erwartet |
+| 37 | `TestFindDocuments.test_find_documents_null_becomes_empty_string` | Randfall | `(document.doi, document.journal_ref) → ('', '')` | ✓ wie erwartet |
+| 38 | `TestFindDocuments.test_find_documents_keeps_given_order` | Normalfall | `ids → [second, first]` | ✓ wie erwartet |
+| 39 | `TestFindDocuments.test_find_documents_unknown_id_skipped` | Randfall | `[stored.id for stored in find_documents(self.connection, [-1, document_id])] → [document_id]` | ✓ wie erwartet |
+| 40 | `TestFindDocuments.test_find_documents_empty_ids` | Randfall | `find_documents(self.connection, []) → []` | ✓ wie erwartet |
 
 ## `cache`
 
@@ -347,26 +400,34 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 2 | `TestCachedSourceWithoutDatabase.test_database_unreachable_falls_back_to_source` | Fehlerfall | `[document.id for document in documents] → ['9999.00001', '9999.00002'] (+2 weitere Prüfungen)` | ✓ wie erwartet |
 | 3 | `TestCachedSourceWithoutDatabase.test_source_error_propagates` | Fehlerfall | `cached.search([KEYWORD], 2) → SourceError` | ✓ wie erwartet |
 | 4 | `TestCachedSourceWithoutDatabase.test_default_notes_empty` | Randfall | `CachedSource(FakeSource(), connect=unreachable).notes → ()` | ✓ wie erwartet |
-| 5 | `TestCachedSourceWithDatabase.test_miss_asks_source_and_saves` | Normalfall | `self.inner.calls → 1 (+3 weitere Prüfungen)` | ✓ wie erwartet |
-| 6 | `TestCachedSourceWithDatabase.test_hit_skips_source_and_keeps_order` | Normalfall | `self.inner.calls → 1 (+2 weitere Prüfungen)` | ✓ wie erwartet |
-| 7 | `TestCachedSourceWithDatabase.test_more_results_than_cached_asks_source_again` | Normalfall | `self.inner.calls → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 8 | `TestCachedSourceWithDatabase.test_fewer_results_than_cached_uses_cache` | Normalfall | `self.inner.calls → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 9 | `TestCachedSourceWithDatabase.test_other_filter_asks_source_again` | Randfall | `self.inner.calls → 2` | ✓ wie erwartet |
-| 10 | `TestCachedSourceWithDatabase.test_save_failure_still_returns_documents` | Normalfall | `len(documents) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 11 | `TestCachedSourceWithDatabase.test_notes_reset_between_calls` | Normalfall | `self.cached.notes → ()` | ✓ wie erwartet |
-| 12 | `TestCachedSourceWithDatabase.test_source_without_documents_is_no_cache_error` | Fehlerfall | `cached.search([KEYWORD], 2) → [] (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 13 | `TestCachedEmbedderWithoutDatabase.test_is_an_embedder` | Normalfall | `assertIsInstance(CachedEmbedder(CountingEmbedder(), 'm', connect=unreachable), Embedder)` | ✓ wie erwartet |
-| 14 | `TestCachedEmbedderWithoutDatabase.test_query_is_never_cached` | Normalfall | `cached.embed(['frage'], 'query') → [[5.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
-| 15 | `TestCachedEmbedderWithoutDatabase.test_database_unreachable_falls_back` | Fehlerfall | `cached.embed(['ab', 'abc']) → [[2.0, 1.0], [3.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 16 | `TestCachedEmbedderWithDatabase.test_miss_embeds_and_stores` | Normalfall | `vectors → [[9.0, 1.0], [9.0, 1.0]] (+3 weitere Prüfungen)` | ✓ wie erwartet |
-| 17 | `TestCachedEmbedderWithDatabase.test_hit_skips_inner_embedder` | Normalfall | `len(self.inner.calls) → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 18 | `TestCachedEmbedderWithDatabase.test_only_missing_texts_are_embedded` | Fehlerfall | `self.inner.calls[1] → (['fünf'], 'document')` | ✓ wie erwartet |
-| 19 | `TestCachedEmbedderWithDatabase.test_duplicate_texts_embedded_once` | Randfall | `self.inner.calls → [(['fünf'], 'document')] (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 20 | `TestCachedEmbedderWithDatabase.test_text_without_chunk_is_returned_not_stored` | Randfall | `self.cached.embed(['gibt es nicht']) → [[13.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
-| 21 | `TestCachedEmbedderWithDatabase.test_save_failure_still_returns_vectors` | Normalfall | `cached.embed(['fünf']) → [[4.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
-| 22 | `TestCachedEmbedderWithDatabase.test_other_model_is_a_miss` | Randfall | `len(self.inner.calls) → 2` | ✓ wie erwartet |
-| 23 | `TestCachedSourceStoresChunks.test_chunks_are_stored` | Normalfall | `texts → ['Titel 1', 'Abstract 1']` | ✓ wie erwartet |
-| 24 | `TestCachedSourceStoresChunks.test_storing_again_keeps_embeddings` | Normalfall | `count → 1` | ✓ wie erwartet |
+| 5 | `TestCachedSourceWithoutDatabase.test_database_unreachable_keeps_inner_notes` | Fehlerfall | `cached.notes → (CACHE_UNAVAILABLE, 'Volltext fehlt')` | ✓ wie erwartet |
+| 6 | `TestCachedSourceWithoutDatabase.test_full_text_mode_follows_inner_source` | Normalfall | `CachedSource(FullTextSource(), connect=unreachable).full_text → wahr (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 7 | `TestCachedSourceWithDatabase.test_miss_asks_source_and_saves` | Normalfall | `self.inner.calls → 1 (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 8 | `TestCachedSourceWithDatabase.test_hit_skips_source_and_keeps_order` | Normalfall | `self.inner.calls → 1 (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 9 | `TestCachedSourceWithDatabase.test_more_results_than_cached_asks_source_again` | Normalfall | `self.inner.calls → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 10 | `TestCachedSourceWithDatabase.test_fewer_results_than_cached_uses_cache` | Normalfall | `self.inner.calls → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 11 | `TestCachedSourceWithDatabase.test_other_filter_asks_source_again` | Randfall | `self.inner.calls → 2` | ✓ wie erwartet |
+| 12 | `TestCachedSourceWithDatabase.test_save_failure_still_returns_documents` | Normalfall | `len(documents) → 2 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 13 | `TestCachedSourceWithDatabase.test_notes_reset_between_calls` | Normalfall | `self.cached.notes → ()` | ✓ wie erwartet |
+| 14 | `TestCachedSourceWithDatabase.test_source_without_documents_is_no_cache_error` | Fehlerfall | `cached.search([KEYWORD], 2) → [] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 15 | `TestCachedEmbedderWithoutDatabase.test_is_an_embedder` | Normalfall | `assertIsInstance(CachedEmbedder(CountingEmbedder(), 'm', connect=unreachable), Embedder)` | ✓ wie erwartet |
+| 16 | `TestCachedEmbedderWithoutDatabase.test_query_is_never_cached` | Normalfall | `cached.embed(['frage'], 'query') → [[5.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 17 | `TestCachedEmbedderWithoutDatabase.test_database_unreachable_falls_back` | Fehlerfall | `cached.embed(['ab', 'abc']) → [[2.0, 1.0], [3.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 18 | `TestCachedEmbedderWithDatabase.test_miss_embeds_and_stores` | Normalfall | `vectors → [[9.0, 1.0], [9.0, 1.0]] (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 19 | `TestCachedEmbedderWithDatabase.test_hit_skips_inner_embedder` | Normalfall | `len(self.inner.calls) → 1 (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 20 | `TestCachedEmbedderWithDatabase.test_only_missing_texts_are_embedded` | Fehlerfall | `self.inner.calls[1] → (['fünf'], 'document')` | ✓ wie erwartet |
+| 21 | `TestCachedEmbedderWithDatabase.test_duplicate_texts_embedded_once` | Randfall | `self.inner.calls → [(['fünf'], 'document')] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 22 | `TestCachedEmbedderWithDatabase.test_text_without_chunk_is_returned_not_stored` | Randfall | `self.cached.embed(['gibt es nicht']) → [[13.0, 1.0]] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 23 | `TestCachedEmbedderWithDatabase.test_save_failure_still_returns_vectors` | Normalfall | `cached.embed(['fünf']) → [[4.0, 1.0]] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 24 | `TestCachedEmbedderWithDatabase.test_other_model_is_a_miss` | Randfall | `len(self.inner.calls) → 2` | ✓ wie erwartet |
+| 25 | `TestCachedSourceStoresChunks.test_chunks_are_stored` | Normalfall | `texts → ['Titel 1', 'Abstract 1']` | ✓ wie erwartet |
+| 26 | `TestCachedSourceStoresChunks.test_storing_again_keeps_embeddings` | Normalfall | `count → 1` | ✓ wie erwartet |
+| 27 | `TestCachedSourceFullText.test_full_text_is_stored_with_origin` | Normalfall | `self.stored() → [('9999.00001', 'html', 'Volltext 9999.00001'), ('9999.00002', 'html', 'Volltext 9999.00002')]` | ✓ wie erwartet |
+| 28 | `TestCachedSourceFullText.test_full_text_is_loaded_from_cache_without_download` | Randfall | `second → first (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 29 | `TestCachedSourceFullText.test_chunks_come_from_full_text` | Normalfall | `texts → ['Titel 1', 'Volltext 9999.00001']` | ✓ wie erwartet |
+| 30 | `TestCachedSourceFullText.test_full_text_mode_completes_cached_abstracts_only` | Normalfall | `inner.completed → [['9999.00002']] (+3 weitere Prüfungen)` | ✓ wie erwartet |
+| 31 | `TestCachedSourceFullText.test_full_text_completion_survives_save_failure` | Normalfall | `[document.origin for document in documents] → ['html', 'html'] (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 32 | `TestCachedSourceFullText.test_abstract_mode_drops_cached_full_text` | Normalfall | `inner.calls → 0 (+2 weitere Prüfungen)` | ✓ wie erwartet |
 
 ## `evaluation`
 
@@ -392,5 +453,9 @@ Spalte **Input → erwartet** zeigt die erste Prüfung des Tests; „→ Fehlerk
 | 18 | `TestStoreRuns.test_store_run_without_tool_call` | Randfall | `self.rows() → [('bm25', [], DEFAULT_K, 10, False)]` | ✓ wie erwartet |
 | 19 | `TestStoreRuns.test_probe_run_writes_all_variants` | Normalfall | `self.rows() → [('agent_websearch', None, None, 100, True), ('bm25', ['probe'], 3, 100, True), ('hybrid', ['probe'], 3, 100, True)] (+2 weitere Prüfungen)` | ✓ wie erwartet |
 | 20 | `TestStoreRuns.test_failed_run_is_not_stored` | Fehlerfall | `self.rows() → []` | ✓ wie erwartet |
-| 21 | `TestProbe.test_probe_source_is_offline` | Normalfall | `ProbeSource().search(['x'], 5) → []` | ✓ wie erwartet |
-| 22 | `TestProbe.test_probe_client_cites_expected_paper` | Normalfall | `found_source(answer, '2601.11143') → wahr` | ✓ wie erwartet |
+| 21 | `TestFullTextRuns.test_full_text_run_is_marked_in_question_and_log_folder` | Normalfall | `rows → [('bm25',)] (+2 weitere Prüfungen)` | ✓ wie erwartet |
+| 22 | `TestSourceForRun.test_default_run_uses_abstracts_without_cache` | Randfall | `assertIs(type(source), ArxivSource) (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 23 | `TestSourceForRun.test_full_text_run_uses_full_text_without_cache` | Randfall | `assertIs(type(source), ArxivSource) (+1 weitere Prüfungen)` | ✓ wie erwartet |
+| 24 | `TestSourceForRun.test_probe_stays_offline_with_full_text` | Normalfall | `assertIsInstance(messlauf.source_for_run(probe=True, full_text=True), ProbeSource)` | ✓ wie erwartet |
+| 25 | `TestProbe.test_probe_source_is_offline` | Normalfall | `ProbeSource().search(['x'], 5) → []` | ✓ wie erwartet |
+| 26 | `TestProbe.test_probe_client_cites_expected_paper` | Normalfall | `found_source(answer, '2601.11143') → wahr` | ✓ wie erwartet |

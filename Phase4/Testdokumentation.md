@@ -6,7 +6,7 @@ Phase 4 des Hackathons (Karte #15). Stand: 15.11.2026 (abends), Branch `luca-dev
 
 **Wo was steht**
 - Diese Datei: Vorgehen, Übersicht, Coverage, ausgewählte Fälle im Detail, Abweichungsanalyse
-- `Phase4/Testkatalog.md`: **alle** 325 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
+- `Phase4/Testkatalog.md`: **alle** 390 Unittests mit Kategorie, Input → erwartet und tatsächlichem Ergebnis, automatisch erzeugt
 - `Phase4/Klicktest-runs.md`: Anleitung, um das Schreiben der Messläufe in `runs` von Hand zu prüfen (Probelauf ohne API)
 - Testcode: `src/<modul>/test_<modul>.py`
 
@@ -41,19 +41,19 @@ Die Zuordnung im Katalog macht `testkatalog.py`: Fehlerfall, wenn der Test einen
 
 | Modul | Normalfall | Randfall | Fehlerfall | gesamt | wie erwartet |
 |---|---|---|---|---|---|
-| `sources` | 24 | 15 | 11 | 50 | 50 |
+| `sources` | 49 | 30 | 18 | 97 | 97 |
 | `chunking` | 6 | 10 | 8 | 24 | 24 |
 | `bm25` | 13 | 38 | 0 | 51 | 51 |
 | `vector_search` | 19 | 17 | 17 | 53 | 53 |
 | `ranking` | 7 | 9 | 1 | 17 | 17 |
-| `pipeline` | 14 | 9 | 4 | 27 | 27 |
-| `mcp_server` | 11 | 1 | 7 | 19 | 19 |
-| `storage` | 13 | 16 | 9 | 38 | 38 |
-| `cache` | 14 | 5 | 5 | 24 | 24 |
-| `evaluation` | 14 | 5 | 3 | 22 | 22 |
-| **gesamt** | **135** | **125** | **65** | **325** | **325** |
+| `pipeline` | 16 | 9 | 4 | 29 | 29 |
+| `mcp_server` | 13 | 1 | 7 | 21 | 21 |
+| `storage` | 15 | 16 | 9 | 40 | 40 |
+| `cache` | 20 | 6 | 6 | 32 | 32 |
+| `evaluation` | 16 | 7 | 3 | 26 | 26 |
+| **gesamt** | **174** | **143** | **73** | **390** | **390** |
 
-Alle Tests laufen wie erwartet. Die 5 Abweichungen in `storage` vom 14./15.11. sind behoben (Abschnitt 6.1).
+Stand 28.11.2026, mit laufender Test-Datenbank, 0 Tests übersprungen. Neu seit dem 15.11. sind vor allem die Volltext-Tests in `sources` (HTML- und PDF-Extraktion, Wiederholen bei HTTP 429 mit austauschbarer Wartefunktion, Rückfall auf das Abstract, R17) und in `cache` (Speichern und Laden von `origin` und `full_text`, C8, C14–C16). Alle Tests laufen wie erwartet. Die 5 Abweichungen in `storage` vom 14./15.11. sind behoben (Abschnitt 6.1).
 
 ## 4. Coverage
 
@@ -64,14 +64,14 @@ Gemessen mit `coverage 7.17.3`, Zeilen und Verzweigungen, ohne Testdateien.
 | `bm25` | 55 | 0 | 20 | **100 %** | – |
 | `chunking` | 22 | 0 | 8 | **100 %** | – |
 | `ranking` | 15 | 0 | 10 | **100 %** | – |
-| `pipeline` | 73 | 0 | 16 | **100 %** | – |
-| `cache` | 82 | 0 | 14 | **100 %** | – |
-| `sources` | 110 | 3 | 26 | 97 % | `http_get`: der echte Netzwerkaufruf |
+| `pipeline` | 77 | 0 | 16 | **100 %** | – |
+| `cache` | 102 | 0 | 18 | **100 %** | – |
+| `sources` | 287 | 6 | 80 | 98 % | `http_get` und `http_get_bytes`: die echten Netzwerkaufrufe (`fulltext.py` allein 100 %) |
 | `vector_search` | 90 | 3 | 30 | 98 % | `http_post_json`: der echte Netzwerkaufruf |
-| `storage` | 107 | 5 | 16 | 95 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
-| `evaluation` | 130 | 2 | 26 | 97 % | Pause zwischen echten arXiv-Anfragen und `if __name__ == "__main__"` |
-| `mcp_server` | 53 | 9 | 8 | 82 % | `main()`: Start des Servers über die Kommandozeile |
-| **gesamt** | **737** | **22** | **174** | **97 %** | |
+| `storage` | 121 | 5 | 16 | 96 % | Fehlerzweige von `find_documents` und `kpi_by_variant` (Datenbankfehler mitten in einer Leseabfrage), leere ID-Liste bei `find_embeddings` |
+| `evaluation` | 153 | 2 | 32 | 97 % | Pause zwischen echten arXiv-Anfragen und `if __name__ == "__main__"` |
+| `mcp_server` | 55 | 11 | 8 | 79 % | `main()`: Start des Servers über die Kommandozeile |
+| **gesamt** | **980** | **27** | **238** | **97 %** | |
 
 **Bewertung:** Die Algorithmus-Module (`bm25`, `chunking`, `ranking`, `pipeline`) und der Cache sind vollständig abgedeckt. Offen sind nur Zeilen, die echte Netzwerkaufrufe machen oder den Server starten. Sie sind absichtlich durch Attrappen ersetzt und wurden stattdessen im Notebook und in den Messungen live ausgeführt.
 
@@ -180,8 +180,8 @@ Kein Programmierfehler, aber eine Abweichung zwischen erwartetem und tatsächlic
 ## 7. Optional: Laufzeit und Vergleich mit Alternativen
 
 **Laufzeit**
-- Die gesamte Testsuite (325 Tests) läuft in etwa 1,2 s.
-- Ein Tool-Aufruf mit Titel und Abstract dauert eine arXiv-Anfrage plus zwei Voyage-Aufrufe; die Rechenschritte selbst fallen daneben nicht ins Gewicht. Mit Volltext und ohne Cache wären es etwa 3,5 Minuten pro Aufruf (ADR 0004).
+- Die gesamte Testsuite (390 Tests) läuft in etwa 1,5–1,9 s.
+- Ein Tool-Aufruf mit Titel und Abstract dauert eine arXiv-Anfrage plus zwei Voyage-Aufrufe; die Rechenschritte selbst fallen daneben nicht ins Gewicht. Mit Volltext und ohne Cache schätzte ADR 0004 etwa 3,5 Minuten pro Aufruf (20 Dokumente); der Rauchtest vom 28.11.2026 mit 5 Dokumenten brauchte 15,9 s, aus dem Cache 0,1 s (ADR 0006).
 
 **Vergleich mit Alternativen**
 
