@@ -1,4 +1,5 @@
 import importlib.util
+import logging
 import unittest
 from datetime import date
 from urllib.error import HTTPError, URLError
@@ -92,7 +93,7 @@ class FakeBytesFetch:
 def fetcher(responses, extract_pdf=None, clock=None):
     clock = clock or FakeClock()
     return FullTextFetcher(FakeBytesFetch(responses), sleep=clock.sleep, clock=clock,
-                           extract_pdf=extract_pdf or (lambda data: data.decode("latin-1")))
+                           extract_pdf=extract_pdf or (lambda data: data.decode("latin-1").removeprefix("%PDF-1.4 ")))
 
 
 def html(text=HTML_PAGE):
@@ -158,6 +159,8 @@ class TestPdfText(unittest.TestCase):
         self.assertEqual(pdf_text(make_pdf(["Algo-", "rithmus"])), "Algorithmus")
 
     def test_pdf_text_invalid_bytes_raise_pdf_error(self):
+        logging.getLogger("pypdf").setLevel(logging.CRITICAL)
+        self.addCleanup(logging.getLogger("pypdf").setLevel, logging.NOTSET)
         with self.assertRaises(PdfError):
             pdf_text(b"%PDF-1.4 broken")
 

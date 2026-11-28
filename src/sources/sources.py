@@ -2,10 +2,12 @@ import re
 import urllib.request
 import xml.etree.ElementTree as ET
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import date
 from typing import Callable, Optional
 from urllib.parse import urlencode
+
+from .fulltext import FullTextFetcher
 
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ARXIV_ERROR_PREFIX = "https://arxiv.org/api/errors"
@@ -13,6 +15,7 @@ ATOM = "{http://www.w3.org/2005/Atom}"
 ARXIV = "{http://arxiv.org/schemas/atom}"
 USER_AGENT = "AlgorithmusProjekt/0.1"
 PEER_REVIEW_OVERFETCH = 3
+ORIGINS = ("html", "pdf", "abstract")
 
 
 class SourceError(Exception):
@@ -32,6 +35,18 @@ class Document:
     categories: tuple[str, ...] = ()
     journal_ref: str = ""
     doi: str = ""
+    origin: str = "abstract"
+    full_text: str = ""
+
+    def __post_init__(self):
+        if self.origin not in ORIGINS:
+            raise ValueError(f"origin must be one of {ORIGINS}")
+        if (self.origin == "abstract") != (not self.full_text):
+            raise ValueError("full_text must be empty exactly when origin is 'abstract'")
+
+    def abstract_only(self) -> "Document":
+        """The same document without full text (C15)."""
+        return replace(self, origin="abstract", full_text="")
 
     @property
     def peer_reviewed(self) -> bool:
@@ -40,8 +55,9 @@ class Document:
 
     @property
     def text(self) -> str:
-        """Title and abstract, separated by a blank line."""
-        return f"{self.title}\n\n{self.abstract}" if self.abstract else self.title
+        """Title and full text, otherwise title and abstract, separated by a blank line (R17)."""
+        body = self.full_text or self.abstract
+        return f"{self.title}\n\n{body}" if body else self.title
 
 
 @dataclass(frozen=True)
@@ -152,32 +168,51 @@ def http_get(url: str, timeout: float = 20.0) -> str:
         return response.read().decode("utf-8")
 
 
+def http_get_bytes(url: str, timeout: float = 60.0) -> tuple[bytes, str]:
+    """Fetches the URL and returns the raw body and its content type, for HTML and PDF downloads."""
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.read(), response.headers.get("Content-Type", "")
+
+
 class Source(ABC):
     """A research source that finds documents for a list of keywords."""
     name: str
     notes: tuple[str, ...] = ()
+    full_text: bool = False
 
     @abstractmethod
     def search(self, keywords: list[str], max_results: int,
                search_filter: Optional[SearchFilter] = None) -> list[Document]:
         """Returns up to max_results documents for the keywords that pass the filter."""
 
+    def add_full_texts(self, documents: list[Document]) -> list[Document]:
+        """Documents with full text where the source can load it; this default source cannot."""
+        return list(documents)
+
 
 class ArxivSource(Source):
-    """Searches arXiv; fetch is injectable so tests run without network."""
+    """Searches arXiv, optionally with full texts (R17); fetch and full_texts are injectable for tests."""
     name = "arxiv"
 
-    def __init__(self, categories: tuple[str, ...] = (), fetch: Callable[[str], str] = http_get):
+    def __init__(self, categories: tuple[str, ...] = (), fetch: Callable[[str], str] = http_get,
+                 full_text: bool = False, full_texts: Optional[FullTextFetcher] = None):
         self.categories = categories
         self.fetch = fetch
+        self.full_text = full_text
+        self.full_texts = full_texts or FullTextFetcher(http_get_bytes)
+        self.notes = ()
 
     def search(self, keywords: list[str], max_results: int,
                search_filter: Optional[SearchFilter] = None) -> list[Document]:
-        """Returns up to max_results arXiv documents; dates and categories are filtered by arXiv itself."""
+        """Up to max_results arXiv documents, with full text in full-text mode; arXiv filters dates and categories."""
         search_filter = search_filter or SearchFilter()
+        self.notes = ()
         fetch_count = max_results * PEER_REVIEW_OVERFETCH if search_filter.peer_reviewed_only else max_results
         url = build_arxiv_url(normalize_keywords(keywords), fetch_count, search_filter.categories or self.categories,
                               search_filter.published_from, search_filter.published_to)
+        if self.full_text:
+            self.full_texts.wait()
         try:
             xml_text = self.fetch(url)
         except OSError as error:
@@ -186,4 +221,10 @@ class ArxivSource(Source):
         documents = parse_arxiv_feed(xml_text)
         if search_filter.peer_reviewed_only:
             documents = [document for document in documents if document.peer_reviewed]
-        return documents[:max_results]
+        documents = documents[:max_results]
+        return self.add_full_texts(documents) if self.full_text else documents
+
+    def add_full_texts(self, documents: list[Document]) -> list[Document]:
+        """Documents with the HTML or PDF text, the rest keeps its abstract with a warning in notes (R17)."""
+        documents, self.notes = self.full_texts.add_full_texts(documents)
+        return documents

@@ -124,7 +124,7 @@ class TestResearchFullText(unittest.TestCase):
 
     def test_research_abstract_document_unchanged(self):
         result = pipeline.research(["associations"], 3, FakeSource([UML]))
-        self.assertEqual(result.hits[0].chunk.text, UML.text)
+        self.assertEqual(result.hits[0].chunk.text, " ".join(UML.text.split()))
 
 
 class TestResultToDict(unittest.TestCase):

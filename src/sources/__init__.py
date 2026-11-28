@@ -8,7 +8,9 @@ from .sources import (
     Source,
     SourceError,
     build_arxiv_url,
+    ORIGINS,
     http_get,
+    http_get_bytes,
     normalize_keywords,
     parse_arxiv_feed,
 )
