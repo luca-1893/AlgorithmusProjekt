@@ -8,6 +8,8 @@ Was **nicht** nötig ist:
 - **PostgreSQL:** Ohne Datenbank läuft das Tool ohne Cache weiter und meldet „Cache nicht verfügbar“ in `warnings` (R15).
 - **Anthropic-API-Key:** Nur für die Messläufe (`evaluation.messlauf`), nicht für das Tool.
 
+Gut zu wissen: Das Tool lädt seit dem 28.11.2026 den Volltext der Paper (HTML-Fassung, sonst PDF; ADR 0006). Der erste Aufruf zu einer Frage dauert deshalb deutlich länger (Rauchtest mit 5 Dokumenten: 16 s; bei 20 Dokumenten geschätzt über eine Minute), eine wiederholte Suche kommt aus dem Cache. Wer nur Titel und Abstract will, startet den Server mit `--abstract-only`.
+
 ## 1. Voraussetzungen
 
 | | macOS | Windows |

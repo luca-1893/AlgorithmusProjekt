@@ -33,9 +33,9 @@ Die Pipeline arbeitet ohne Token-Budget: Die Größe der Antwort ist durch `k` u
 
 ## Stand
 
-Stand 15.11.2026: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit 325 Unittests (Coverage 97 %, Algorithmus-Module 100 %, siehe `Phase4/Testdokumentation.md`). Die Datenbank ist vollständig umgesetzt (sechs Tabellen, alle SQL-Abfragen, siehe [Datenbank](#datenbank)). Der MCP-Server schaltet einen Cache davor: Gleiche Suchen der letzten 7 Tage kommen aus der Datenbank (R13–R15), bekannte Chunks werden nicht neu eingebettet (R16). Das Skript für die Messläufe ist fertig, die Messung selbst steht noch aus (siehe [Messläufe](#messläufe)). Offen sind der Volltext statt Titel und Abstract und die Gewichtung nach Metadaten; Limitationen und Reflexion stehen in `Phase5/Reflexion.md`.
+Stand 28.11.2026: Alle Bausteine, die Pipeline und das MCP-Tool laufen, mit 390 Unittests (Coverage 97 %, Algorithmus-Module 100 %, siehe `Phase4/Testdokumentation.md`). Die Datenbank ist vollständig umgesetzt (sechs Tabellen, alle SQL-Abfragen, siehe [Datenbank](#datenbank)). Der MCP-Server schaltet einen Cache davor: Gleiche Suchen der letzten 7 Tage kommen aus der Datenbank (R13–R15), bekannte Chunks werden nicht neu eingebettet (R16). Seit dem 28.11.2026 (Branch `volltext`) lädt das Tool den Volltext der Paper: HTML-Fassung, sonst PDF mit `pypdf`, sonst Abstract mit Hinweis (R17, ADR 0006); der Cache speichert ihn, sodass eine wiederholte Suche ohne Download auskommt. Im MCP-Server ist der Volltext an, die Messläufe bleiben ohne `--volltext` bei Titel und Abstract. Das Skript für die Messläufe ist fertig, die Messung selbst steht noch aus (siehe [Messläufe](#messläufe)). Offen sind die Messung mit Volltext, die IDF über die Datenbank und die Gewichtung nach Metadaten; Limitationen und Reflexion stehen in `Phase5/Reflexion.md`.
 
-**Bekannte Einschränkungen** (ADR 0004, Messungen in `messungen/2026-10-19_review-pr24/`): Auf Titel und Abstract filtert die BM25-Vorauswahl nur Chunks ganz ohne Schlagwort aus, und das Hauptschlagwort bekommt eine IDF nahe null, weil arXiv die Dokumente gerade wegen der Schlagwörter liefert. Beides löst erst der Volltext mit Datenbank-Cache. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
+**Bekannte Einschränkungen** (ADR 0004, Messungen in `messungen/2026-10-19_review-pr24/`): Auf Titel und Abstract filtert die BM25-Vorauswahl nur Chunks ganz ohne Schlagwort aus, und das Hauptschlagwort bekommt eine IDF nahe null, weil arXiv die Dokumente gerade wegen der Schlagwörter liefert. Der Volltext mit Datenbank-Cache ist umgesetzt (ADR 0006) und entschärft beides, ist im Messlauf aber noch nicht gemessen; die IDF hängt weiter am Treffersatz. Der erste Aufruf mit Volltext dauert deutlich länger, weil jedes neue Paper mit 3,1 s Abstand geladen wird (Rauchtest mit 5 Dokumenten: 15,9 s, aus dem Cache 0,1 s); ein bekanntes Paper wird nur über die gleiche Suche wiederverwendet, nicht über seine arXiv-ID. Aufgaben und Fortschritt stehen in den [Issues](https://github.com/luca-1893/AlgorithmusProjekt/issues), gruppiert nach den [Phasen des Hackathons](https://github.com/luca-1893/AlgorithmusProjekt/milestones).
 
 ## Hackathon-Phasen
 
@@ -66,7 +66,7 @@ AlgorithmusProjekt/
 ├── src/
 │   ├── bm25/            # Tokenizer, invertierter Index, BM25, top_m
 │   ├── chunking/        # Chunks mit Überlappung
-│   ├── sources/         # arXiv-Anbindung, Dokumente, Suchfilter
+│   ├── sources/         # arXiv-Anbindung, Dokumente, Suchfilter, Volltext (HTML/PDF)
 │   ├── vector_search/   # Cosinus, Top-k, Voyage-Einbetter, MMR
 │   ├── ranking/         # Rangfusion (RRF), Normalisierung
 │   ├── pipeline/        # verbindet alle Bausteine
@@ -121,7 +121,7 @@ In PyCharm `.venv/bin/python` (Windows: `.venv\Scripts\python.exe`) als Interpre
 
 ## MCP-Tool
 
-Der Server bietet ein Tool, `research_papers(keywords, k = 5, question = "", published_after = "", peer_reviewed_only = false)`, und gibt die ausgewählten Abschnitte mit Titel, Autoren, Datum und Link als JSON zurück, dazu `warnings`, z. B. „Dokumente aus dem Cache“ oder „Cache nicht verfügbar“. Ist die Datenbank nicht erreichbar, läuft das Tool ohne Cache weiter.
+Der Server bietet ein Tool, `research_papers(keywords, k = 5, question = "", published_after = "", peer_reviewed_only = false)`, und gibt die ausgewählten Abschnitte mit Titel, Autoren, Datum und Link als JSON zurück, dazu `warnings`, z. B. „Dokumente aus dem Cache“, „Cache nicht verfügbar“ oder „Volltext nicht verfügbar für … Dokumente“. Ist die Datenbank nicht erreichbar, läuft das Tool ohne Cache weiter. Der Server lädt den Volltext der Paper (ADR 0006); `--abstract-only` schaltet das aus.
 
 Lokal über stdio, z. B. für Claude Code oder Claude Desktop:
 
@@ -179,7 +179,10 @@ Jede der 25 Fragen aus `docs/evaluation/testfragen.md` wird in drei Varianten be
 PYTHONPATH=src .venv/bin/python -m evaluation.messlauf                    # alle 25 × 3, kostet API-Guthaben
 PYTHONPATH=src .venv/bin/python -m evaluation.messlauf --fragen F01,F14   # nur einzelne Fragen
 PYTHONPATH=src .venv/bin/python -m evaluation.messlauf --probe            # ohne API und arXiv, zum Prüfen von runs
+PYTHONPATH=src .venv/bin/python -m evaluation.messlauf --volltext         # Tool mit Volltext statt Abstract (Leitfrage L6)
 ```
+
+Ohne `--volltext` arbeitet das Tool im Messlauf mit Titel und Abstract. Mit `--volltext` lädt es die Volltexte, ebenfalls ohne Cache, also bei jedem Tool-Aufruf neu; die Läufe stehen mit „[Volltext]“ vor der Frage in `runs` und im Log unter `messungen/<datum>_messlauf_volltext/`.
 
 Probeläufe stehen mit „[Probe]“ vor der Frage in `runs` und lassen sich mit `DELETE FROM runs WHERE question LIKE '[Probe]%';` wieder entfernen. Die Auswertung macht `sql/kpi_by_variant.sql`. Anleitung zum Prüfen von Hand: `Phase4/Klicktest-runs.md`.
 

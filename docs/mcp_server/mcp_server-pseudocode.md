@@ -1,5 +1,6 @@
 FUNKTION baue_server(quelle, einbetter, konfiguration)
-    EINGABE:  quelle        – Recherche-Quelle, Standard ArxivQuelle
+    EINGABE:  quelle        – Recherche-Quelle, Standard: ArxivQuelle mit Volltext (R17),
+                              davor der Cache (R13–R15)
               einbetter     – Einbetter oder LEER; Standard: Voyage, falls VOYAGE_API_KEY
                               gesetzt ist, sonst LEER (dann nur BM25)
               konfiguration – Pipeline-Konfiguration
@@ -36,11 +37,12 @@ ENDE
 // Laufzeit: wie recherchiere
 
 
-FUNKTION starte(transport, host, port)
+FUNKTION starte(transport, host, port, nur_abstract)
     transport "stdio" (Standard): Client startet den Server als Prozess,
                                   z. B. Claude Code oder Claude Desktop lokal
     transport "http":             Server läuft als Webdienst unter host:port/mcp
-    baue_server() und starte ihn mit dem gewählten Transport
+    nur_abstract (--abstract-only): Quelle ohne Volltext, nur Titel und Abstract
+    baue_server(Standardquelle mit volltext = NICHT nur_abstract) und starte ihn mit dem gewählten Transport
 ENDE
 // Bekannte Grenzen: über HTTP noch ohne Anmeldung, deshalb nur hinter einem
 // abgesicherten Zugang (z. B. VPN oder Reverse-Proxy mit Token) betreiben

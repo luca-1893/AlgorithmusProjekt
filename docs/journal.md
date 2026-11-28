@@ -130,3 +130,13 @@
 - Einrichtungsanleitung für neue Nutzer (`docs/mcp_server/einrichtung.md`) für die Übungssession am 30.11.: venv, Claude Desktop auf macOS und Windows, Testfrage F21, Fehlersuche. Ohne Voyage-Key läuft das Tool mit BM25, ohne Datenbank ohne Cache.
 - Nächster Schritt: Key einrichten, Bewertung der Teiltreffer festlegen, Messläufe bis 27.11.
 
+
+## 2026-11-28
+
+- Volltext umgesetzt (Entscheidung von Luca, umgesetzt von Claude auf dem Branch `volltext`, noch nicht gemergt, weil die Abstract-Messläufe laufen): `ArxivSource(full_text=True)` lädt pro Paper die HTML-Fassung von `export.arxiv.org`, sonst das PDF mit `pypdf`, sonst bleibt das Abstract mit Hinweis in `warnings` (neue Regel R17, ADR 0006, `src/sources/fulltext.py`). Anfragen laufen nacheinander mit 3,1 s Abstand; HTTP 429/503 wird mit 5, 10, 20 s Wartezeit wiederholt, danach bleiben die übrigen Dokumente des Aufrufs beim Abstract.
+- `Document` trägt jetzt `origin` und `full_text`; `document.text` ist Titel plus Volltext, wenn einer vorliegt, die Pipeline bleibt unverändert. Der Cache speichert beides und lädt bei einer gespeicherten Suche nur die Dokumente nach, die noch als Abstract vorliegen (C8, C14–C16). Am Schema hat sich nichts geändert.
+- MCP-Server: Volltext standardmäßig an, `--abstract-only` schaltet ihn aus. Messlauf: ohne Option unverändert (Abstract, ohne Cache), mit `--volltext` Volltext ohne Cache, Frage in `runs` mit „[Volltext]“ markiert, Log unter `<datum>_messlauf_volltext/`.
+- Live-Rauchtest (`["BM25", "information retrieval"]`, 5 Dokumente, nur BM25, lokale Arbeits-DB): erster Abruf 15,9 s, gleiche Suche aus dem Cache 0,1 s, Abstract ohne Cache 0,3 s; 5 × HTML, 278 Chunks. Gefunden und behoben: Die aktuelle LaTeXML-Ausgabe gibt `<article>` die Klasse `ltx_authors_1line`, der Teilstring-Vergleich aus dem Messskript übersprang dadurch den ganzen Text (alle Paper fielen auf PDF zurück, 32,5 s); `pypdf` liefert NUL-Zeichen, die PostgreSQL ablehnt, deshalb meldete der erste Lauf „Cache nicht verfügbar“.
+- 390 Tests grün, 0 übersprungen, Coverage 97 % (`fulltext.py` und `cache` 100 %).
+- Gelernt: Fail-open versteckt Fehler gut. Beide Bugs hätten ohne den Live-Test nur als Hinweis bzw. langsamer PDF-Rückfall ausgesehen, nicht als Absturz.
+- Nächster Schritt: nach den Abstract-Messläufen mergen, dann Messlauf mit `--volltext` (Leitfrage L6). Offen für Luca: Zeitlimit pro Tool-Aufruf, Anzahl Dokumente im Volltext-Modus, eine SQL-Abfrage „Dokumente nach arXiv-ID“ für die Wiederverwendung über Suchen hinweg.
