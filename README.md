@@ -129,7 +129,7 @@ Lokal über stdio, z. B. für Claude Code oder Claude Desktop:
 PYTHONPATH=src .venv/bin/python -m mcp_server
 ```
 
-In diesem Projekt ist das Tool für Claude Code schon in `.mcp.json` eingetragen; Claude Code fragt beim ersten Start, ob es den Server nutzen darf.
+In diesem Projekt ist das Tool für Claude Code schon in `.mcp.json` eingetragen; Claude Code fragt beim ersten Start, ob es den Server nutzen darf. Schritt für Schritt für einen neuen Rechner mit Claude Desktop (macOS und Windows): `docs/mcp_server/einrichtung.md`.
 
 Als Webdienst auf dem Server (Endpunkt `/mcp`):
 
