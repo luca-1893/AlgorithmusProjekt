@@ -33,6 +33,7 @@ SYSTEM = (
     "of the papers your answer is based on."
 )
 PROBE_PREFIX = "[Probe] "
+VOLLTEXT_PREFIX = "[Volltext] "
 ARXIV_ID = re.compile(r"(?<![\d.])\d{4}\.\d{4,5}(?!\d)")
 
 
@@ -180,6 +181,18 @@ class ProbeSource(Source):
         return []
 
 
+def source_for_run(probe: bool, full_text: bool) -> Source:
+    """Offline source for a probe, otherwise arXiv without cache, with full texts only if asked (R17)."""
+    if probe:
+        return ProbeSource()
+    return ArxivSource(full_text=full_text)
+
+
+def mark_full_text(measurement: Measurement) -> Measurement:
+    """Prefixes the stored question so full-text runs stay apart from abstract runs in table runs."""
+    return replace(measurement, run=replace(measurement.run, question=VOLLTEXT_PREFIX + measurement.run.question))
+
+
 def main(argv: Optional[list[str]] = None) -> None:
     """Runs the selected questions in the selected variants and stores every run."""
     parser = argparse.ArgumentParser(description="Messläufe für die KPI-Auswertung")
@@ -187,6 +200,8 @@ def main(argv: Optional[list[str]] = None) -> None:
     parser.add_argument("--varianten", default=",".join(VARIANTS))
     parser.add_argument("--modell", default=MODEL)
     parser.add_argument("--probe", action="store_true", help="ohne API und arXiv, schreibt trotzdem in runs")
+    parser.add_argument("--volltext", action="store_true",
+                        help="Tool mit Volltext statt Abstract (ohne Cache); Frage in runs mit Präfix [Volltext]")
     args = parser.parse_args(argv)
 
     wanted = {number.strip() for number in args.fragen.split(",") if number.strip()}
@@ -195,8 +210,9 @@ def main(argv: Optional[list[str]] = None) -> None:
         questions = [replace(question, text=PROBE_PREFIX + question.text) for question in questions]
     variants = [variant.strip() for variant in args.varianten.split(",") if variant.strip()]
     embedder = None if args.probe or "hybrid" not in variants else VoyageEmbedder()
-    source = ProbeSource() if args.probe else ArxivSource()
-    log_path = LOG_DIR / f"{date.today().isoformat()}_messlauf{'_probe' if args.probe else ''}" / "runs.jsonl"
+    source = source_for_run(args.probe, args.volltext)
+    suffix = ("_volltext" if args.volltext else "") + ("_probe" if args.probe else "")
+    log_path = LOG_DIR / f"{date.today().isoformat()}_messlauf{suffix}" / "runs.jsonl"
     log_path.parent.mkdir(parents=True, exist_ok=True)
 
     with connect() as connection, log_path.open("a", encoding="utf-8") as log:
@@ -205,6 +221,8 @@ def main(argv: Optional[list[str]] = None) -> None:
                 try:
                     client = ProbeClient(question.expected_id) if args.probe else Anthropic()
                     measurement = measure(client, question, variant, source, embedder, args.modell)
+                    if args.volltext:
+                        measurement = mark_full_text(measurement)
                 except Exception as error:
                     print(f"{question.number} {variant}: Fehler {error!r}, Lauf nicht gespeichert")
                     continue
