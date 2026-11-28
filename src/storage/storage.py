@@ -108,8 +108,10 @@ def document_params(document: Document, chunk_size: int, overlap: int, origin: s
 
 
 def save_document(connection: psycopg.Connection, document: Document, chunk_size: int, overlap: int,
-                  origin: str = "abstract", full_text: Optional[str] = None) -> int:
-    """Inserts or updates a document and returns its database id."""
+                  origin: Optional[str] = None, full_text: Optional[str] = None) -> int:
+    """Inserts or updates a document and returns its database id; origin and full text default to the document's."""
+    origin = origin or document.origin
+    full_text = full_text or document.full_text or None
     params = document_params(document, chunk_size, overlap, origin, full_text)
     return execute(connection, "upsert_document", params).fetchone()[0]
 
@@ -132,7 +134,8 @@ def stored_document(row: dict) -> StoredDocument:
     document = Document(id=row["source_id"], title=row["title"], abstract=row["abstract"] or "",
                         authors=tuple(row["authors"]), published=row["published"], url=row["url"],
                         source=row["source"], categories=tuple(row["categories"]),
-                        journal_ref=row["journal_ref"] or "", doi=row["doi"] or "")
+                        journal_ref=row["journal_ref"] or "", doi=row["doi"] or "",
+                        origin=row["origin"], full_text=row["full_text"] or "")
     return StoredDocument(row["id"], document, row["origin"], row["full_text"], row["chunk_size"], row["overlap"])
 
 
