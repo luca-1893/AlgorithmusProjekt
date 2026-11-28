@@ -22,14 +22,19 @@ FUNKTION CachedSource.suche(schlagwörter, max_treffer, filter)
         MIT verbinde() ALS verbindung:
             ids ← storage.finde_gespeicherte_suche(verbindung, schlagwörter, filter, höchstalter)
             WENN Anzahl(ids) ≥ max_treffer:
-                hinweise.anhängen("Dokumente aus dem Cache")
-                GIB storage.finde_dokumente(verbindung, erste max_treffer ids) ZURÜCK
+                gespeichert ← storage.finde_dokumente(verbindung, erste max_treffer ids)
     BEI StorageError:
         hinweise.anhängen("Cache nicht verfügbar")
-        GIB innere_quelle.suche(schlagwörter, max_treffer, filter) ZURÜCK   // ohne Speichern
+        dokumente ← innere_quelle.suche(schlagwörter, max_treffer, filter)   // ohne Speichern
+        hinweise.anhängen(innere_quelle.hinweise)
+        GIB dokumente ZURÜCK
+    WENN gespeichert gesetzt:
+        hinweise.anhängen("Dokumente aus dem Cache")
+        GIB passe_an_modus(gespeichert) ZURÜCK                           // C14, C15
 
     // R2, R3: Quelle fragen; ihr Fehler geht unverändert an die Pipeline
     dokumente ← innere_quelle.suche(schlagwörter, max_treffer, filter)
+    hinweise.anhängen(innere_quelle.hinweise)             // z. B. Volltext-Rückfall (R17)
     WENN dokumente leer: GIB dokumente ZURÜCK            // C9: leere Ergebnisse nicht speichern
 
     // R14: speichern, Fehler dabei kosten nur den Cache, nicht die Recherche
@@ -37,6 +42,7 @@ FUNKTION CachedSource.suche(schlagwörter, max_treffer, filter)
         MIT verbinde() ALS verbindung:
             FÜR JEDES dokument IN dokumente:
                 id    ← storage.speichere_dokument(verbindung, dokument, chunk_größe, überlappung)
+                                                          // mit herkunft und volltext (C8)
                 texte ← Texte von erzeuge_chunks(dokument.id, dokument.text, chunk_größe, überlappung)
                 WENN gespeicherte Chunk-Texte von id ≠ texte:      // C10
                     storage.speichere_chunks(verbindung, id, texte)
@@ -45,6 +51,21 @@ FUNKTION CachedSource.suche(schlagwörter, max_treffer, filter)
         hinweise.anhängen("Cache nicht verfügbar")
 
     GIB dokumente ZURÜCK
+ENDE
+
+
+FUNKTION CachedSource.passe_an_modus(gespeichert)
+    WENN NICHT innere_quelle.volltext:
+        GIB gespeichert, jeweils ohne Volltext (herkunft "abstract") ZURÜCK     // C15
+    nur_abstract ← Dokumente aus gespeichert mit herkunft = "abstract"
+    WENN nur_abstract leer: GIB gespeichert ZURÜCK                           // kein Download
+    ergänzt ← innere_quelle.ergänze_volltexte(nur_abstract)                  // C14
+    hinweise.anhängen(innere_quelle.hinweise)
+    VERSUCHE:
+        speichere jedes Dokument aus ergänzt, das jetzt einen Volltext hat, mit seinen Chunks (C10)
+    BEI StorageError:
+        hinweise.anhängen("Cache nicht verfügbar")
+    GIB gespeichert, die Dokumente aus nur_abstract durch ergänzt ersetzt, gleiche Reihenfolge ZURÜCK
 ENDE
 ```
 
@@ -103,7 +124,10 @@ ENDE
 | C11 | Die Frage (`query`) wird nie gecacht | Sie ist fast jedes Mal anders, und Voyage bettet Fragen anders ein als Dokumente; im Schema hängen Vektoren außerdem an Chunks. |
 | C12 | Vektoren werden über den **Chunk-Text** gefunden, nicht über Dokument und Position | Der Einbetter bekommt von der Pipeline nur Texte. So bleibt die Pipeline unverändert, und gleiche Texte in verschiedenen Dokumenten (z. B. zwei Fassungen eines Papers) teilen sich einen Vektor. Damit die Suche nach Text schnell bleibt, hat `chunks.text` einen Hash-Index: ein B-Baum hat eine Größengrenze pro Eintrag (etwa 2,7 kB), die ein Chunk aus 200 Wörtern überschreiten kann. |
 | C13 | Neue Vektoren gelten für alle Chunks mit demselben Text | `insert_embedding_by_text.sql` speichert den Vektor zu jedem passenden Chunk; ein Text ohne gespeicherten Chunk (Datenbank fiel beim Speichern aus) wird nur zurückgegeben, nicht gespeichert. |
-| C8 | Gespeichert wird `origin = 'abstract'` ohne Volltext | Die Pipeline arbeitet noch mit Titel und Abstract (ADR 0004). |
+| C8 | Gespeichert werden `origin` und `full_text` so, wie die Quelle sie liefert (`html`, `pdf` oder `abstract` ohne Volltext) | Seit dem Volltext (ADR 0006) trägt das Dokument beides selbst. Bis zum 28.11.2026 wurde immer `abstract` gespeichert (ADR 0004). |
+| C14 | Volltext-Modus und gespeicherte Suche enthält Dokumente nur mit Abstract: nur für diese den Volltext nachladen und speichern | Ältere Einträge stammen aus der Zeit vor dem Volltext, andere aus einem gescheiterten Abruf (R17). Die ganze Suche als Fehlschlag zu werten, würde alle Volltexte neu laden; nur die fehlenden nachzuladen, heilt den Cache Schritt für Schritt. |
+| C15 | Abstract-Modus und gespeicherte Dokumente haben Volltext: Volltext beim Zurückgeben weglassen | Die Pipeline soll im Abstract-Modus genau die Texte sehen wie ohne Cache (Vergleich Leitfrage L6). In der Datenbank bleibt der Volltext stehen. |
+| C16 | Die Hinweise der inneren Quelle werden an die eigenen angehängt | Sonst ginge der Hinweis zum Volltext-Rückfall (R17) hinter dem Cache verloren. |
 
 ## Weitergabe der Hinweise
 
@@ -116,3 +140,5 @@ ENDE
 - Eine Instanz merkt sich die Hinweise des **letzten** Aufrufs; laufen zwei Aufrufe gleichzeitig auf derselben Instanz, können sie sich die Hinweise überschreiben. Der MCP-Server über stdio bearbeitet Aufrufe nacheinander.
 - Liefert die Quelle für eine Suche dauerhaft weniger als `max_treffer` Dokumente (seltene Schlagwörter), greift der Cache nach C2 nie; jede Wiederholung fragt die Quelle erneut.
 - Jeder Aufruf öffnet bis zu zwei Verbindungen; bei einem lokalen PostgreSQL sind das wenige Millisekunden.
+- Volltexte werden nur über eine gespeicherte **Suche** wiederverwendet (R13). Taucht ein schon gespeichertes Paper in einer anderen Suche auf, lädt die Quelle seinen Volltext neu, weil es keine Abfrage „Dokument nach arXiv-ID“ gibt. Dafür wäre eine neue SQL-Datei nötig (z. B. `find_documents_by_source_ids.sql`), die Luca selbst schreiben will.
+- Wird ein Dokument im Abstract-Modus oder nach einem gescheiterten Volltext-Abruf neu gespeichert, überschreibt `upsert_document.sql` einen vorhandenen Volltext mit `NULL`. Beim nächsten Volltext-Aufruf lädt C14 ihn nach.

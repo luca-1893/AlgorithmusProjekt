@@ -1,6 +1,6 @@
 # Pseudocode: Recherche-Pipeline
 
-Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`. Die Regelnummern R1 bis R16 und die Schleifen S1 und S2 stehen auch an den Rauten im Flowchart. Den Pseudocode der einzelnen Funktionen gibt es pro Modul unter `docs/<modul>/<modul>-pseudocode.md`.
+Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`. Die Regelnummern R1 bis R17 und die Schleifen S1 und S2 stehen auch an den Rauten im Flowchart. Den Pseudocode der einzelnen Funktionen gibt es pro Modul unter `docs/<modul>/<modul>-pseudocode.md`.
 
 ## Eingaben und Parameter
 
@@ -17,12 +17,13 @@ Gesamtablauf des Algorithmus, passend zu `Phase2/Flowchart_RAG-Pipeline.drawio`.
 | `k_rrf` | Glättung der Rangfusion | 60 |
 | `λ` | MMR-Gewicht Relevanz gegen Vielfalt | 0,7 |
 | `max_alter_suche` | wie lange ein Eintrag im Such-Cache gilt | 7 Tage |
+| `volltext` | Volltext statt Abstract laden (Schalter der Quelle) | im MCP-Server an, im Messlauf nur mit `--volltext` |
 
 ## Startbedingung
 
 Ein MCP-Client (z. B. Claude Code) ruft das Tool `research_papers` mit mindestens einem Schlagwort auf. Die Vektorsuche ist nur aktiv, wenn `VOYAGE_API_KEY` gesetzt ist; sonst arbeitet der Algorithmus nur mit BM25. Die Datenbank ist ebenfalls optional; ohne sie läuft jede Suche direkt gegen arXiv.
 
-Die Cache-Regeln R13 bis R16 sind seit dem 15.11.2026 umgesetzt (`CachedSource`, `CachedEmbedder`, `docs/cache/cache-pseudocode.md`).
+Die Cache-Regeln R13 bis R16 sind seit dem 15.11.2026 umgesetzt (`CachedSource`, `CachedEmbedder`, `docs/cache/cache-pseudocode.md`), der Volltext mit R17 seit dem 28.11.2026 (ADR 0006, `docs/sources/sources-pseudocode.md`).
 
 ## Endbedingungen
 
@@ -56,6 +57,13 @@ ALGORITHMUS Recherche(schlagwörter, k, frage, suchfilter)
             dokumente ← quelle.suche(schlagwörter, max_dokumente, suchfilter)
         BEI Netzwerkfehler, Zeitüberschreitung oder ungültiger Antwort:
             FEHLER "Recherche-Quelle nicht erreichbar"      → Ende: Fehler
+        // R17: Volltext pro Dokument, HTML vor PDF, sonst Abstract
+        WENN volltext:
+            FÜR JEDES dokument IN dokumente:
+                dokument.volltext ← HTML-Text, sonst PDF-Text, sonst LEER
+                                    // bei HTTP 429 wiederholen mit 5, 10, 20 s Wartezeit
+            WENN ein dokument ohne volltext:
+                hinweise.anhängen("Volltext nicht verfügbar für … Dokumente, dort nur Titel und Abstract")
         // R14
         WENN Datenbank erreichbar:
             cache.speichere(schlagwörter, suchfilter, dokumente)
@@ -67,7 +75,7 @@ ALGORITHMUS Recherche(schlagwörter, k, frage, suchfilter)
     // S1: jedes Dokument in Chunks zerlegen
     chunks ← leere Liste
     FÜR JEDES dokument IN dokumente:
-        text ← dokument.titel + Leerzeile + dokument.abstract
+        text ← dokument.titel + Leerzeile + (dokument.volltext, WENN vorhanden, SONST dokument.abstract)
         FÜR JEDEN chunk IN erzeuge_chunks(dokument.id, text, chunk_größe, überlappung):
             chunks.anhängen((chunk, dokument))
 
@@ -144,8 +152,9 @@ ENDE
 | R14 | Dokumente kamen von der Quelle | Dokumente und Suche in der Datenbank speichern; bekannte Dokumente aktualisieren (DOI und Zeitschriftenverweis kommen oft später dazu) |
 | R15 | Datenbank nicht erreichbar | ohne Cache weiter, Hinweis „Cache nicht verfügbar“; die Recherche scheitert nicht daran |
 | R16 | Vektor zu Chunk, Modell und Chunk-Parametern schon gespeichert | wiederverwenden statt neu einbetten |
+| R17 | Volltext eingeschaltet und für ein Dokument weder HTML noch PDF verwertbar (404, Fehler, unter 500 Wörtern, HTTP 429 nach 4 Versuchen) | für dieses Dokument Titel und Abstract verwenden, Hinweis „Volltext nicht verfügbar …“; nach dauerhaftem 429 für die übrigen Dokumente des Aufrufs keinen Volltext mehr versuchen |
 
-R13 bis R16 sind umgesetzt (`src/cache/`). R16 findet Vektoren über den Chunk-Text statt über die Chunk-Parameter (C12); gleicher Text ergibt denselben Vektor.
+R13 bis R16 sind umgesetzt (`src/cache/`), R17 in `src/sources/fulltext.py`. R16 findet Vektoren über den Chunk-Text statt über die Chunk-Parameter (C12); gleicher Text ergibt denselben Vektor.
 
 ## Schleifen
 
@@ -161,7 +170,7 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 | Schritt | Laufzeit |
 |---|---|
 | Cache abfragen | eine Datenbankabfrage; bei Treffer entfällt der arXiv-Aufruf |
-| Quelle abfragen | ein HTTP-Aufruf, dominiert vom Netzwerk |
+| Quelle abfragen | ein HTTP-Aufruf, dominiert vom Netzwerk; mit Volltext zusätzlich 1–2 Downloads pro Dokument mit 3,1 s Abstand, nur beim ersten Abruf (Cache) |
 | Chunking und Indexaufbau | O(T), T = Wörter aller Dokumente |
 | BM25-Vorauswahl | O(P + C · \|q\| + C · log m), P = Postings der Anfragewörter, C = Kandidaten, \|q\| = Anfragewörter |
 | Einbetten | zwei API-Aufrufe (Anfrage, Kandidaten); mit R16 nur für noch nicht gespeicherte Chunks |
@@ -171,7 +180,7 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 
 ## Annahmen und Vereinfachungen
 
-- Nur Titel und Abstract, kein Volltext.
+- Volltext nur, wenn der Schalter `volltext` an ist (MCP-Server: Standard an; Messlauf: nur mit `--volltext`, damit die Abstract-Messung vergleichbar bleibt). Ohne Schalter nur Titel und Abstract. Formeln, Tabellen, Abbildungen und das Literaturverzeichnis werden beim Extrahieren weggelassen.
 - Chunks werden in Wörtern gemessen, nicht in LLM-Tokens.
 - Kein Token-Budget als Parameter; die Antwortgröße ist durch k und die Chunk-Größe begrenzt.
 - Dokumente und Vektoren veralten nicht: Derselbe Text mit demselben Modell ergibt denselben Vektor. Veralten kann nur das Suchergebnis, weil täglich neue Paper erscheinen; deshalb gilt das Höchstalter von 7 Tagen nur für den Such-Cache.
@@ -181,8 +190,10 @@ Weitere Schleifen stecken in den Modulen: das Chunking, der Aufbau des invertier
 
 Gemessen mit 8 echten arXiv-Anfragen (`messungen/2026-10-19_review-pr24/`):
 
+Beide Punkte gelten für die Abstract-Variante. Mit Volltext (ab 28.11.2026, R17) sind sie umgesetzt, aber noch nicht im Messlauf gemessen.
+
 - **Die Keyword-Vorauswahl greift auf Abstracts kaum.** 20 Abstracts ergeben nur 22 bis 29 Chunks, also weniger als m = 50. `top_m` sortiert nur Chunks ganz ohne Schlagwort aus (rund 10 %). BM25 ist hier vor allem ein Ranking-Signal für die Rangfusion. Mit Volltext sortiert die Vorauswahl 90 bis 96 % aus.
 - **Die IDF hängt am Treffersatz.** arXiv liefert die Dokumente wegen der Schlagwörter, das Hauptschlagwort steht deshalb in fast jedem Chunk und bekommt eine IDF nahe null. BM25 rankt dann nach seltenen Nebenbegriffen. Volltext entschärft das, gelöst ist es erst mit einer IDF über alle gespeicherten Chunks.
 
-Geplant nach dem SQL: Volltext mit Cache, danach die IDF über die Datenbank.
+Volltext mit Cache ist umgesetzt (ADR 0006); geplant bleibt die IDF über die Datenbank.
 - arXiv ist englischsprachig; deutsche Schlagwörter finden kaum etwas, die Vektorsuche gleicht das nur für die Frage aus.

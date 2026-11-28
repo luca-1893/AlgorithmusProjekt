@@ -71,9 +71,13 @@ STRUKTUR Dokument
     zeitschrift   – Zeitschriften- oder Konferenzverweis, leer bei reinen Preprints
     doi           – DOI, leer wenn keine vergeben
     begutachtet   – WAHR, wenn zeitschrift oder doi gesetzt ist
-    text          – titel und abstract, durch eine Leerzeile getrennt
+    herkunft      – woher der Text stammt: "html", "pdf" oder "abstract" (Standard)
+    volltext      – extrahierter Volltext, leer genau dann, wenn herkunft = "abstract"
+    text          – titel und volltext, WENN volltext nicht leer,
+                    SONST titel und abstract; jeweils durch eine Leerzeile getrennt
 ENDE
 // Unveränderlich nach dem Erzeugen; id dient später zur Duplikaterkennung in der Datenbank
+// herkunft und volltext müssen zusammenpassen, sonst FEHLER (wie documents_invalid_full_text im Schema)
 
 
 FUNKTION lies_arxiv_feed(xml_text)
@@ -99,7 +103,11 @@ ENDE
 
 SCHNITTSTELLE Quelle
     name                                  – Name der Quelle, z. B. "arxiv"
+    volltext                              – WAHR: Dokumente kommen mit Volltext, wo möglich (R17)
+    hinweise                              – Hinweise des letzten Aufrufs, z. B. zum Volltext-Rückfall
     suche(schlagwörter, max_treffer, suchfilter) → Liste von Dokument
+    ergänze_volltexte(dokumente) → Liste von Dokument
+                                          // Standard: unverändert zurück (Quelle ohne Volltext)
 ENDE
 // Jede weitere Quelle (OpenAlex, Semantic Scholar) setzt dieselbe Schnittstelle um;
 // die Pipeline kennt nur die Schnittstelle
@@ -118,6 +126,9 @@ FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer, suchfilter)
                                veröffentlicht_ab, veröffentlicht_bis)
                                           // wirft bei leeren Schlagwörtern,
                                           // bevor ein Netzwerkaufruf passiert
+    WENN volltext:
+        warte, bis seit der letzten Anfrage des Volltextabrufs pause vergangen ist
+                                          // dieselbe Pause wie für die Downloads, gleicher Server
     VERSUCHE:
         antwort ← HTTP-GET url
     BEI Netzwerkfehler oder Zeitüberschreitung:
@@ -125,8 +136,122 @@ FUNKTION ArxivQuelle.suche(schlagwörter, max_treffer, suchfilter)
     dokumente ← lies_arxiv_feed(antwort)
     WENN nur_begutachtet:
         dokumente ← nur die dokumente mit begutachtet = WAHR
-    GIB die ersten max_treffer von dokumente ZURÜCK
+    dokumente ← die ersten max_treffer von dokumente
+    WENN volltext:
+        dokumente ← ergänze_volltexte(dokumente)          // R17
+    GIB dokumente ZURÜCK
 ENDE
-// Laufzeit: ein HTTP-Aufruf, dominiert von Netzwerk und Antwortgröße
-// Bekannte Grenzen: nur Titel und Abstract (Volltext später); keine Drosselung zwischen
-// mehreren Aufrufen, arXiv verlangt Abstand zwischen Anfragen; kein Cache (kommt mit PostgreSQL)
+// Laufzeit: ein HTTP-Aufruf, dominiert von Netzwerk und Antwortgröße;
+// mit Volltext zusätzlich ein bis zwei Downloads pro Dokument (siehe unten)
+// Bekannte Grenzen: ohne Volltext nur Titel und Abstract; der Cache liegt davor (docs/cache/)
+
+
+## Volltext (R17, ADR 0006)
+
+FUNKTION html_text(html)
+    EINGABE:  html – HTML-Seite eines Papers (arXiv erzeugt sie mit LaTeXML)
+    AUSGABE:  Fließtext aus <article>, Leerraum vereinheitlicht
+
+    teile ← leere Liste
+    überspringen ← 0                       // Tiefe innerhalb eines übersprungenen Elements
+    FÜR JEDES Start-Tag, End-Tag und Textstück in html, in Reihenfolge:
+        leere Elemente (br, img, …) zählen nicht zur Tiefe
+        WENN überspringen > 0: Tiefe mitzählen, Text verwerfen
+        SONST WENN innerhalb von <article> UND (Tag ist script, style, math, nav, header, footer,
+                   svg, figure, table ODER Klasse enthält Literaturverzeichnis, Kopf-, Fußzeile,
+                   Autoren oder Fußnote):
+            überspringen ← 1
+        SONST WENN Text innerhalb von <article>: teile.anhängen(Text)
+        Ende von p, div, section, h1–h4, li: Zeilenumbruch anhängen
+    GIB teile verbunden, Leerraum auf ein Leerzeichen reduziert ZURÜCK
+ENDE
+// Laufzeit: O(H), H = Länge der Seite, ein Durchlauf
+// Formeln fallen weg (sie bestehen aus Zeichen, nicht aus Wörtern); Tabellen und Abbildungen auch
+
+
+FUNKTION schneide_literatur_ab(text)
+    treffer ← letzte Zeile, die nur "References" oder "Bibliography" enthält (beliebige Schreibweise groß/klein)
+    WENN treffer existiert UND treffer in der zweiten Hälfte von text liegt:
+        GIB text bis vor treffer ZURÜCK
+    GIB text ZURÜCK
+ENDE
+// Zweite Hälfte: ein "References" im Inhaltsverzeichnis oder in der Einleitung schneidet nichts ab
+
+
+FUNKTION pdf_text(pdf_bytes)
+    text ← Text aller Seiten mit pypdf, durch Zeilenumbrüche getrennt
+    text ← schneide_literatur_ab(text)
+    text ← Trennstriche am Zeilenende entfernen ("Algo-\nrithmus" → "Algorithmus")
+    GIB text mit vereinheitlichtem Leerraum ZURÜCK
+ENDE
+// Wenn die Bibliothek fehlt oder die Datei kaputt ist: FEHLER "PDF nicht lesbar"
+
+
+KLASSE Volltextabruf
+    abrufen      – HTTP-GET, liefert (Inhalt, Inhaltstyp); austauschbar für Tests
+    schlafen     – Wartefunktion; austauschbar für Tests
+    pause        – Mindestabstand zwischen zwei Anfragen an arXiv, 3,1 s
+    versuche     – höchstens 4 Versuche pro URL
+    wartezeit    – erste Wartezeit nach HTTP 429, 5 s, verdoppelt sich pro Versuch
+    gedrosselt   – WAHR, sobald eine URL nach allen Versuchen noch 429 bekam
+ENDE
+
+
+FUNKTION Volltextabruf.hole(url)
+    AUSGABE:  (Inhalt, Inhaltstyp) oder LEER
+    FÜR versuch VON 1 BIS versuche:
+        warte, bis seit der letzten Anfrage pause vergangen ist
+        VERSUCHE:
+            GIB abrufen(url) ZURÜCK
+        BEI HTTP 429 oder 503:
+            WENN versuch < versuche: schlafen(wartezeit · 2^(versuch − 1))   // 5, 10, 20 s
+        BEI anderem HTTP-Fehler (z. B. 404: keine HTML-Fassung), Netzwerkfehler, Zeitüberschreitung:
+            GIB LEER ZURÜCK
+    gedrosselt ← WAHR
+    GIB LEER ZURÜCK
+ENDE
+// Laufzeit: höchstens versuche Anfragen; im schlimmsten Fall 5 + 10 + 20 = 35 s Warten pro URL
+
+
+FUNKTION Volltextabruf.volltext(arxiv_id)
+    AUSGABE:  (herkunft, text) oder LEER
+    antwort ← hole(HTML-URL der id)
+    WENN antwort ist HTML:
+        text ← html_text(antwort)
+        WENN Anzahl Wörter von text ≥ 500: GIB ("html", text) ZURÜCK
+    WENN gedrosselt: GIB LEER ZURÜCK
+    antwort ← hole(PDF-URL der id)
+    WENN antwort beginnt mit "%PDF":
+        VERSUCHE: text ← pdf_text(antwort)
+        BEI "PDF nicht lesbar": GIB LEER ZURÜCK
+        WENN Anzahl Wörter von text ≥ 500: GIB ("pdf", text) ZURÜCK
+    GIB LEER ZURÜCK
+ENDE
+// Unter 500 Wörtern ist die Extraktion gescheitert (z. B. Fehlerseite statt Paper);
+// dann ist das Abstract der bessere Text
+
+
+FUNKTION ArxivQuelle.ergänze_volltexte(dokumente)
+    hinweise ← leere Liste
+    volltextabruf.gedrosselt ← FALSCH
+    ergebnis ← leere Liste
+    fehlend  ← leere Liste
+    FÜR JEDES dokument IN dokumente:
+        treffer ← LEER, WENN volltextabruf.gedrosselt, SONST volltextabruf.volltext(dokument.id)
+        WENN treffer LEER:
+            ergebnis.anhängen(dokument)                       // R17: Abstract bleibt
+            fehlend.anhängen(dokument.id)
+        SONST:
+            ergebnis.anhängen(dokument mit herkunft und volltext aus treffer)
+    WENN fehlend nicht leer:
+        hinweise.anhängen("Volltext nicht verfügbar für <Anzahl> von <Anzahl> Dokumenten,
+                           dort nur Titel und Abstract: <ids>")
+    WENN volltextabruf.gedrosselt:
+        hinweise.anhängen("arXiv drosselt (HTTP 429), weitere Volltexte übersprungen")
+    GIB ergebnis ZURÜCK
+ENDE
+// Laufzeit: pro Dokument eine (HTML) oder zwei (PDF) Anfragen mit 3,1 s Abstand,
+// bei 20 Dokumenten also mindestens etwa eine Minute, wenn nichts im Cache liegt
+// Anfragen laufen nacheinander, nie parallel (arXiv-Nutzungsregeln)
+// Bekannte Grenzen: Ist arXiv gedrosselt, bekommen die übrigen Dokumente dieses Aufrufs nur
+// das Abstract; der nächste Aufruf versucht es wieder
