@@ -9,7 +9,7 @@ working manual for any coding agent (Claude Code, Codex, OpenCode, ...).
 Read it fully before changing code.
 
 - Overview, setup, commands, project status: [README.md](README.md)
-- Overall algorithm, decision rules R1–R16, loops, complexity:
+- Overall algorithm, decision rules R1–R17, loops, complexity:
   [Phase2/Pseudocode.md](Phase2/Pseudocode.md) (flowchart: `Phase2/Flowchart_RAG-Pipeline.drawio`)
 - Per-module design: `docs/<module>/<module>-pseudocode.md` and
   `*-formelsammlung.md` (bm25, chunking, sources, vector_search, ranking,
@@ -18,7 +18,7 @@ Read it fully before changing code.
 - Database: [docs/storage/schema-entwurf.md](docs/storage/schema-entwurf.md)
   (decisions E1–E32), [docs/storage/sql-aufgaben.md](docs/storage/sql-aufgaben.md)
   (contract per SQL file), `sql/schema.sql`
-- Cache behavior and its decisions C1–C13: [docs/cache/cache-pseudocode.md](docs/cache/cache-pseudocode.md)
+- Cache behavior and its decisions C1–C16: [docs/cache/cache-pseudocode.md](docs/cache/cache-pseudocode.md)
 - Measurement: questions F01–F25 with expected arXiv id in
   [docs/evaluation/testfragen.md](docs/evaluation/testfragen.md); manual
   check of `runs`: [Phase4/Klicktest-runs.md](Phase4/Klicktest-runs.md)
@@ -121,7 +121,7 @@ src/bm25           tokenizer, inverted index, IDF, BM25 score, top_m (heap)
 src/chunking       overlapping word chunks
 src/ranking        reciprocal rank fusion, score normalization
 src/vector_search  cosine, top-k, MMR, Embedder ABC + VoyageEmbedder
-src/sources        Document, SearchFilter, Source ABC + ArxivSource
+src/sources        Document, SearchFilter, Source ABC + ArxivSource, full text (R17)
 src/pipeline       research(): wires the modules, rules R1–R12
 src/cache          CachedSource / CachedEmbedder in front of arXiv and Voyage (R13–R16)
 src/storage        one function per SQL file in sql/, psycopg 3
