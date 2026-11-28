@@ -92,6 +92,28 @@ python Phase4/testkatalog.py                               # regenerates Phase4/
 - Secrets (`VOYAGE_API_KEY`, `ANTHROPIC_API_KEY`) come from the
   environment. Never write them into files, `.mcp.json` or logs.
 
+### Claude Code cloud sessions
+
+The cloud environment "AlgorithmusProjekt" has a setup script that creates
+`.venv` and a local PostgreSQL 16 (user `postgres`, no password) with both
+databases and the schema; `DATABASE_URL` and `TEST_DATABASE_URL` point to
+it. The server is stopped after setup, start it first:
+
+```bash
+su postgres -c "/usr/lib/postgresql/16/bin/pg_ctl -D /var/lib/pg/data -l /var/lib/pg/log -o '-c listen_addresses=localhost' -w start"
+```
+
+- The Voyage key is injected by the network proxy; `VOYAGE_API_KEY` only
+  holds the placeholder `proxy-injected`.
+- `ANTHROPIC_API_KEY` must be set by the user as an environment variable
+  of the cloud environment (the proxy cannot inject keys for Anthropic
+  hosts). The session sets `ANTHROPIC_BASE_URL` to an internal endpoint:
+  run the measurement with `env -u ANTHROPIC_BASE_URL`, otherwise the SDK
+  does not reach `api.anthropic.com`.
+- The databases live in the container and vanish with it. Results that
+  matter go into `messungen/<date>_messlauf/` (JSONL log plus a CSV export
+  of `runs`) and get committed.
+
 ## Architecture in one page
 
 ```
