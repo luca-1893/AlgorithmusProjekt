@@ -1,6 +1,6 @@
 # Reflexion: Annahmen und Limitationen
 
-Phase 5 des Hackathons (Karte #16). Stand: 15.11.2026, Prototyp auf `luca-dev`. Tests und Coverage: `Phase4/Testdokumentation.md`.
+Phase 5 des Hackathons (Karte #16). Stand: 15.11.2026, Prototyp auf `luca-dev`; L1–L3 und L7 nachgetragen am 28.11.2026 (Volltext, Branch `volltext`). Tests und Coverage: `Phase4/Testdokumentation.md`.
 
 Grundlage sind die Messungen aus `messungen/2026-10-19_review-pr24/` (8 echte arXiv-Anfragen aus verschiedenen Fachgebieten, je 20 Dokumente), die ADRs unter `docs/adr/` und der Prototyp `Phase3/Prototyp.ipynb`. Die KPI-Messläufe (Karte #6) stehen noch aus; wo Ergebnisse daraus fehlen, ist das markiert.
 
@@ -8,7 +8,7 @@ Grundlage sind die Messungen aus `messungen/2026-10-19_review-pr24/` (8 echte ar
 
 | Nr. | Annahme oder Vereinfachung | Warum | Wo beschlossen |
 |---|---|---|---|
-| A1 | Nur Titel und Abstract, kein Volltext | Volltext kostet ohne Cache etwa 3,5 Minuten pro Tool-Aufruf | ADR 0004 |
+| A1 | Bis 28.11.2026 nur Titel und Abstract; seitdem Volltext per Schalter (MCP-Server an, Messlauf nur mit `--volltext`) | Volltext kostet ohne Cache etwa 3,5 Minuten pro Tool-Aufruf; mit Cache nur beim ersten Abruf | ADR 0004, ADR 0006 |
 | A2 | arXiv ist die einzige Quelle | Offene API, keine Anmeldung; Google Scholar hat keine offizielle API | Karte #21 |
 | A3 | Chunks werden in Wörtern gemessen, nicht in LLM-Tokens | Kein Tokenizer des Sprachmodells nötig, unabhängig vom Modell | `docs/chunking/chunking-pseudocode.md` |
 | A4 | Kein Token-Budget; die Antwortgröße begrenzen `k` und die Chunk-Größe | Einfacher und erklärbarer als eine Knapsack-Auswahl | Entscheidung vom 10.10., Knapsack als Übung (#10) |
@@ -28,13 +28,13 @@ Jede Limitation folgt demselben Aufbau: **Was** ist eingeschränkt, **woher** wi
 
 | Nr. | Limitation | Schwere | Status |
 |---|---|---|---|
-| L1 | BM25-Vorauswahl greift auf Abstracts kaum | hoch | dokumentiert, Lösung geplant (Volltext + Cache) |
-| L2 | IDF hängt am Treffersatz, das Hauptschlagwort zählt kaum | hoch | dokumentiert, Lösung geplant (IDF über die Datenbank) |
-| L3 | Antworten nur im Volltext werden nicht gefunden | hoch | dokumentiert, Lösung geplant |
+| L1 | BM25-Vorauswahl greift auf Abstracts kaum | hoch | Volltext + Cache umgesetzt (ADR 0006), im Messlauf noch nicht gemessen |
+| L2 | IDF hängt am Treffersatz, das Hauptschlagwort zählt kaum | hoch | durch Volltext entschärft (umgesetzt), Lösung geplant (IDF über die Datenbank) |
+| L3 | Antworten nur im Volltext werden nicht gefunden | hoch | Volltext umgesetzt (ADR 0006), im Messlauf noch nicht gemessen (L6) |
 | L4 | Deutsche Schlagwörter finden kaum etwas | mittel | offen |
 | L5 | Token-Ersparnis bisher nur geschätzt | hoch für den Pitch | Messung offen (Karte #6) |
 | L6 | Halluzinationen nur indirekt gemessen | mittel | bewusste Entscheidung (E33) |
-| L7 | Abhängigkeit von arXiv und Voyage, stiller Rückfall auf BM25 | mittel | Fehlerpfade getestet, Wiederholen offen |
+| L7 | Abhängigkeit von arXiv und Voyage, stiller Rückfall auf BM25 | mittel | Fehlerpfade getestet; Wiederholen bei 429 für Volltext-Downloads umgesetzt, für Suche und Voyage offen |
 | L8 | Wörter statt Tokens, zerrissene Sätze, Redundanz | niedrig | gemessen, `overlap = 40` begründet |
 | L9 | Parameter nicht für arXiv kalibriert | mittel | offen |
 | L10 | Kleinere Grenzen (Seitenzahl, Anmeldung, Index pro Aufruf, Testabdeckung) | niedrig | dokumentiert |
@@ -51,9 +51,9 @@ Vorschlag für den Pitch (fünf Folien-Punkte): L2, L1, L3, L6, L7.
 
 **Bedeutung:** Im hybriden Weg gehen fast alle Chunks an Voyage. Die Annahme aus ADR 0001, dass BM25 die Embedding-Kosten klein hält, gilt auf Abstracts nicht. BM25 wirkt hier vor allem als zweites Ranking-Signal in der Rangfusion, nicht als Filter.
 
-**Heute:** als Einschränkung dokumentiert (ADR 0004), nicht als Bug behoben.
+**Heute:** In der Abstract-Variante (Messlauf ohne `--volltext`) gilt die Einschränkung weiter (ADR 0004). Seit dem 28.11.2026 lädt das Tool den Volltext (ADR 0006, R17), im MCP-Server standardmäßig. Im Rauchtest (`["BM25", "information retrieval"]`, 5 Dokumente) entstanden daraus 278 Chunks; wie viel die Vorauswahl im Messlauf aussortiert und ob die Antworten besser werden, ist **noch nicht gemessen**.
 
-**Lösung:** Volltext statt Abstract. Mit Volltext entstehen 515–1.167 Chunks pro Anfrage, und die Vorauswahl sortiert 90–96 % aus. Das kostet ohne Cache etwa 3,5 Minuten pro Aufruf und ist deshalb erst mit dem Datenbank-Cache sinnvoll. Die Alternative, `max_documents` auf 50–100 zu erhöhen, wurde verworfen, weil sie L2 verschärft.
+**Lösung:** Volltext statt Abstract (umgesetzt). Mit Volltext entstehen 515–1.167 Chunks pro Anfrage, und die Vorauswahl sortiert 90–96 % aus. Das kostet ohne Cache etwa 3,5 Minuten pro Aufruf und ist deshalb erst mit dem Datenbank-Cache sinnvoll. Die Alternative, `max_documents` auf 50–100 zu erhöhen, wurde verworfen, weil sie L2 verschärft.
 
 ### L2: Die IDF hängt am Treffersatz
 
@@ -74,7 +74,7 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 
 **Bedeutung:** BM25 rankt praktisch nach Nebenbegriffen und nach der Textlänge. Ein Chunk, der das Hauptthema ausführlich behandelt, kann hinter einem Chunk landen, der zufällig einen seltenen Nebenbegriff enthält. Mehr Dokumente machen es schlimmer, nicht besser. Lucas ursprüngliche Idee, ein seltenes Schlagwort solle mehr zählen als die bloße Wiederholung des Suchworts, leistet BM25 zwar über IDF und Sättigung, aber nur auf einem passenden Korpus.
 
-**Heute:** dokumentiert (ADR 0004). Volltext entschärft das Problem (`uml` 0,10 → 0,62), löst es aber nicht: Das Hauptschlagwort bleibt meist der schwächste Term.
+**Heute:** dokumentiert (ADR 0004). Volltext entschärft das Problem (`uml` 0,10 → 0,62 in der Messung vom 19.10.), löst es aber nicht: Das Hauptschlagwort bleibt meist der schwächste Term. Der Volltext ist seit dem 28.11.2026 umgesetzt (ADR 0006), die IDF über die Datenbank noch nicht.
 
 **Lösung:** Die IDF über alle gespeicherten Chunks in der Datenbank berechnen, also über einen Korpus, der mit jeder Recherche wächst und nicht nur aus Treffern besteht. Voraussetzung sind Cache und eine `top_m`-Variante, die eine fertige IDF-Tabelle annimmt.
 
@@ -88,9 +88,9 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 
 **Bedeutung:** Für Detailfragen (eine Zahl aus einer Tabelle, ein Verfahren aus dem Methodenteil, eine Einschränkung aus der Diskussion) liefert das Tool bestenfalls das richtige Paper, aber nie die richtige Stelle. Das Sprachmodell müsste dann selbst nachlesen, und die Token-Ersparnis (L5) wäre dahin.
 
-**Heute:** dokumentiert; das Datenbankschema ist für Volltext schon vorbereitet (`documents.full_text`, `origin` mit `html`, `pdf`, `abstract`).
+**Heute:** umgesetzt am 28.11.2026, aber **noch nicht im Messlauf gemessen**. Das Tool lädt pro Paper die HTML-Fassung, sonst das PDF mit `pypdf`, sonst bleibt das Abstract mit Hinweis in `warnings` (R17, ADR 0006). Der Cache speichert `origin` und `full_text`; eine wiederholte Suche kommt ohne Download aus (Rauchtest: erster Abruf 15,9 s bei 5 Dokumenten, aus dem Cache 0,1 s). Wiederverwendet wird ein Volltext bisher nur über die gleiche Suche, nicht über die arXiv-ID. Die Abstract-Variante bleibt für den Vergleich in Leitfrage L6 erhalten (`messlauf` ohne `--volltext`).
 
-**Lösung:** Volltext mit `pypdf` (gleich gut wie `pymupdf4llm`, siebenmal schneller, BSD-Lizenz), Wiederholen mit wachsender Wartezeit bei 429, Cache in PostgreSQL. Jedes Paper kostet dann nur beim ersten Abruf.
+**Lösung:** Volltext mit `pypdf` (gleich gut wie `pymupdf4llm`, siebenmal schneller, BSD-Lizenz), Wiederholen mit wachsender Wartezeit bei 429, Cache in PostgreSQL (umgesetzt). Offen: Messlauf mit `--volltext` und Vergleich nach L6.
 
 ### L4: Deutsche Schlagwörter finden kaum etwas
 
@@ -145,7 +145,7 @@ Bei „quantum error correction“ liegen alle drei Terme zwischen 0,10 und 0,14
 **Bedeutung:**
 - Fällt **arXiv** aus, liefert das Tool nichts, außer die Suche liegt schon im Cache (seit 15.11. umgesetzt, R13–R15).
 - Fällt **Voyage** aus (Schlüssel ungültig, Limit, Netz), fällt die Pipeline still auf reines BM25 zurück (R10). Das ist gewollt, weil die Recherche nicht scheitern soll, aber der Hinweis „Vektorsuche nicht verfügbar, nur BM25“ im Ergebnis ist das einzige Signal. Liest das Sprachmodell ihn nicht, merkt der Nutzer nicht, dass er schlechtere Treffer bekommt.
-- Bei HTTP 429 wird weder bei arXiv noch bei Voyage automatisch wiederholt.
+- Bei HTTP 429 werden seit dem 28.11.2026 nur die Volltext-Downloads wiederholt (5, 10, 20 s Wartezeit, dann Abstract, R17). Die Suchanfrage an die arXiv-API und Voyage werden weiterhin nicht wiederholt.
 - Jeder Aufruf verursacht Voyage-Kosten, und wegen L1 für fast alle Chunks.
 
 **Heute:** Beide Ausfälle führen zu verständlichen Fehlern oder einem geregelten Ausweichweg, nicht zum Absturz.
@@ -233,4 +233,5 @@ Mehr Dokumente skalieren rechnerisch linear, verschlechtern aber die IDF (L2). M
 
 - [ ] Ergebnisse der Messläufe (Karte #6) bei L5 und L6 eintragen
 - [ ] Prüfen, ob die Reihenfolge der Limitationen für den Pitch passt (die 5 wichtigsten nach vorn)
-- [ ] Nach Cache und Volltext: Status von L1 bis L3 aktualisieren
+- [x] Nach Cache und Volltext: Status von L1 bis L3 aktualisieren (28.11.2026, umgesetzt, noch nicht gemessen)
+- [ ] Messlauf mit `--volltext` und Vergleich mit der Abstract-Variante (Leitfrage L6), danach L1 und L3 mit Zahlen
