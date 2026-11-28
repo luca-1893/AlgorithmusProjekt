@@ -366,6 +366,21 @@ class TestCachedSourceFullText(unittest.TestCase):
         self.assertEqual(cached.notes, (CACHE_HIT, "ergänzt"))
         self.assertEqual(self.stored()[1], ("9999.00002", "html", "Volltext 9999.00002"))
 
+    def test_full_text_completion_survives_save_failure(self):
+        self.cached(FakeSource(self.documents)).search([KEYWORD], 2)
+        calls = []
+
+        def connect_once():
+            calls.append(1)
+            if len(calls) > 1:
+                raise StorageError("gone")
+            return connect(TEST_DATABASE_URL)
+
+        cached = CachedSource(FullTextSource(self.documents), connect=connect_once)
+        documents = cached.search([KEYWORD], 2)
+        self.assertEqual([document.origin for document in documents], ["html", "html"])
+        self.assertEqual(cached.notes, (CACHE_HIT, CACHE_UNAVAILABLE))
+
     def test_abstract_mode_drops_cached_full_text(self):
         self.cached(FullTextSource(self.documents)).search([KEYWORD], 2)
         inner = FakeSource(self.documents)
