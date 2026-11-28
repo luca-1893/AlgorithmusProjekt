@@ -205,6 +205,56 @@ class TestStoreRuns(unittest.TestCase):
         self.assertEqual(self.rows(), [])
 
 
+@unittest.skipUnless(database_available(), "test database not reachable")
+class TestFullTextRuns(unittest.TestCase):
+    STORED = messlauf.VOLLTEXT_PREFIX + messlauf.PROBE_PREFIX + QUESTION if HAS_DEPENDENCIES else ""
+
+    def setUp(self):
+        self.cleanup()
+
+    def tearDown(self):
+        self.cleanup()
+
+    def cleanup(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("DELETE FROM runs WHERE question = %s", (self.STORED,))
+
+    def run_main(self, folder, *options):
+        with mock.patch.object(messlauf, "LOG_DIR", Path(folder)), \
+                mock.patch.object(messlauf, "load_questions", return_value=[question()]), \
+                mock.patch.object(messlauf, "connect", lambda: connect(TEST_DATABASE_URL)), \
+                mock.patch("builtins.print"):
+            messlauf.main(["--probe", "--varianten", "bm25", *options])
+
+    def test_full_text_run_is_marked_in_question_and_log_folder(self):
+        with tempfile.TemporaryDirectory() as folder:
+            self.run_main(folder, "--volltext")
+            logs = [path.parent.name for path in Path(folder).glob("*/runs.jsonl")]
+        with connect(TEST_DATABASE_URL) as connection:
+            rows = connection.execute("SELECT variant FROM runs WHERE question = %s", (self.STORED,)).fetchall()
+        self.assertEqual(rows, [("bm25",)])
+        self.assertEqual(len(logs), 1)
+        self.assertTrue(logs[0].endswith("_messlauf_volltext_probe"))
+
+
+@unittest.skipUnless(HAS_DEPENDENCIES, "anthropic or psycopg missing, use .venv")
+class TestSourceForRun(unittest.TestCase):
+    def test_default_run_uses_abstracts_without_cache(self):
+        from sources import ArxivSource
+        source = messlauf.source_for_run(probe=False, full_text=False)
+        self.assertIs(type(source), ArxivSource)
+        self.assertFalse(source.full_text)
+
+    def test_full_text_run_uses_full_text_without_cache(self):
+        from sources import ArxivSource
+        source = messlauf.source_for_run(probe=False, full_text=True)
+        self.assertIs(type(source), ArxivSource)
+        self.assertTrue(source.full_text)
+
+    def test_probe_stays_offline_with_full_text(self):
+        self.assertIsInstance(messlauf.source_for_run(probe=True, full_text=True), ProbeSource)
+
+
 @unittest.skipUnless(HAS_DEPENDENCIES, "anthropic or psycopg missing, use .venv")
 class TestProbe(unittest.TestCase):
     def test_probe_source_is_offline(self):

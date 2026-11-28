@@ -1,6 +1,7 @@
 import importlib.util
 import os
 import unittest
+from dataclasses import replace
 from datetime import date
 
 from sources import Document, SearchFilter, Source, SourceError
@@ -34,6 +35,28 @@ class FakeSource(Source):
         if self.error:
             raise self.error
         return self.documents[:max_results]
+
+
+class FullTextSource(FakeSource):
+    """Fake source in full-text mode: every document gets the full text 'Volltext <id>'."""
+    full_text = True
+
+    def __init__(self, documents=(), note=""):
+        super().__init__(documents)
+        self.completed = []
+        self.note = note
+
+    def search(self, keywords, max_results, search_filter=None):
+        return self.add_full_texts(super().search(keywords, max_results, search_filter))
+
+    def add_full_texts(self, documents):
+        self.completed.append([document.id for document in documents])
+        self.notes = (self.note,) if self.note else ()
+        return [with_full_text(document) for document in documents]
+
+
+def with_full_text(document):
+    return replace(document, origin="html", full_text=f"Volltext {document.id}")
 
 
 class CountingEmbedder(Embedder):
@@ -79,6 +102,15 @@ class TestCachedSourceWithoutDatabase(unittest.TestCase):
 
     def test_default_notes_empty(self):
         self.assertEqual(CachedSource(FakeSource(), connect=unreachable).notes, ())
+
+    def test_database_unreachable_keeps_inner_notes(self):
+        cached = CachedSource(FullTextSource([make_document(1)], note="Volltext fehlt"), connect=unreachable)
+        cached.search([KEYWORD], 1)
+        self.assertEqual(cached.notes, (CACHE_UNAVAILABLE, "Volltext fehlt"))
+
+    def test_full_text_mode_follows_inner_source(self):
+        self.assertTrue(CachedSource(FullTextSource(), connect=unreachable).full_text)
+        self.assertFalse(CachedSource(FakeSource(), connect=unreachable).full_text)
 
 
 @unittest.skipUnless(database_available(), "test database not reachable")
@@ -275,3 +307,69 @@ class TestCachedSourceStoresChunks(unittest.TestCase):
         with connect(TEST_DATABASE_URL) as connection:
             count = connection.execute("SELECT count(*) FROM chunk_embeddings WHERE model = 'testmodell'").fetchone()[0]
         self.assertEqual(count, 1)
+
+
+@unittest.skipUnless(database_available(), "test database not reachable")
+class TestCachedSourceFullText(unittest.TestCase):
+    def setUp(self):
+        self.cleanup()
+        self.documents = [make_document(1), make_document(2)]
+
+    def tearDown(self):
+        self.cleanup()
+
+    def cleanup(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("DELETE FROM searches WHERE %s = ANY(keywords)", (KEYWORD,))
+            connection.execute("DELETE FROM documents WHERE source = %s", (TEST_SOURCE,))
+
+    def cached(self, inner, **options):
+        return CachedSource(inner, connect=lambda: connect(TEST_DATABASE_URL), **options)
+
+    def stored(self):
+        with connect(TEST_DATABASE_URL) as connection:
+            return connection.execute("SELECT source_id, origin, full_text FROM documents WHERE source = %s "
+                                      "ORDER BY source_id", (TEST_SOURCE,)).fetchall()
+
+    def test_full_text_is_stored_with_origin(self):
+        self.cached(FullTextSource(self.documents)).search([KEYWORD], 2)
+        self.assertEqual(self.stored(), [("9999.00001", "html", "Volltext 9999.00001"),
+                                         ("9999.00002", "html", "Volltext 9999.00002")])
+
+    def test_full_text_is_loaded_from_cache_without_download(self):
+        inner = FullTextSource(self.documents)
+        first = self.cached(inner).search([KEYWORD], 2)
+        cached = self.cached(inner)
+        second = cached.search([KEYWORD], 2)
+        self.assertEqual(second, first)
+        self.assertEqual(second[0].text, "Titel 1\n\nVolltext 9999.00001")
+        self.assertEqual(inner.completed, [["9999.00001", "9999.00002"]])
+        self.assertEqual(cached.notes, (CACHE_HIT,))
+
+    def test_chunks_come_from_full_text(self):
+        self.cached(FullTextSource(self.documents[:1]), chunk_size=2, overlap=0).search([KEYWORD], 1)
+        with connect(TEST_DATABASE_URL) as connection:
+            document_id = connection.execute("SELECT id FROM documents WHERE source = %s",
+                                             (TEST_SOURCE,)).fetchone()[0]
+            texts = [text for _, _, text in find_chunks(connection, [document_id])]
+        self.assertEqual(texts, ["Titel 1", "Volltext 9999.00001"])
+
+    def test_full_text_mode_completes_cached_abstracts_only(self):
+        self.cached(FakeSource(self.documents)).search([KEYWORD], 2)
+        inner = FullTextSource(self.documents, note="ergänzt")
+        with connect(TEST_DATABASE_URL) as connection:
+            connection.execute("UPDATE documents SET origin = 'pdf', full_text = 'alt' WHERE source_id = '9999.00001'")
+        cached = self.cached(inner)
+        documents = cached.search([KEYWORD], 2)
+        self.assertEqual(inner.completed, [["9999.00002"]])
+        self.assertEqual([document.origin for document in documents], ["pdf", "html"])
+        self.assertEqual(cached.notes, (CACHE_HIT, "ergänzt"))
+        self.assertEqual(self.stored()[1], ("9999.00002", "html", "Volltext 9999.00002"))
+
+    def test_abstract_mode_drops_cached_full_text(self):
+        self.cached(FullTextSource(self.documents)).search([KEYWORD], 2)
+        inner = FakeSource(self.documents)
+        documents = self.cached(inner).search([KEYWORD], 2)
+        self.assertEqual(inner.calls, 0)
+        self.assertEqual(documents, self.documents)
+        self.assertEqual(self.stored()[0][1], "html")

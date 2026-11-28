@@ -147,3 +147,13 @@ class TestDefaultSource(unittest.TestCase):
         self.assertIsInstance(source, CachedSource)
         self.assertIsInstance(source.inner, ArxivSource)
         self.assertEqual((source.chunk_size, source.overlap), (150, 30))
+
+    def test_default_source_uses_full_text(self):
+        from pipeline import PipelineConfig
+
+        self.assertTrue(default_source(PipelineConfig()).inner.full_text)
+
+    def test_default_source_abstract_only(self):
+        from pipeline import PipelineConfig
+
+        self.assertFalse(default_source(PipelineConfig(), full_text=False).inner.full_text)

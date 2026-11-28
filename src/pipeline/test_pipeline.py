@@ -112,6 +112,21 @@ class TestResearchBm25Only(unittest.TestCase):
             pipeline.research(["uml"], 3, FakeSource(error=SourceError("down")))
 
 
+class TestResearchFullText(unittest.TestCase):
+    def test_research_chunks_the_full_text(self):
+        body = "Introduction. " + "filler " * 400 + "The method uses BM25 saturation. " + "more " * 400
+        paper = Document("4", "A paper", "Short abstract.", ("Di",), date(2023, 4, 4), "u4", "arxiv",
+                         origin="html", full_text=body)
+        result = pipeline.research(["saturation"], 3, FakeSource([paper]), config=pipeline.PipelineConfig())
+        self.assertEqual(len(result.hits), 1)
+        self.assertIn("BM25 saturation", result.hits[0].chunk.text)
+        self.assertGreater(result.hits[0].chunk.position, 0)
+
+    def test_research_abstract_document_unchanged(self):
+        result = pipeline.research(["associations"], 3, FakeSource([UML]))
+        self.assertEqual(result.hits[0].chunk.text, UML.text)
+
+
 class TestResultToDict(unittest.TestCase):
     def test_hit_to_dict(self):
         hit = pipeline.research(["class"], 1, FakeSource([UML])).hits[0]

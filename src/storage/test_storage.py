@@ -2,6 +2,7 @@ import importlib.util
 import os
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import date, datetime, timezone
 from pathlib import Path
 from unittest import mock
@@ -252,6 +253,18 @@ class TestFindDocuments(unittest.TestCase):
         document_id = save_document(self.connection, original, 200, 40)
         stored = find_documents(self.connection, [document_id])
         self.assertEqual(stored, [StoredDocument(document_id, original, "abstract", None, 200, 40)])
+
+    def test_find_documents_full_text_round_trip(self):
+        original = replace(make_document(), origin="html", full_text="Volltext des Papers")
+        document_id = save_document(self.connection, original, 200, 40)
+        stored = find_documents(self.connection, [document_id])[0]
+        self.assertEqual((stored.origin, stored.full_text), ("html", "Volltext des Papers"))
+        self.assertEqual(stored.document, original)
+
+    def test_save_document_takes_origin_from_document(self):
+        document_id = save_document(self.connection, replace(make_document(), origin="pdf", full_text="Text"), 200, 40)
+        origin = self.connection.execute("SELECT origin FROM documents WHERE id = %s", (document_id,)).fetchone()[0]
+        self.assertEqual(origin, "pdf")
 
     def test_find_documents_null_becomes_empty_string(self):
         document_id = save_document(self.connection, make_document(), 200, 40)
