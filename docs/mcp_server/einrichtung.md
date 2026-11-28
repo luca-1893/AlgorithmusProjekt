@@ -4,7 +4,7 @@ Ziel: Das Tool `research_papers` läuft auf einem neuen Rechner und lässt sich 
 
 Was **nicht** nötig ist:
 
-- **Voyage-Key:** Ohne `VOYAGE_API_KEY` arbeitet das Tool nur mit BM25 (Regel R10). Für einen ersten Test reicht das.
+- **Voyage-Key:** Ohne `VOYAGE_API_KEY` arbeitet das Tool nur mit BM25 (Regel R6). Für einen ersten Test reicht das.
 - **PostgreSQL:** Ohne Datenbank läuft das Tool ohne Cache weiter und meldet „Cache nicht verfügbar“ in `warnings` (R15).
 - **Anthropic-API-Key:** Nur für die Messläufe (`evaluation.messlauf`), nicht für das Tool.
 
