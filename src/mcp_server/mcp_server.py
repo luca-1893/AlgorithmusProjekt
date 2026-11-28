@@ -38,9 +38,9 @@ def default_embedder() -> Optional[Embedder]:
     return CachedEmbedder(voyage, voyage.model)
 
 
-def default_source(config: PipelineConfig) -> Source:
-    """arXiv with the database cache in front (R13 to R15)."""
-    return CachedSource(ArxivSource(), chunk_size=config.chunk_size, overlap=config.overlap)
+def default_source(config: PipelineConfig, full_text: bool = True) -> Source:
+    """arXiv, by default with full texts (R17), with the database cache in front (R13 to R15)."""
+    return CachedSource(ArxivSource(full_text=full_text), chunk_size=config.chunk_size, overlap=config.overlap)
 
 
 def build_server(source: Optional[Source] = None, embedder: Optional[Embedder] = None,
@@ -77,9 +77,11 @@ def main(argv: Optional[list[str]] = None) -> None:
     parser.add_argument("--transport", choices=("stdio", "http"), default="stdio")
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--abstract-only", action="store_true", help="titles and abstracts only, no full text")
     args = parser.parse_args(argv)
 
-    server = build_server(embedder=default_embedder())
+    config = PipelineConfig()
+    server = build_server(default_source(config, full_text=not args.abstract_only), default_embedder(), config)
     if args.transport == "http":
         server.run(transport="http", host=args.host, port=args.port)
     else:
