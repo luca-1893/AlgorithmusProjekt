@@ -1,6 +1,7 @@
 """Full text of arXiv papers: HTML version first, PDF second, abstract as fallback (R17, ADR 0006)."""
 import http.client
 import io
+import logging
 import re
 import time
 from dataclasses import replace
@@ -19,7 +20,7 @@ ARXIV_THROTTLED = "arXiv drosselt (HTTP 429), weitere Volltexte übersprungen"
 
 VOID_TAGS = {"area", "base", "br", "col", "embed", "hr", "img", "input", "link", "meta", "source", "track", "wbr"}
 SKIP_TAGS = {"script", "style", "math", "nav", "header", "footer", "svg", "figure", "table"}
-SKIP_CLASSES = ("ltx_bibliography", "ltx_page_footer", "ltx_page_header", "ltx_authors", "ltx_role_footnote")
+SKIP_CLASSES = {"ltx_bibliography", "ltx_page_footer", "ltx_page_header", "ltx_authors", "ltx_role_footnote", "ltx_pubnotes"}
 BLOCK_TAGS = {"p", "div", "section", "h1", "h2", "h3", "h4", "li"}
 REFERENCES_HEADING = re.compile(r"^[ \t]*(?:\d+\.?[ \t]*)?(?:References|REFERENCES|Bibliography|BIBLIOGRAPHY)[ \t]*$",
                                 re.MULTILINE)
@@ -50,8 +51,8 @@ class _ArticleText(HTMLParser):
             return
         if tag == "article":
             self.in_article += 1
-        css_class = dict(attrs).get("class") or ""
-        if self.in_article and (tag in SKIP_TAGS or any(name in css_class for name in SKIP_CLASSES)):
+        css_classes = set((dict(attrs).get("class") or "").split())
+        if self.in_article and (tag in SKIP_TAGS or css_classes & SKIP_CLASSES):
             self.skip = 1
 
     def handle_endtag(self, tag):
@@ -75,7 +76,12 @@ def html_text(html: str) -> str:
     parser = _ArticleText()
     parser.feed(html)
     parser.close()
-    return " ".join("".join(parser.parts).split())
+    return collapse_text("".join(parser.parts))
+
+
+def collapse_text(text: str) -> str:
+    """Text without NUL characters (PostgreSQL rejects them) and with whitespace collapsed to single spaces."""
+    return " ".join(text.replace("\x00", "").split())
 
 
 def cut_references(text: str) -> str:
@@ -88,13 +94,13 @@ def cut_references(text: str) -> str:
 
 def pdf_text(data: bytes) -> str:
     """Text of all pages via pypdf, without bibliography and end-of-line hyphens, whitespace collapsed."""
+    logging.getLogger("pypdf").setLevel(logging.ERROR)
     try:
         from pypdf import PdfReader
         text = "\n".join(page.extract_text() or "" for page in PdfReader(io.BytesIO(data)).pages)
     except Exception as error:
         raise PdfError(f"PDF not readable: {error}") from error
-    text = re.sub(r"(\w)-\n(\w)", r"\1\2", cut_references(text))
-    return " ".join(text.split())
+    return collapse_text(re.sub(r"(\w)-\n(\w)", r"\1\2", cut_references(text)))
 
 
 def word_count(text: str) -> int:

@@ -5,8 +5,8 @@ from datetime import date
 from urllib.error import HTTPError, URLError
 
 import sources
-from sources.fulltext import (ARXIV_THROTTLED, MIN_WORDS, FullTextFetcher, PdfError, cut_references, html_text,
-                              pdf_text)
+from sources.fulltext import (ARXIV_THROTTLED, MIN_WORDS, FullTextFetcher, PdfError, collapse_text, cut_references,
+                              html_text, pdf_text)
 
 HAS_PYPDF = importlib.util.find_spec("pypdf") is not None
 LONG_BODY = " ".join(f"word{number}" for number in range(MIN_WORDS))
@@ -125,12 +125,24 @@ class TestHtmlText(unittest.TestCase):
         for unwanted in ("Navigation", "Footer", "color", "Paper A"):
             self.assertNotIn(unwanted, text)
 
+    def test_html_skip_class_must_match_whole_class_name(self):
+        page = '<article class="ltx_document ltx_authors_1line"><p>kept</p><div class="ltx_authors">Ada</div></article>'
+        self.assertEqual(html_text(page), "kept")
+
     def test_html_without_article_is_empty(self):
         self.assertEqual(html_text("<html><body><p>No article.</p></body></html>"), "")
 
     def test_html_void_tag_inside_skipped_element_keeps_skipping(self):
         text = html_text("<article><figure><img src='a'><br><p>hidden</p></figure><p>shown</p></article>")
         self.assertEqual(text, "shown")
+
+
+class TestCollapseText(unittest.TestCase):
+    def test_collapse_removes_nul_characters(self):
+        self.assertEqual(collapse_text("classi\x00fication  of\n\tterms"), "classification of terms")
+
+    def test_collapse_empty_text(self):
+        self.assertEqual(collapse_text(" \n "), "")
 
 
 class TestCutReferences(unittest.TestCase):
